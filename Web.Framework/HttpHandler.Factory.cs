@@ -106,6 +106,7 @@ namespace Web.Framework
                 var httpRequestExpr = Expression.Property(httpContextArg, "Request");
                 var queryProperty = Expression.Property(httpRequestExpr, "Query");
                 var headersProperty = Expression.Property(httpRequestExpr, "Headers");
+                var cookiesProperty = Expression.Property(httpRequestExpr, "Cookies");
                 var formProperty = Expression.Property(httpRequestExpr, "Form");
                 var bodyProperty = Expression.Property(httpRequestExpr, "Body");
 
@@ -121,6 +122,7 @@ namespace Web.Framework
                     var fromForm = p.GetCustomAttribute<FromFormAttribute>();
                     var fromBody = p.GetCustomAttribute<FromBodyAttribute>();
                     var fromRoute = p.GetCustomAttribute<FromRouteAttribute>();
+                    var fromCookie = p.GetCustomAttribute<FromCookieAttribute>();
 
                     if (fromQuery != null)
                     {
@@ -133,6 +135,10 @@ namespace Web.Framework
                     else if (fromRoute != null)
                     {
                         BindArgument(args, routeValuesVar, p, fromRoute.Name);
+                    }
+                    else if (fromCookie != null)
+                    {
+                        BindArgument(args, cookiesProperty, p, fromCookie.Name);
                     }
                     else if (fromForm != null)
                     {
@@ -157,6 +163,10 @@ namespace Web.Framework
                         else if (p.ParameterType == typeof(RequestDelegate))
                         {
                             args.Add(nextArg);
+                        }
+                        else if (p.ParameterType == typeof(IHeaderDictionary))
+                        {
+                            args.Add(headersProperty);
                         }
                         else
                         {
@@ -275,7 +285,7 @@ namespace Web.Framework
             }
             else
             {
-                // string -> thing without a parser
+                // Convert.ChangeType()
                 expr = Expression.Call(ChangeTypeMethodInfo, valueArg, Expression.Constant(parameter.ParameterType));
             }
 
@@ -284,7 +294,7 @@ namespace Web.Framework
                 expr = Expression.Convert(expr, parameter.ParameterType);
             }
 
-            // property[key] == null ? default : (ParameterType)Type.Parse(property[key]);
+            // property[key] == null ? default : (ParameterType){Type}.Parse(property[key]);
             expr = Expression.Condition(
                 Expression.Equal(valueArg, Expression.Constant(null)),
                 Expression.Default(parameter.ParameterType),
