@@ -21,6 +21,7 @@ namespace Web.Framework
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
         private static readonly MethodInfo JsonDeserializeMethodInfo = GetMethodInfo<Func<JsonTextReader, Type, object>>((jsonReader, type) => JsonDeserialize(jsonReader, type));
         private static readonly MethodInfo ActivatorMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => CreateInstance(sp, type));
+        private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
         private static ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>> _cache = new ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>>();
 
@@ -41,14 +42,48 @@ namespace Web.Framework
                 var needForm = false;
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
                 var httpMethod = attribute?.Method ?? "";
-                var template = attribute.Template;
+                var template = attribute?.Template;
+                var parameters = method.GetParameters();
+
+                // Fast path for RequestDelegate
+                if (parameters.Length == 1 &&
+                    parameters[0].ParameterType == typeof(HttpContext) &&
+                    method.ReturnType == typeof(Task))
+                {
+                    var invoke = (RequestDelegate)method.CreateDelegate(typeof(RequestDelegate));
+
+                    bindings.Add(new Binding
+                    {
+                        HttpMethod = httpMethod,
+                        Template = template,
+                        Invoke = (context, next) => invoke(context)
+                    });
+
+                    continue;
+                }
+
+                // TODO: Consider more fast paths
+                // void Method(HttpContext context)
+                // void Method()
+                // Task Method()
+
+                // Non void return type
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
                 //     var handler = ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
-                //     handler.HttpContext = context;
                 //     handler.NextMiddleware = next;
-                //     return ExecuteResult(handler.Method(), httpContext);
+                //     return ExecuteResult(handler.Method(..), httpContext);
+                // }
+
+                // void return type
+
+                // Task Invoke(HttpContext context, RequestDelegate next)
+                // {
+                //     var handler = ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
+                //     handler.NextMiddleware = next;
+                //     handler.Method(..);
+                //     return Task.CompletedTask;
                 // }
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
@@ -60,12 +95,10 @@ namespace Web.Framework
                 // ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
                 var activatorCall = Expression.Call(ActivatorMethodInfo, Expression.Property(httpContextArg, "RequestServices"), Expression.Constant(handlerType));
                 bodyExpressions.Add(Expression.Assign(handlerVar, Expression.Convert(activatorCall, handlerType)));
-                bodyExpressions.Add(Expression.Assign(Expression.Property(handlerVar, "HttpContext"), httpContextArg));
                 bodyExpressions.Add(Expression.Assign(Expression.Property(handlerVar, "NextMiddleware"), nextArg));
 
                 var resultVar = Expression.Variable(typeof(object), "result");
 
-                var parameters = method.GetParameters();
                 var args = new List<Expression>();
 
                 var httpRequestExpr = Expression.Property(httpContextArg, "Request");
@@ -115,6 +148,10 @@ namespace Web.Framework
                         {
                             args.Add(formProperty);
                         }
+                        else if (p.ParameterType == typeof(HttpContext))
+                        {
+                            args.Add(httpContextArg);
+                        }
                         else
                         {
                             args.Add(Expression.Default(p.ParameterType));
@@ -122,8 +159,17 @@ namespace Web.Framework
                     }
                 }
 
-                bodyExpressions.Add(Expression.Assign(resultVar, Expression.Call(handlerVar, method, args)));
-                bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, resultVar, httpContextArg));
+                if (method.ReturnType == typeof(void))
+                {
+                    bodyExpressions.Add(Expression.Call(handlerVar, method, args));
+                    bodyExpressions.Add(Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo));
+                }
+                else
+                {
+                    bodyExpressions.Add(Expression.Assign(resultVar, Expression.Call(handlerVar, method, args)));
+                    bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, resultVar, httpContextArg));
+                }
+
                 var body = Expression.Block(new[] { handlerVar, resultVar }, bodyExpressions);
 
                 bindings.Add(new Binding
@@ -178,7 +224,7 @@ namespace Web.Framework
                     score++;
                 }
 
-                if (score > currentMaxScore)
+                if (score > currentMaxScore || binding == null)
                 {
                     currentMaxScore = score;
                     binding = b;
@@ -247,6 +293,12 @@ namespace Web.Framework
         {
             var mc = (MethodCallExpression)expr.Body;
             return mc.Method;
+        }
+
+        private static MemberInfo GetMemberInfo<T>(Expression<T> expr)
+        {
+            var mc = (MemberExpression)expr.Body;
+            return mc.Member;
         }
 
         private static object CreateInstance(IServiceProvider sp, Type type)

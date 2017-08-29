@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Web.Framework;
 
-namespace WebApplication45
+namespace Samples
 {
     public class ProductsHandler : HttpHandler
     {

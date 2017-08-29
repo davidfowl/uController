@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Samples;
 using Web.Framework;
 
-namespace WebApplication45
+namespace Samples
 {
     public class Startup
     {
@@ -16,6 +17,8 @@ namespace WebApplication45
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication("Cookies")
+                    .AddCookie();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -25,6 +28,8 @@ namespace WebApplication45
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseHttpHandler<AuthenticationHttpHandler>();
 
             app.UseHttpHandler<MyHandler>();
         }

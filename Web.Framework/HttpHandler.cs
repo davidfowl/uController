@@ -4,7 +4,6 @@ namespace Web.Framework
 {
     public abstract partial class HttpHandler
     {
-        public HttpContext HttpContext { get; set; }
         public RequestDelegate NextMiddleware { get; set; }
 
         public Result Next() => Result(NextMiddleware);

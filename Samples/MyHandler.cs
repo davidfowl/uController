@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Web.Framework;
 
-namespace WebApplication45
+namespace Samples
 {
     public class MyHandler : HttpHandler
     {
