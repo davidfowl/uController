@@ -9,16 +9,18 @@ namespace Web.Framework
     public class HttpMethodAttribute : Attribute
     {
         public string Method { get; }
+        public string Template { get; set; }
 
-        public HttpMethodAttribute(string method)
+        public HttpMethodAttribute(string method, string template)
         {
             Method = method;
+            Template = template;
         }
     }
 
     public class HttpGetAttribute : HttpMethodAttribute
     {
-        public HttpGetAttribute() : base(HttpMethods.Get)
+        public HttpGetAttribute(string template = null) : base(HttpMethods.Get, template)
         {
 
         }
@@ -26,7 +28,7 @@ namespace Web.Framework
 
     public class HttpPostAttribute : HttpMethodAttribute
     {
-        public HttpPostAttribute() : base(HttpMethods.Post)
+        public HttpPostAttribute(string template = null) : base(HttpMethods.Post, template)
         {
 
         }
@@ -34,7 +36,7 @@ namespace Web.Framework
 
     public class HttpDeleteAttribute : HttpMethodAttribute
     {
-        public HttpDeleteAttribute() : base(HttpMethods.Delete)
+        public HttpDeleteAttribute(string template = null) : base(HttpMethods.Delete, template)
         {
 
         }
@@ -42,7 +44,7 @@ namespace Web.Framework
 
     public class HttpPutAttribute : HttpMethodAttribute
     {
-        public HttpPutAttribute() : base(HttpMethods.Put)
+        public HttpPutAttribute(string template = null) : base(HttpMethods.Put, template)
         {
 
         }

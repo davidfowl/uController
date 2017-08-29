@@ -34,18 +34,14 @@ namespace Web.Framework
             var handlerType = typeof(THttpHandler);
             var methods = handlerType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-            var dictionary = new Dictionary<string, Binding>();
+            var bindings = new List<Binding>();
 
             foreach (var method in methods)
             {
                 var needForm = false;
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
-                var key = attribute?.Method ?? "";
-
-                if (dictionary.ContainsKey(key))
-                {
-                    throw new InvalidOperationException($"Duplicate methods matching http method {attribute.Method}");
-                }
+                var httpMethod = attribute?.Method ?? "";
+                var template = attribute.Template;
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
@@ -130,11 +126,13 @@ namespace Web.Framework
                 bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, resultVar, httpContextArg));
                 var body = Expression.Block(new[] { handlerVar, resultVar }, bodyExpressions);
 
-                dictionary[key] = new Binding
+                bindings.Add(new Binding
                 {
                     Invoke = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg).Compile(),
-                    NeedForm = needForm
-                };
+                    NeedForm = needForm,
+                    HttpMethod = httpMethod,
+                    Template = template
+                });
             }
 
 
@@ -142,8 +140,9 @@ namespace Web.Framework
             {
                 return async context =>
                 {
-                    if (dictionary.TryGetValue(context.Request.Method, out var binding) ||
-                        dictionary.TryGetValue("", out binding))
+                    var binding = Match(context, bindings);
+
+                    if (binding != null)
                     {
                         // Generating async code would just be insane so if the method needs the form populate it here
                         // so the within the method it's cached
@@ -159,6 +158,34 @@ namespace Web.Framework
                     await next(context);
                 };
             };
+        }
+
+        private static Binding Match(HttpContext context, List<Binding> bindings)
+        {
+            Binding binding = null;
+            var currentMaxScore = 0;
+
+            foreach (var b in bindings)
+            {
+                int score = 0;
+                if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
+                {
+                    score++;
+                }
+
+                if (b.Template != null && context.Request.Path.StartsWithSegments(b.Template, StringComparison.OrdinalIgnoreCase))
+                {
+                    score++;
+                }
+
+                if (score > currentMaxScore)
+                {
+                    currentMaxScore = score;
+                    binding = b;
+                }
+            }
+
+            return binding;
         }
 
         private static void BindBody(List<Expression> args, Expression httpBody, ParameterInfo p)
@@ -207,7 +234,7 @@ namespace Web.Framework
                 expr = Expression.Convert(expr, parameter.ParameterType);
             }
 
-            // context.Request.Blah[key] == null ? default : expr;
+            // property[key] == null ? default : (ParameterType)Type.Parse(property[key]);
             expr = Expression.Condition(
                 Expression.Equal(valueArg, Expression.Constant(null)),
                 Expression.Default(parameter.ParameterType),
@@ -248,6 +275,9 @@ namespace Web.Framework
                         await val(httpContext);
                     }
                     break;
+                case Task task:
+                    await task;
+                    break;
                 case Result val:
                     {
                         await val.ExecuteAsync(httpContext);
@@ -268,6 +298,10 @@ namespace Web.Framework
         private class Binding
         {
             public Func<HttpContext, RequestDelegate, Task> Invoke { get; set; }
+
+            public string Template { get; set; }
+
+            public string HttpMethod { get; set; }
 
             public bool NeedForm { get; set; }
         }

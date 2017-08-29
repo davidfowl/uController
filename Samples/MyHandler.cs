@@ -15,6 +15,9 @@ namespace WebApplication45
             return Json(new { A = id.GetValueOrDefault() });
         }
 
+        [HttpGet("/hello")]
+        public string Get() => "Hey!";
+
         [HttpPost]
         public Result Post([FromBody]JToken obj)
         {
