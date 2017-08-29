@@ -63,6 +63,9 @@ namespace Web.Framework
                 }
 
                 // TODO: Consider more fast paths
+                // RequestDelegate Method(HttpContext context, RequestDelegate next)
+                // Task<RequestDelegate> Method(HttpContext context, RequestDelegate next)
+                // Task Method(HttpContext context, RequestDelegate next)
                 // void Method(HttpContext context)
                 // void Method()
                 // Task Method()
@@ -71,18 +74,21 @@ namespace Web.Framework
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
-                //     var handler = ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
-                //     handler.NextMiddleware = next;
-                //     return ExecuteResult(handler.Method(..), httpContext);
+                //     return ExecuteResult(
+                //                ActivatorUtilities.CreateInstance(
+                //                    context.RequestServices, 
+                //                    typeof(THttpHandler))
+                //                          .Method(..), httpContext);
                 // }
 
                 // void return type
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
-                //     var handler = ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
-                //     handler.NextMiddleware = next;
-                //     handler.Method(..);
+                //     ActivatorUtilities.CreateInstance(
+                //           context.RequestServices, 
+                //           typeof(THttpHandler))
+                //                .Method(..);
                 //     return Task.CompletedTask;
                 // }
 
@@ -90,14 +96,10 @@ namespace Web.Framework
                 var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
 
                 var bodyExpressions = new List<Expression>();
-                // var handler =
-                var handlerVar = Expression.Variable(handlerType, "handler");
-                // ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
-                var activatorCall = Expression.Call(ActivatorMethodInfo, Expression.Property(httpContextArg, "RequestServices"), Expression.Constant(handlerType));
-                bodyExpressions.Add(Expression.Assign(handlerVar, Expression.Convert(activatorCall, handlerType)));
-                bodyExpressions.Add(Expression.Assign(Expression.Property(handlerVar, "NextMiddleware"), nextArg));
-
-                var resultVar = Expression.Variable(typeof(object), "result");
+                // (THttpHandler)ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
+                var activatorCall = Expression.Convert(
+                                        Expression.Call(ActivatorMethodInfo, Expression.Property(httpContextArg, "RequestServices"), Expression.Constant(handlerType)),
+                                        handlerType);
 
                 var args = new List<Expression>();
 
@@ -152,6 +154,10 @@ namespace Web.Framework
                         {
                             args.Add(httpContextArg);
                         }
+                        else if (p.ParameterType == typeof(RequestDelegate))
+                        {
+                            args.Add(nextArg);
+                        }
                         else
                         {
                             args.Add(Expression.Default(p.ParameterType));
@@ -161,16 +167,15 @@ namespace Web.Framework
 
                 if (method.ReturnType == typeof(void))
                 {
-                    bodyExpressions.Add(Expression.Call(handlerVar, method, args));
+                    bodyExpressions.Add(Expression.Call(activatorCall, method, args));
                     bodyExpressions.Add(Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo));
                 }
                 else
                 {
-                    bodyExpressions.Add(Expression.Assign(resultVar, Expression.Call(handlerVar, method, args)));
-                    bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, resultVar, httpContextArg));
+                    bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, Expression.Call(activatorCall, method, args), httpContextArg));
                 }
 
-                var body = Expression.Block(new[] { handlerVar, resultVar }, bodyExpressions);
+                var body = Expression.Block(bodyExpressions);
 
                 bindings.Add(new Binding
                 {
@@ -180,7 +185,6 @@ namespace Web.Framework
                     Template = template
                 });
             }
-
 
             return next =>
             {

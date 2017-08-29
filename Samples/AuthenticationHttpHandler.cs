@@ -18,7 +18,7 @@ namespace Samples
             _options = options.Value;
         }
 
-        public async Task<Result> InvokeAsync(HttpContext context)
+        public async Task<RequestDelegate> InvokeAsync(HttpContext context, RequestDelegate next)
         {
             var result = await context.AuthenticateAsync(_options.DefaultAuthenticateScheme);
 
@@ -27,7 +27,7 @@ namespace Samples
                 context.User = result.Principal;
             }
 
-            return Next();
+            return next;
         }
     }
 }

@@ -4,10 +4,7 @@ namespace Web.Framework
 {
     public abstract partial class HttpHandler
     {
-        public RequestDelegate NextMiddleware { get; set; }
-
-        public Result Next() => Result(NextMiddleware);
-        public Result Result(RequestDelegate requestDelegate) => new InlineResult(requestDelegate);
+        public Result Execute(RequestDelegate requestDelegate) => new InlineResult(requestDelegate);
         public Result Empty() => new EmptyResult();
         public Result BadRequest() => Status(StatusCodes.Status400BadRequest);
         public Result NotFound() => Status(StatusCodes.Status404NotFound);
