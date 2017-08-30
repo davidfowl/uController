@@ -9,7 +9,7 @@ namespace Samples
 {
     // Port of the social sample here
     // https://github.com/aspnet/Security/blob/bf685de16be9949d67e93cc058ef4393f005756b/samples/SocialSample/Startup.cs
-    public class SocialHandler : HttpHandler
+    public class SocialHandler
     {
         private readonly IAuthenticationSchemeProvider _schemeProvider;
 
