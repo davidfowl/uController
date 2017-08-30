@@ -23,8 +23,16 @@ namespace Samples
             return context.Response.WriteAsync("Hello World");
         }
 
+        [HttpGet("/hey")]
+        public async Task<string> GetAsync()
+        {
+            await Task.Delay(500);
+
+            return "Hey!";
+        }
+
         [HttpGet("/hello")]
-        public string Get() => "Hey!";
+        public string Get() => "Hello!";
 
         [HttpPost]
         public Result Post([FromBody]JToken obj)

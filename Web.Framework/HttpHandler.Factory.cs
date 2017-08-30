@@ -17,23 +17,29 @@ namespace Web.Framework
 {
     public partial class HttpHandler
     {
-        private static readonly MethodInfo ExecuteAsyncMethodInfo = GetMethodInfo<Func<object, HttpContext, Task>>((result, httpContext) => ExecuteResult(result, httpContext));
+        private static readonly MethodInfo ExecuteAsyncMethodInfo = GetMethodInfo<Func<object, HttpContext, Task>>((result, httpContext) => ExecuteResultAsync(result, httpContext));
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
         private static readonly MethodInfo JsonDeserializeMethodInfo = GetMethodInfo<Func<JsonTextReader, Type, object>>((jsonReader, type) => JsonDeserialize(jsonReader, type));
         private static readonly MethodInfo ActivatorMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => CreateInstance(sp, type));
         private static readonly MethodInfo GetRequiredServiceMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => sp.GetRequiredService(type));
+        private static readonly MethodInfo ConvertToTaskMethodInfo = typeof(HttpHandler).GetMethod(nameof(ConvertTask), BindingFlags.NonPublic | BindingFlags.Static);
+
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
         private static ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>> _cache = new ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>>();
 
-        public static Func<RequestDelegate, RequestDelegate> Build<THttpHandler>() where THttpHandler : HttpHandler
+        public static Func<RequestDelegate, RequestDelegate> Build<THttpHandler>()
         {
-            return _cache.GetOrAdd(typeof(THttpHandler), type => BuildCore<THttpHandler>());
+            return Build(typeof(THttpHandler));
         }
 
-        public static Func<RequestDelegate, RequestDelegate> BuildCore<THttpHandler>() where THttpHandler : HttpHandler
+        public static Func<RequestDelegate, RequestDelegate> Build(Type handlerType)
         {
-            var handlerType = typeof(THttpHandler);
+            return _cache.GetOrAdd(handlerType, type => BuildWithoutCache(type));
+        }
+
+        private static Func<RequestDelegate, RequestDelegate> BuildWithoutCache(Type handlerType)
+        {
             var methods = handlerType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
             var bindings = new List<Binding>();
@@ -64,7 +70,7 @@ namespace Web.Framework
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
                 var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
-                var requestServicesExpr = Expression.Property(httpContextArg, "RequestServices");
+                var requestServicesExpr = Expression.Property(httpContextArg, nameof(HttpContext.RequestServices));
 
                 // Fast path: We can skip the activator if there's only a default ctor with 0 args
                 var ctors = handlerType.GetConstructors();
@@ -88,7 +94,7 @@ namespace Web.Framework
 
                 var args = new List<Expression>();
 
-                var httpRequestExpr = Expression.Property(httpContextArg, "Request");
+                var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
 
                 foreach (var p in parameters)
                 {
@@ -104,25 +110,25 @@ namespace Web.Framework
 
                     if (fromQuery != null)
                     {
-                        var queryProperty = Expression.Property(httpRequestExpr, "Query");
+                        var queryProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Query));
                         paramterExpression = BindArgument(queryProperty, p, fromQuery.Name);
                     }
                     else if (fromHeader != null)
                     {
-                        var headersProperty = Expression.Property(httpRequestExpr, "Headers");
+                        var headersProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
                         paramterExpression = BindArgument(headersProperty, p, fromHeader.Name);
                     }
                     else if (fromRoute != null)
                     {
-                        var featuresProperty = Expression.Property(httpContextArg, "Features");
+                        var featuresProperty = Expression.Property(httpContextArg, nameof(HttpContext.Features));
                         var routeFeatureVar = Expression.Convert(Expression.MakeIndex(featuresProperty, featuresProperty.Type.GetProperty("Item"), new[] { Expression.Constant(typeof(IRoutingFeature)) }), typeof(IRoutingFeature));
-                        var routeDataVar = Expression.Property(routeFeatureVar, "RouteData");
-                        var routeValuesVar = Expression.Property(routeDataVar, "Values");
+                        var routeDataVar = Expression.Property(routeFeatureVar, nameof(IRoutingFeature.RouteData));
+                        var routeValuesVar = Expression.Property(routeDataVar, nameof(RouteData.Values));
                         paramterExpression = BindArgument(routeValuesVar, p, fromRoute.Name);
                     }
                     else if (fromCookie != null)
                     {
-                        var cookiesProperty = Expression.Property(httpRequestExpr, "Cookies");
+                        var cookiesProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Cookies));
                         paramterExpression = BindArgument(cookiesProperty, p, fromCookie.Name);
                     }
                     else if (fromService != null)
@@ -137,19 +143,19 @@ namespace Web.Framework
                     {
                         needForm = true;
 
-                        var formProperty = Expression.Property(httpRequestExpr, "Form");
+                        var formProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
                         paramterExpression = BindArgument(formProperty, p, fromForm.Name);
                     }
                     else if (fromBody != null)
                     {
-                        var bodyProperty = Expression.Property(httpRequestExpr, "Body");
+                        var bodyProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Body));
                         paramterExpression = BindBody(bodyProperty, p);
                     }
                     else
                     {
                         if (p.ParameterType == typeof(IFormCollection))
                         {
-                            paramterExpression = Expression.Property(httpRequestExpr, "Form");
+                            paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
                         }
                         else if (p.ParameterType == typeof(HttpContext))
                         {
@@ -161,7 +167,7 @@ namespace Web.Framework
                         }
                         else if (p.ParameterType == typeof(IHeaderDictionary))
                         {
-                            paramterExpression = Expression.Property(httpRequestExpr, "Headers");
+                            paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
                         }
                     }
 
@@ -182,14 +188,28 @@ namespace Web.Framework
                 }
                 else
                 {
-                    body = Expression.Call(ExecuteAsyncMethodInfo,
-                            Expression.Call(httpHandlerExpression, method, args),
-                            httpContextArg);
+                    var methodCall = Expression.Call(httpHandlerExpression, method, args);
+
+                    // Coerce Task<T> to Task<object>
+                    if (method.ReturnType.IsGenericType &&
+                        method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                    {
+                        var typeArg = method.ReturnType.GetGenericArguments()[0];
+
+                        // Convert<T>(handler.Method(..))
+                        methodCall = Expression.Call(
+                                           ConvertToTaskMethodInfo.MakeGenericMethod(typeArg),
+                                           methodCall);
+                    }
+
+                    body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
                 }
+
+                var lambda = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg);
 
                 bindings.Add(new Binding
                 {
-                    Invoke = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg).Compile(),
+                    Invoke = lambda.Compile(),
                     NeedForm = needForm,
                     HttpMethod = httpMethod,
                     Template = template
@@ -325,20 +345,20 @@ namespace Web.Framework
             return new JsonSerializer().Deserialize(jsonReader, type);
         }
 
-        internal static async Task ExecuteResult(object result, HttpContext httpContext)
+        private static async Task<object> ConvertTask<T>(Task<T> task)
+        {
+            return await task;
+        }
+
+        private static async Task ExecuteResultAsync(object result, HttpContext httpContext)
         {
             switch (result)
             {
-                case Task<Result> asyncResult:
+                case Task<object> task:
                     {
-                        var val = await asyncResult;
-                        await val.ExecuteAsync(httpContext);
-                    }
-                    break;
-                case Task<RequestDelegate> asyncResult:
-                    {
-                        var val = await asyncResult;
-                        await val(httpContext);
+                        var val = await task;
+                        // We normalize to Task<object> then we execute the actual result
+                        await ExecuteResultAsync(val, httpContext);
                     }
                     break;
                 case Task task:
