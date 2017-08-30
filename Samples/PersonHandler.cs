@@ -6,7 +6,7 @@ using Web.Framework;
 
 namespace Samples
 {
-    public class ProductsHandler : HttpHandler
+    public class ProductsHandler
     {
         [HttpGet]
         public object Get([FromRoute]int? id)

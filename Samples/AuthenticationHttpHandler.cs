@@ -9,7 +9,7 @@ using Web.Framework;
 
 namespace Samples
 {
-    public class AuthenticationHttpHandler : HttpHandler
+    public class AuthenticationHttpHandler
     {
         private readonly AuthenticationOptions _options;
 
