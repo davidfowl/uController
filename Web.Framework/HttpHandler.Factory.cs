@@ -373,11 +373,6 @@ namespace Web.Framework
                 case Task task:
                     await task;
                     break;
-                case Result val:
-                    {
-                        await val.ExecuteAsync(httpContext);
-                    }
-                    break;
                 case RequestDelegate val:
                     await val(httpContext);
                     break;
