@@ -27,32 +27,30 @@ namespace Web.Framework
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
-        private static ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>> _cache = new ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>>();
-
-        public static Func<RequestDelegate, RequestDelegate> Build<THttpHandler>()
+        public static Func<RequestDelegate, RequestDelegate> Build<THttpHandler>(Action<HttpModel> configure = null)
         {
-            return Build(typeof(THttpHandler));
+            return Build(typeof(THttpHandler), configure);
         }
 
-        public static Func<RequestDelegate, RequestDelegate> Build(Type handlerType)
+        public static Func<RequestDelegate, RequestDelegate> Build(Type handlerType, Action<HttpModel> configure = null)
         {
-            return _cache.GetOrAdd(handlerType, type => BuildWithoutCache(type));
+            return BuildWithoutCache(handlerType, configure);
         }
 
-        private static Func<RequestDelegate, RequestDelegate> BuildWithoutCache(Type handlerType)
+        private static Func<RequestDelegate, RequestDelegate> BuildWithoutCache(Type handlerType, Action<HttpModel> configure)
         {
-            var methods = handlerType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var model = HttpModel.FromType(handlerType);
+
+            configure?.Invoke(model);
 
             var bindings = new List<Binding>();
             var routeKey = new object();
 
-            foreach (var method in methods)
+            foreach (var action in model.Actions)
             {
                 var needForm = false;
-                var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
-                var httpMethod = attribute?.Method ?? "";
-                var template = attribute?.Template;
-                var parameters = method.GetParameters();
+                var httpMethod = action.HttpMethod;
+                var template = action.Template;
 
                 // Non void return type
 
@@ -98,29 +96,21 @@ namespace Web.Framework
 
                 var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
 
-                foreach (var p in parameters)
+                foreach (var p in action.Parameters)
                 {
-                    var fromQuery = p.GetCustomAttribute<FromQueryAttribute>();
-                    var fromHeader = p.GetCustomAttribute<FromHeaderAttribute>();
-                    var fromForm = p.GetCustomAttribute<FromFormAttribute>();
-                    var fromBody = p.GetCustomAttribute<FromBodyAttribute>();
-                    var fromRoute = p.GetCustomAttribute<FromRouteAttribute>();
-                    var fromCookie = p.GetCustomAttribute<FromCookieAttribute>();
-                    var fromService = p.GetCustomAttribute<FromServicesAttribute>();
-
                     Expression paramterExpression = Expression.Default(p.ParameterType);
 
-                    if (fromQuery != null)
+                    if (p.FromQuery != null)
                     {
                         var queryProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Query));
-                        paramterExpression = BindArgument(queryProperty, p, fromQuery.Name);
+                        paramterExpression = BindArgument(queryProperty, p, p.FromQuery);
                     }
-                    else if (fromHeader != null)
+                    else if (p.FromHeader != null)
                     {
                         var headersProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
-                        paramterExpression = BindArgument(headersProperty, p, fromHeader.Name);
+                        paramterExpression = BindArgument(headersProperty, p, p.FromHeader);
                     }
-                    else if (fromRoute != null)
+                    else if (p.FromRoute != null)
                     {
                         var itemsProperty = Expression.Property(httpContextArg, nameof(HttpContext.Items));
                         var routeValuesVar = Expression.Convert(
@@ -131,14 +121,14 @@ namespace Web.Framework
                                                                      }),
                                                 typeof(RouteValueDictionary));
 
-                        paramterExpression = BindArgument(routeValuesVar, p, fromRoute.Name);
+                        paramterExpression = BindArgument(routeValuesVar, p, p.FromRoute);
                     }
-                    else if (fromCookie != null)
+                    else if (p.FromCookie != null)
                     {
                         var cookiesProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Cookies));
-                        paramterExpression = BindArgument(cookiesProperty, p, fromCookie.Name);
+                        paramterExpression = BindArgument(cookiesProperty, p, p.FromCookie);
                     }
-                    else if (fromService != null)
+                    else if (p.FromServices)
                     {
                         paramterExpression = Expression.Convert(
                              Expression.Call(GetRequiredServiceMethodInfo,
@@ -146,14 +136,14 @@ namespace Web.Framework
                                              Expression.Constant(p.ParameterType)),
                              p.ParameterType);
                     }
-                    else if (fromForm != null)
+                    else if (p.FromForm != null)
                     {
                         needForm = true;
 
                         var formProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
-                        paramterExpression = BindArgument(formProperty, p, fromForm.Name);
+                        paramterExpression = BindArgument(formProperty, p, p.FromForm);
                     }
-                    else if (fromBody != null)
+                    else if (p.FromBody)
                     {
                         var bodyProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Body));
                         paramterExpression = BindBody(bodyProperty, p);
@@ -183,11 +173,11 @@ namespace Web.Framework
 
                 Expression body = null;
 
-                if (method.ReturnType == typeof(void))
+                if (action.ReturnType == typeof(void))
                 {
                     var bodyExpressions = new List<Expression>
                     {
-                        Expression.Call(httpHandlerExpression, method, args),
+                        Expression.Call(httpHandlerExpression, action.MethodInfo, args),
                         Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo)
                     };
 
@@ -195,13 +185,13 @@ namespace Web.Framework
                 }
                 else
                 {
-                    var methodCall = Expression.Call(httpHandlerExpression, method, args);
+                    var methodCall = Expression.Call(httpHandlerExpression, action.MethodInfo, args);
 
                     // Coerce Task<T> to Task<object>
-                    if (method.ReturnType.IsGenericType &&
-                        method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                    if (action.ReturnType.IsGenericType &&
+                        action.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
                     {
-                        var typeArg = method.ReturnType.GetGenericArguments()[0];
+                        var typeArg = action.ReturnType.GetGenericArguments()[0];
 
                         // Convert<T>(handler.Method(..))
                         methodCall = Expression.Call(
@@ -283,7 +273,7 @@ namespace Web.Framework
             return binding;
         }
 
-        private static Expression BindBody(Expression httpBody, ParameterInfo p)
+        private static Expression BindBody(Expression httpBody, ParameterModel p)
         {
             // Hard coded to JSON (and JSON.NET at that!)
             // Also this is synchronous, good luck generating async anything
@@ -304,7 +294,7 @@ namespace Web.Framework
             return expr;
         }
 
-        private static Expression BindArgument(Expression sourceExpression, ParameterInfo parameter, string name)
+        private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)
         {
             var key = name ?? parameter.Name;
             var type = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
