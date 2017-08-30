@@ -291,14 +291,23 @@ namespace Web.Framework
 
         private static Expression BindArgument(MemberExpression property, ParameterInfo parameter, string name)
         {
-            string key = name ?? parameter.Name;
+            var key = name ?? parameter.Name;
             var type = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
-            var valueArg = Expression.Convert(Expression.MakeIndex(property, property.Type.GetProperty("Item"), new[] { Expression.Constant(key) }), typeof(string));
+            var valueArg = Expression.Convert(
+                                Expression.MakeIndex(property,
+                                                     property.Type.GetProperty("Item"),
+                                                     new[] {
+                                                         Expression.Constant(key)
+                                                     }),
+                                typeof(string));
 
-            var parseMethod = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
-                                  .FirstOrDefault(m => m.Name == "Parse" && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string));
+            MethodInfo parseMethod = (from m in type.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                                      let parameters = m.GetParameters()
+                                      where m.Name == "Parse" && parameters.Length == 1 && parameters[0].ParameterType == typeof(string)
+                                      select m).FirstOrDefault();
 
             Expression expr = null;
+
             if (parseMethod != null)
             {
                 expr = Expression.Call(parseMethod, valueArg);
@@ -306,7 +315,7 @@ namespace Web.Framework
             else
             {
                 // Convert.ChangeType()
-                expr = Expression.Call(ChangeTypeMethodInfo, valueArg, Expression.Constant(parameter.ParameterType));
+                expr = Expression.Call(ChangeTypeMethodInfo, valueArg, Expression.Constant(type));
             }
 
             if (expr.Type != parameter.ParameterType)
