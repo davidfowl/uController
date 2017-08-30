@@ -21,6 +21,7 @@ namespace Web.Framework
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
         private static readonly MethodInfo JsonDeserializeMethodInfo = GetMethodInfo<Func<JsonTextReader, Type, object>>((jsonReader, type) => JsonDeserialize(jsonReader, type));
         private static readonly MethodInfo ActivatorMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => CreateInstance(sp, type));
+        private static readonly MethodInfo GetRequiredServiceMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => sp.GetRequiredService(type));
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
         private static ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>> _cache = new ConcurrentDictionary<Type, Func<RequestDelegate, RequestDelegate>>();
@@ -94,11 +95,12 @@ namespace Web.Framework
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
                 var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
+                var requestServicesExpr = Expression.Property(httpContextArg, "RequestServices");
 
                 var bodyExpressions = new List<Expression>();
                 // (THttpHandler)ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
                 var activatorCall = Expression.Convert(
-                                        Expression.Call(ActivatorMethodInfo, Expression.Property(httpContextArg, "RequestServices"), Expression.Constant(handlerType)),
+                                        Expression.Call(ActivatorMethodInfo, requestServicesExpr, Expression.Constant(handlerType)),
                                         handlerType);
 
                 var args = new List<Expression>();
@@ -123,6 +125,7 @@ namespace Web.Framework
                     var fromBody = p.GetCustomAttribute<FromBodyAttribute>();
                     var fromRoute = p.GetCustomAttribute<FromRouteAttribute>();
                     var fromCookie = p.GetCustomAttribute<FromCookieAttribute>();
+                    var fromService = p.GetCustomAttribute<FromServicesAttribute>();
 
                     if (fromQuery != null)
                     {
@@ -139,6 +142,14 @@ namespace Web.Framework
                     else if (fromCookie != null)
                     {
                         BindArgument(args, cookiesProperty, p, fromCookie.Name);
+                    }
+                    else if (fromService != null)
+                    {
+                        args.Add(Expression.Convert(
+                             Expression.Call(GetRequiredServiceMethodInfo,
+                                             requestServicesExpr,
+                                             Expression.Constant(p.ParameterType)),
+                             p.ParameterType));
                     }
                     else if (fromForm != null)
                     {
