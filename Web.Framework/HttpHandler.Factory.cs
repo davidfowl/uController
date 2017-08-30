@@ -100,15 +100,17 @@ namespace Web.Framework
                     var fromCookie = p.GetCustomAttribute<FromCookieAttribute>();
                     var fromService = p.GetCustomAttribute<FromServicesAttribute>();
 
+                    Expression paramterExpression = Expression.Default(p.ParameterType);
+
                     if (fromQuery != null)
                     {
                         var queryProperty = Expression.Property(httpRequestExpr, "Query");
-                        BindArgument(args, queryProperty, p, fromQuery.Name);
+                        paramterExpression = BindArgument(queryProperty, p, fromQuery.Name);
                     }
                     else if (fromHeader != null)
                     {
                         var headersProperty = Expression.Property(httpRequestExpr, "Headers");
-                        BindArgument(args, headersProperty, p, fromHeader.Name);
+                        paramterExpression = BindArgument(headersProperty, p, fromHeader.Name);
                     }
                     else if (fromRoute != null)
                     {
@@ -116,58 +118,54 @@ namespace Web.Framework
                         var routeFeatureVar = Expression.Convert(Expression.MakeIndex(featuresProperty, featuresProperty.Type.GetProperty("Item"), new[] { Expression.Constant(typeof(IRoutingFeature)) }), typeof(IRoutingFeature));
                         var routeDataVar = Expression.Property(routeFeatureVar, "RouteData");
                         var routeValuesVar = Expression.Property(routeDataVar, "Values");
-                        BindArgument(args, routeValuesVar, p, fromRoute.Name);
+                        paramterExpression = BindArgument(routeValuesVar, p, fromRoute.Name);
                     }
                     else if (fromCookie != null)
                     {
                         var cookiesProperty = Expression.Property(httpRequestExpr, "Cookies");
-                        BindArgument(args, cookiesProperty, p, fromCookie.Name);
+                        paramterExpression = BindArgument(cookiesProperty, p, fromCookie.Name);
                     }
                     else if (fromService != null)
                     {
-                        args.Add(Expression.Convert(
+                        paramterExpression = Expression.Convert(
                              Expression.Call(GetRequiredServiceMethodInfo,
                                              requestServicesExpr,
                                              Expression.Constant(p.ParameterType)),
-                             p.ParameterType));
+                             p.ParameterType);
                     }
                     else if (fromForm != null)
                     {
                         needForm = true;
 
                         var formProperty = Expression.Property(httpRequestExpr, "Form");
-                        BindArgument(args, formProperty, p, fromForm.Name);
+                        paramterExpression = BindArgument(formProperty, p, fromForm.Name);
                     }
                     else if (fromBody != null)
                     {
                         var bodyProperty = Expression.Property(httpRequestExpr, "Body");
-                        BindBody(args, bodyProperty, p);
+                        paramterExpression = BindBody(bodyProperty, p);
                     }
                     else
                     {
                         if (p.ParameterType == typeof(IFormCollection))
                         {
-                            var formProperty = Expression.Property(httpRequestExpr, "Form");
-                            args.Add(formProperty);
+                            paramterExpression = Expression.Property(httpRequestExpr, "Form");
                         }
                         else if (p.ParameterType == typeof(HttpContext))
                         {
-                            args.Add(httpContextArg);
+                            paramterExpression = httpContextArg;
                         }
                         else if (p.ParameterType == typeof(RequestDelegate))
                         {
-                            args.Add(nextArg);
+                            paramterExpression = nextArg;
                         }
                         else if (p.ParameterType == typeof(IHeaderDictionary))
                         {
-                            var headersProperty = Expression.Property(httpRequestExpr, "Headers");
-                            args.Add(headersProperty);
-                        }
-                        else
-                        {
-                            args.Add(Expression.Default(p.ParameterType));
+                            paramterExpression = Expression.Property(httpRequestExpr, "Headers");
                         }
                     }
+
+                    args.Add(paramterExpression);
                 }
 
                 Expression body = null;
@@ -250,7 +248,7 @@ namespace Web.Framework
             return binding;
         }
 
-        private static void BindBody(List<Expression> args, Expression httpBody, ParameterInfo p)
+        private static Expression BindBody(Expression httpBody, ParameterInfo p)
         {
             // Hard coded to JSON (and JSON.NET at that!)
             // Also this is synchronous, good luck generating async anything
@@ -268,10 +266,10 @@ namespace Web.Framework
             Expression expr = Expression.Call(JsonDeserializeMethodInfo, textReader, Expression.Constant(p.ParameterType));
             expr = Expression.Convert(expr, p.ParameterType);
 
-            args.Add(expr);
+            return expr;
         }
 
-        private static void BindArgument(List<Expression> args, MemberExpression property, ParameterInfo parameter, string name)
+        private static Expression BindArgument(MemberExpression property, ParameterInfo parameter, string name)
         {
             string key = name ?? parameter.Name;
             var type = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
@@ -302,7 +300,7 @@ namespace Web.Framework
                 Expression.Default(parameter.ParameterType),
                 expr);
 
-            args.Add(expr);
+            return expr;
         }
 
         private static MethodInfo GetMethodInfo<T>(Expression<T> expr)
