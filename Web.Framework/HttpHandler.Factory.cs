@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -43,6 +44,7 @@ namespace Web.Framework
             var methods = handlerType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
             var bindings = new List<Binding>();
+            var routeKey = new object();
 
             foreach (var method in methods)
             {
@@ -120,10 +122,15 @@ namespace Web.Framework
                     }
                     else if (fromRoute != null)
                     {
-                        var featuresProperty = Expression.Property(httpContextArg, nameof(HttpContext.Features));
-                        var routeFeatureVar = Expression.Convert(Expression.MakeIndex(featuresProperty, featuresProperty.Type.GetProperty("Item"), new[] { Expression.Constant(typeof(IRoutingFeature)) }), typeof(IRoutingFeature));
-                        var routeDataVar = Expression.Property(routeFeatureVar, nameof(IRoutingFeature.RouteData));
-                        var routeValuesVar = Expression.Property(routeDataVar, nameof(RouteData.Values));
+                        var itemsProperty = Expression.Property(httpContextArg, nameof(HttpContext.Items));
+                        var routeValuesVar = Expression.Convert(
+                                                Expression.MakeIndex(itemsProperty,
+                                                                     itemsProperty.Type.GetProperty("Item"),
+                                                                     new[] {
+                                                                         Expression.Constant(routeKey)
+                                                                     }),
+                                                typeof(RouteValueDictionary));
+
                         paramterExpression = BindArgument(routeValuesVar, p, fromRoute.Name);
                     }
                     else if (fromCookie != null)
@@ -212,7 +219,7 @@ namespace Web.Framework
                     Invoke = lambda.Compile(),
                     NeedForm = needForm,
                     HttpMethod = httpMethod,
-                    Template = template
+                    Template = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/')) // REVIEW: Trimming ~ and /, is that right?
                 });
             }
 
@@ -220,10 +227,13 @@ namespace Web.Framework
             {
                 return async context =>
                 {
-                    var binding = Match(context, bindings);
+                    var binding = Match(context, bindings, out var routeValues);
 
                     if (binding != null)
                     {
+                        // This is routing without routing
+                        context.Items[routeKey] = routeValues;
+
                         // Generating async code would just be insane so if the method needs the form populate it here
                         // so the within the method it's cached
                         if (binding.NeedForm)
@@ -240,9 +250,10 @@ namespace Web.Framework
             };
         }
 
-        private static Binding Match(HttpContext context, List<Binding> bindings)
+        private static Binding Match(HttpContext context, List<Binding> bindings, out RouteValueDictionary routeValues)
         {
             Binding binding = null;
+            routeValues = null;
             var currentMaxScore = 0;
 
             foreach (var b in bindings)
@@ -253,7 +264,10 @@ namespace Web.Framework
                     score++;
                 }
 
-                if (b.Template != null && context.Request.Path.StartsWithSegments(b.Template, StringComparison.OrdinalIgnoreCase))
+                var defaults = new RouteValueDictionary();
+                var matchValues = new RouteValueDictionary();
+
+                if (b.Template != null && new TemplateMatcher(b.Template, defaults).TryMatch(context.Request.Path, matchValues))
                 {
                     score++;
                 }
@@ -262,6 +276,7 @@ namespace Web.Framework
                 {
                     currentMaxScore = score;
                     binding = b;
+                    routeValues = matchValues;
                 }
             }
 
@@ -289,13 +304,13 @@ namespace Web.Framework
             return expr;
         }
 
-        private static Expression BindArgument(MemberExpression property, ParameterInfo parameter, string name)
+        private static Expression BindArgument(Expression sourceExpression, ParameterInfo parameter, string name)
         {
             var key = name ?? parameter.Name;
             var type = Nullable.GetUnderlyingType(parameter.ParameterType) ?? parameter.ParameterType;
             var valueArg = Expression.Convert(
-                                Expression.MakeIndex(property,
-                                                     property.Type.GetProperty("Item"),
+                                Expression.MakeIndex(sourceExpression,
+                                                     sourceExpression.Type.GetProperty("Item"),
                                                      new[] {
                                                          Expression.Constant(key)
                                                      }),
@@ -389,7 +404,7 @@ namespace Web.Framework
         {
             public Func<HttpContext, RequestDelegate, Task> Invoke { get; set; }
 
-            public string Template { get; set; }
+            public RouteTemplate Template { get; set; }
 
             public string HttpMethod { get; set; }
 
