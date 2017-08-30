@@ -46,50 +46,19 @@ namespace Web.Framework
                 var template = attribute?.Template;
                 var parameters = method.GetParameters();
 
-                // Fast path for RequestDelegate
-                if (parameters.Length == 1 &&
-                    parameters[0].ParameterType == typeof(HttpContext) &&
-                    method.ReturnType == typeof(Task))
-                {
-                    var invoke = (RequestDelegate)method.CreateDelegate(typeof(RequestDelegate));
-
-                    bindings.Add(new Binding
-                    {
-                        HttpMethod = httpMethod,
-                        Template = template,
-                        Invoke = (context, next) => invoke(context)
-                    });
-
-                    continue;
-                }
-
-                // TODO: Consider more fast paths
-                // RequestDelegate Method(HttpContext context, RequestDelegate next)
-                // Task<RequestDelegate> Method(HttpContext context, RequestDelegate next)
-                // Task Method(HttpContext context, RequestDelegate next)
-                // void Method(HttpContext context)
-                // void Method()
-                // Task Method()
-
                 // Non void return type
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
-                //     return ExecuteResult(
-                //                ActivatorUtilities.CreateInstance(
-                //                    context.RequestServices, 
-                //                    typeof(THttpHandler))
-                //                          .Method(..), httpContext);
+                //     // The type is activated via DI if it has args
+                //     return ExecuteResult(new THttpHandler(...).Method(..), httpContext);
                 // }
 
                 // void return type
 
                 // Task Invoke(HttpContext context, RequestDelegate next)
                 // {
-                //     ActivatorUtilities.CreateInstance(
-                //           context.RequestServices, 
-                //           typeof(THttpHandler))
-                //                .Method(..);
+                //     new THttpHandler(...).Method(..)
                 //     return Task.CompletedTask;
                 // }
 
@@ -97,25 +66,29 @@ namespace Web.Framework
                 var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
                 var requestServicesExpr = Expression.Property(httpContextArg, "RequestServices");
 
-                var bodyExpressions = new List<Expression>();
-                // (THttpHandler)ActivatorUtilities.CreateInstance(context.RequestServices, typeof(THttpHandler));
-                var activatorCall = Expression.Convert(
-                                        Expression.Call(ActivatorMethodInfo, requestServicesExpr, Expression.Constant(handlerType)),
-                                        handlerType);
+                // Fast path: We can skip the activator if there's only a default ctor with 0 args
+                var ctors = handlerType.GetConstructors();
+
+                Expression httpHandlerExpression = null;
+                if (ctors.Length == 1 && ctors[0].GetParameters().Length == 0)
+                {
+                    httpHandlerExpression = Expression.New(ctors[0]);
+                }
+                else
+                {
+                    // (THttpHandler)ActivatorUtilities.CreateInstance(
+                    //            context.RequestServices, 
+                    //            typeof(THttpHandler));
+                    httpHandlerExpression = Expression.Convert(
+                                                Expression.Call(ActivatorMethodInfo,
+                                                                requestServicesExpr,
+                                                                Expression.Constant(handlerType)),
+                                                handlerType);
+                }
 
                 var args = new List<Expression>();
 
                 var httpRequestExpr = Expression.Property(httpContextArg, "Request");
-                var queryProperty = Expression.Property(httpRequestExpr, "Query");
-                var headersProperty = Expression.Property(httpRequestExpr, "Headers");
-                var cookiesProperty = Expression.Property(httpRequestExpr, "Cookies");
-                var formProperty = Expression.Property(httpRequestExpr, "Form");
-                var bodyProperty = Expression.Property(httpRequestExpr, "Body");
-
-                var featuresProperty = Expression.Property(httpContextArg, "Features");
-                var routeFeatureVar = Expression.Convert(Expression.MakeIndex(featuresProperty, featuresProperty.Type.GetProperty("Item"), new[] { Expression.Constant(typeof(IRoutingFeature)) }), typeof(IRoutingFeature));
-                var routeDataVar = Expression.Property(routeFeatureVar, "RouteData");
-                var routeValuesVar = Expression.Property(routeDataVar, "Values");
 
                 foreach (var p in parameters)
                 {
@@ -129,18 +102,25 @@ namespace Web.Framework
 
                     if (fromQuery != null)
                     {
+                        var queryProperty = Expression.Property(httpRequestExpr, "Query");
                         BindArgument(args, queryProperty, p, fromQuery.Name);
                     }
                     else if (fromHeader != null)
                     {
+                        var headersProperty = Expression.Property(httpRequestExpr, "Headers");
                         BindArgument(args, headersProperty, p, fromHeader.Name);
                     }
                     else if (fromRoute != null)
                     {
+                        var featuresProperty = Expression.Property(httpContextArg, "Features");
+                        var routeFeatureVar = Expression.Convert(Expression.MakeIndex(featuresProperty, featuresProperty.Type.GetProperty("Item"), new[] { Expression.Constant(typeof(IRoutingFeature)) }), typeof(IRoutingFeature));
+                        var routeDataVar = Expression.Property(routeFeatureVar, "RouteData");
+                        var routeValuesVar = Expression.Property(routeDataVar, "Values");
                         BindArgument(args, routeValuesVar, p, fromRoute.Name);
                     }
                     else if (fromCookie != null)
                     {
+                        var cookiesProperty = Expression.Property(httpRequestExpr, "Cookies");
                         BindArgument(args, cookiesProperty, p, fromCookie.Name);
                     }
                     else if (fromService != null)
@@ -155,16 +135,19 @@ namespace Web.Framework
                     {
                         needForm = true;
 
+                        var formProperty = Expression.Property(httpRequestExpr, "Form");
                         BindArgument(args, formProperty, p, fromForm.Name);
                     }
                     else if (fromBody != null)
                     {
+                        var bodyProperty = Expression.Property(httpRequestExpr, "Body");
                         BindBody(args, bodyProperty, p);
                     }
                     else
                     {
                         if (p.ParameterType == typeof(IFormCollection))
                         {
+                            var formProperty = Expression.Property(httpRequestExpr, "Form");
                             args.Add(formProperty);
                         }
                         else if (p.ParameterType == typeof(HttpContext))
@@ -177,6 +160,7 @@ namespace Web.Framework
                         }
                         else if (p.ParameterType == typeof(IHeaderDictionary))
                         {
+                            var headersProperty = Expression.Property(httpRequestExpr, "Headers");
                             args.Add(headersProperty);
                         }
                         else
@@ -186,17 +170,24 @@ namespace Web.Framework
                     }
                 }
 
+                Expression body = null;
+
                 if (method.ReturnType == typeof(void))
                 {
-                    bodyExpressions.Add(Expression.Call(activatorCall, method, args));
-                    bodyExpressions.Add(Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo));
+                    var bodyExpressions = new List<Expression>
+                    {
+                        Expression.Call(httpHandlerExpression, method, args),
+                        Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo)
+                    };
+
+                    body = Expression.Block(bodyExpressions);
                 }
                 else
                 {
-                    bodyExpressions.Add(Expression.Call(ExecuteAsyncMethodInfo, Expression.Call(activatorCall, method, args), httpContextArg));
+                    body = Expression.Call(ExecuteAsyncMethodInfo,
+                            Expression.Call(httpHandlerExpression, method, args),
+                            httpContextArg);
                 }
-
-                var body = Expression.Block(bodyExpressions);
 
                 bindings.Add(new Binding
                 {
