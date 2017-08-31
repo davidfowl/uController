@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 
 namespace Web.Framework
 {
     public class HttpModel
     {
-        public List<ActionModel> Actions { get; } = new List<ActionModel>();
+        public List<MethodModel> Methods { get; } = new List<MethodModel>();
 
         public static HttpModel FromType(Type type)
         {
@@ -17,14 +16,14 @@ namespace Web.Framework
             foreach (var method in methods)
             {
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
-                var httpMethod = attribute?.Method ?? "";
+                var httpMethod = attribute?.Method;
 
-                var action = new ActionModel
+                var action = new MethodModel
                 {
                     MethodInfo = method,
                     ReturnType = method.ReturnType,
                     HttpMethod = httpMethod,
-                    Template = attribute?.Template
+                    Template = attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template
                 };
 
                 foreach (var p in method.GetParameters())
@@ -51,14 +50,14 @@ namespace Web.Framework
                     });
                 }
 
-                model.Actions.Add(action);
+                model.Methods.Add(action);
             }
 
             return model;
         }
     }
 
-    public class ActionModel
+    public class MethodModel
     {
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();

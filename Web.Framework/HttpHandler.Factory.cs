@@ -46,15 +46,15 @@ namespace Web.Framework
             var bindings = new List<Binding>();
             var routeKey = new object();
 
-            foreach (var action in model.Actions)
+            foreach (var method in model.Methods)
             {
                 var needForm = false;
-                var httpMethod = action.HttpMethod;
-                var template = action.Template;
+                var httpMethod = method.HttpMethod;
+                var template = method.Template;
 
                 // Non void return type
 
-                // Task Invoke(HttpContext context, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext, RequestDelegate next)
                 // {
                 //     // The type is activated via DI if it has args
                 //     return ExecuteResult(new THttpHandler(...).Method(..), httpContext);
@@ -62,7 +62,7 @@ namespace Web.Framework
 
                 // void return type
 
-                // Task Invoke(HttpContext context, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext, RequestDelegate next)
                 // {
                 //     new THttpHandler(...).Method(..)
                 //     return Task.CompletedTask;
@@ -96,7 +96,7 @@ namespace Web.Framework
 
                 var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
 
-                foreach (var p in action.Parameters)
+                foreach (var p in method.Parameters)
                 {
                     Expression paramterExpression = Expression.Default(p.ParameterType);
 
@@ -173,11 +173,11 @@ namespace Web.Framework
 
                 Expression body = null;
 
-                if (action.ReturnType == typeof(void))
+                if (method.ReturnType == typeof(void))
                 {
                     var bodyExpressions = new List<Expression>
                     {
-                        Expression.Call(httpHandlerExpression, action.MethodInfo, args),
+                        Expression.Call(httpHandlerExpression, method.MethodInfo, args),
                         Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo)
                     };
 
@@ -185,13 +185,13 @@ namespace Web.Framework
                 }
                 else
                 {
-                    var methodCall = Expression.Call(httpHandlerExpression, action.MethodInfo, args);
+                    var methodCall = Expression.Call(httpHandlerExpression, method.MethodInfo, args);
 
                     // Coerce Task<T> to Task<object>
-                    if (action.ReturnType.IsGenericType &&
-                        action.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                    if (method.ReturnType.IsGenericType &&
+                        method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
                     {
-                        var typeArg = action.ReturnType.GetGenericArguments()[0];
+                        var typeArg = method.ReturnType.GetGenericArguments()[0];
 
                         // Convert<T>(handler.Method(..))
                         methodCall = Expression.Call(
@@ -242,27 +242,56 @@ namespace Web.Framework
 
         private static Binding Match(HttpContext context, List<Binding> bindings, out RouteValueDictionary routeValues)
         {
+            // TODO: There needs to be tie breaker rules between bindings with the same score
+            // right now first wins
+
             Binding binding = null;
             routeValues = null;
             var currentMaxScore = 0;
 
             foreach (var b in bindings)
             {
-                int score = 0;
-                if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
-                {
-                    score++;
-                }
+                var score = 0;
 
                 var defaults = new RouteValueDictionary();
                 var matchValues = new RouteValueDictionary();
 
-                if (b.Template != null && new TemplateMatcher(b.Template, defaults).TryMatch(context.Request.Path, matchValues))
+                if (b.Template != null)
                 {
+                    var matcher = new TemplateMatcher(b.Template, defaults);
+
+                    // If there's a template, it has to match the path
+                    if (matcher.TryMatch(context.Request.Path, matchValues))
+                    {
+                        if (b.HttpMethod != null)
+                        {
+                            // If there's a method, it has to match
+                            if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
+                            {
+                                score++;
+                            }
+                        }
+                        else
+                        {
+                            score++;
+                        }
+                    }
+                }
+                else if (b.HttpMethod != null)
+                {
+                    // If there's a method, it has to match
+                    if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
+                    {
+                        score++;
+                    }
+                }
+                else
+                {
+                    // No method, so this is a candidate (no method means wildcard)
                     score++;
                 }
 
-                if (score > currentMaxScore || binding == null)
+                if (score > currentMaxScore)
                 {
                     currentMaxScore = score;
                     binding = b;

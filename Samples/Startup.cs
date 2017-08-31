@@ -31,6 +31,14 @@ namespace Samples
 
             app.UseHttpHandler<AuthenticationHttpHandler>();
 
+            app.UseHttpHandler<ExternalMetadataHandler>(model =>
+            {
+                model.Method(nameof(ExternalMetadataHandler.Get))
+                     .Get("/something/{name}")
+                        .Parameter("name")
+                        .FromRoute();
+            });
+
             app.UseHttpHandler<MyHandler>();
         }
     }
