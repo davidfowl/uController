@@ -33,13 +33,20 @@ namespace Samples
 
             app.UseHttpHandler<Handler>(model =>
             {
+                model.Method(nameof(Handler.GetAll))
+                     .Get("/products");
+
                 model.Method(nameof(Handler.Get))
-                     .Get("/something/{name}")
-                     .FromRoute("name");
+                     .Get("/products/{id}")
+                     .FromRoute("id");
 
                 model.Method(nameof(Handler.Post))
-                     .Post("/json")
-                     .FromBody("obj");
+                     .Post("/products")
+                     .FromBody("product");
+
+                model.Method(nameof(Handler.Delete))
+                     .Delete("/products/{id}")
+                     .FromRoute("id");
             });
 
             app.UseHttpHandler<MyHandler>();
