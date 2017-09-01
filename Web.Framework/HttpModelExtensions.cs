@@ -53,27 +53,27 @@ namespace Web.Framework
             return model.Parameters.First(p => p.Name == parameter);
         }
 
-        public static ParameterModel FromBody(this ParameterModel model)
+        public static MethodModel FromBody(this MethodModel model, string parameter)
         {
-            model.FromBody = true;
+            model.Parameter(parameter).FromBody = true;
             return model;
         }
 
-        public static ParameterModel FromQuery(this ParameterModel model, string name = null)
+        public static MethodModel FromQuery(this MethodModel model, string parameter, string name = null)
         {
-            model.FromQuery = name ?? model.Name;
+            model.Parameter(parameter).FromQuery = name ?? parameter;
             return model;
         }
 
-        public static ParameterModel FromRoute(this ParameterModel model, string name = null)
+        public static MethodModel FromRoute(this MethodModel model, string parameter, string name = null)
         {
-            model.FromRoute = name ?? model.Name;
+            model.Parameter(parameter).FromRoute = name ?? parameter;
             return model;
         }
 
-        public static ParameterModel FromHeader(this ParameterModel model, string name = null)
+        public static MethodModel FromHeader(this MethodModel model, string parameter, string name = null)
         {
-            model.FromHeader = name ?? model.Name;
+            model.Parameter(parameter).FromHeader = name ?? parameter;
             return model;
         }
     }
