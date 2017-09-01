@@ -18,11 +18,11 @@ namespace Web.Framework
 {
     public partial class HttpHandler
     {
-        private static readonly MethodInfo ExecuteAsyncMethodInfo = GetMethodInfo<Func<object, HttpContext, Task>>((result, httpContext) => ExecuteResultAsync(result, httpContext));
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
-        private static readonly MethodInfo JsonDeserializeMethodInfo = GetMethodInfo<Func<JsonTextReader, Type, object>>((jsonReader, type) => JsonDeserialize(jsonReader, type));
-        private static readonly MethodInfo ActivatorMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => CreateInstance(sp, type));
-        private static readonly MethodInfo GetRequiredServiceMethodInfo = GetMethodInfo<Func<IServiceProvider, Type, object>>((sp, type) => sp.GetRequiredService(type));
+        private static readonly MethodInfo ExecuteAsyncMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteResultAsync), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo JsonDeserializeMethodInfo = typeof(HttpHandler).GetMethod(nameof(JsonDeserialize), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ConvertToTaskMethodInfo = typeof(HttpHandler).GetMethod(nameof(ConvertTask), BindingFlags.NonPublic | BindingFlags.Static);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
@@ -87,14 +87,8 @@ namespace Web.Framework
                 }
                 else
                 {
-                    // (THttpHandler)ActivatorUtilities.CreateInstance(
-                    //            context.RequestServices, 
-                    //            typeof(THttpHandler));
-                    httpHandlerExpression = Expression.Convert(
-                                                Expression.Call(ActivatorMethodInfo,
-                                                                requestServicesExpr,
-                                                                Expression.Constant(handlerType)),
-                                                handlerType);
+                    // CreateInstance<THttpHandler>(context.RequestServices)
+                    httpHandlerExpression = Expression.Call(ActivatorMethodInfo.MakeGenericMethod(handlerType), requestServicesExpr);
                 }
 
                 var args = new List<Expression>();
@@ -135,11 +129,7 @@ namespace Web.Framework
                     }
                     else if (p.FromServices)
                     {
-                        paramterExpression = Expression.Convert(
-                             Expression.Call(GetRequiredServiceMethodInfo,
-                                             requestServicesExpr,
-                                             Expression.Constant(p.ParameterType)),
-                             p.ParameterType);
+                        paramterExpression = Expression.Call(GetRequiredServiceMethodInfo.MakeGenericMethod(p.ParameterType), requestServicesExpr);
                     }
                     else if (p.FromForm != null)
                     {
@@ -361,8 +351,7 @@ namespace Web.Framework
             var textReaderCtor = typeof(JsonTextReader).GetConstructor(new[] { typeof(TextReader) });
             var textReader = Expression.New(textReaderCtor, streamReader);
 
-            Expression expr = Expression.Call(JsonDeserializeMethodInfo, textReader, Expression.Constant(p.ParameterType));
-            expr = Expression.Convert(expr, p.ParameterType);
+            Expression expr = Expression.Call(JsonDeserializeMethodInfo.MakeGenericMethod(p.ParameterType), textReader);
 
             return expr;
         }
@@ -422,14 +411,19 @@ namespace Web.Framework
             return mc.Member;
         }
 
-        private static object CreateInstance(IServiceProvider sp, Type type)
+        private static T GetRequiredService<T>(IServiceProvider sp)
         {
-            return ActivatorUtilities.CreateInstance(sp, type);
+            return sp.GetRequiredService<T>();
         }
 
-        private static object JsonDeserialize(JsonTextReader jsonReader, Type type)
+        private static T CreateInstance<T>(IServiceProvider sp)
         {
-            return new JsonSerializer().Deserialize(jsonReader, type);
+            return ActivatorUtilities.CreateInstance<T>(sp);
+        }
+
+        private static T JsonDeserialize<T>(JsonTextReader jsonReader)
+        {
+            return new JsonSerializer().Deserialize<T>(jsonReader);
         }
 
         private static async Task<object> ConvertTask<T>(Task<T> task)
