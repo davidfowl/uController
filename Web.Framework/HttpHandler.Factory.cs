@@ -214,6 +214,7 @@ namespace Web.Framework
 
                 bindings.Add(new Binding
                 {
+                    MethodInfo = method.MethodInfo,
                     Invoke = lambda.Compile(),
                     NeedForm = needForm,
                     HttpMethod = httpMethod,
@@ -253,15 +254,14 @@ namespace Web.Framework
             // TODO: There needs to be tie breaker rules between bindings with the same score
             // right now first wins
 
-            Binding binding = null;
             routeValues = null;
-            var currentMaxScore = 0;
 
             var matchValues = new RouteValueDictionary();
+            object match = null;
 
             foreach (var b in bindings)
             {
-                var score = 0;
+                var matchedFound = false;
 
                 if (b.Matcher != null)
                 {
@@ -276,12 +276,12 @@ namespace Web.Framework
                             // If there's a method, it has to match
                             if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                             {
-                                score = 2;
+                                matchedFound = true;
                             }
                         }
                         else
                         {
-                            score = 1;
+                            matchedFound = true;
                         }
                     }
                 }
@@ -290,25 +290,60 @@ namespace Web.Framework
                     // If there's a method, it has to match
                     if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                     {
-                        score = 1;
+                        matchedFound = true;
                     }
                 }
                 else
                 {
                     // No method, so this is a candidate (no method means wildcard)
-                    score = 1;
+                    matchedFound = true;
                 }
 
-                if (score > currentMaxScore)
+                if (matchedFound)
                 {
-                    currentMaxScore = score;
-                    binding = b;
+                    switch (match)
+                    {
+                        case null:
+                            match = b;
+                            break;
+                        case Binding previous:
+                            {
+                                match = new List<Binding>(bindings.Count)
+                                {
+                                    previous,
+                                    b
+                                };
+                            }
+                            break;
+                        case List<Binding> candidates:
+                            candidates.Add(b);
+                            break;
+                    }
+
                     // Copy the values here
                     routeValues = new RouteValueDictionary(matchValues);
                 }
             }
 
-            return binding;
+            switch (match)
+            {
+                case Binding binding:
+                    return binding;
+                case List<Binding> candidates:
+                    throw new InvalidOperationException($"Ambiguous match found: \r\n{GetCandidiatesString(candidates)}");
+            }
+
+            return null;
+        }
+
+        private static string GetCandidiatesString(List<Binding> candidates)
+        {
+            return string.Join("\n", candidates.Select(c => GetMethodInfoString(c.MethodInfo)));
+        }
+
+        private static string GetMethodInfoString(MethodInfo methodInfo)
+        {
+            return $"{methodInfo.Name}({string.Join(",", methodInfo.GetParameters().Select(p => p.ParameterType.Name))})";
         }
 
         private static Expression BindBody(Expression httpBody, ParameterModel p)
@@ -430,6 +465,8 @@ namespace Web.Framework
 
         private class Binding
         {
+            public MethodInfo MethodInfo { get; set; }
+
             public Func<HttpContext, RequestDelegate, Task> Invoke { get; set; }
 
             public TemplateMatcher Matcher { get; set; }
