@@ -18,7 +18,7 @@ namespace Samples
         }
 
         [HttpGet("/foo")]
-        public Task Another(HttpContext context)
+        public static Task Another(HttpContext context)
         {
             return context.Response.WriteAsync("Hello World");
         }

@@ -76,7 +76,12 @@ namespace Web.Framework
                 var ctors = handlerType.GetConstructors();
 
                 Expression httpHandlerExpression = null;
-                if (ctors.Length == 1 && ctors[0].GetParameters().Length == 0)
+
+                if (method.MethodInfo.IsStatic)
+                {
+                    // Do nothing
+                }
+                else if (ctors.Length == 1 && ctors[0].GetParameters().Length == 0)
                 {
                     httpHandlerExpression = Expression.New(ctors[0]);
                 }
@@ -268,12 +273,12 @@ namespace Web.Framework
                             // If there's a method, it has to match
                             if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                             {
-                                score++;
+                                score = 2;
                             }
                         }
                         else
                         {
-                            score++;
+                            score = 1;
                         }
                     }
                 }
@@ -282,13 +287,13 @@ namespace Web.Framework
                     // If there's a method, it has to match
                     if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                     {
-                        score++;
+                        score = 1;
                     }
                 }
                 else
                 {
                     // No method, so this is a candidate (no method means wildcard)
-                    score++;
+                    score = 1;
                 }
 
                 if (score > currentMaxScore)

@@ -11,7 +11,7 @@ namespace Web.Framework
         public static HttpModel FromType(Type type)
         {
             var model = new HttpModel();
-            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
             foreach (var method in methods)
             {
