@@ -209,12 +209,15 @@ namespace Web.Framework
 
                 var lambda = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg);
 
+                // REVIEW: Trimming ~ and /, is that right?
+                var routeTemplate = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/'));
+
                 bindings.Add(new Binding
                 {
                     Invoke = lambda.Compile(),
                     NeedForm = needForm,
                     HttpMethod = httpMethod,
-                    Template = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/')) // REVIEW: Trimming ~ and /, is that right?
+                    Matcher = routeTemplate == null ? null : new TemplateMatcher(routeTemplate, new RouteValueDictionary())
                 });
             }
 
@@ -254,19 +257,19 @@ namespace Web.Framework
             routeValues = null;
             var currentMaxScore = 0;
 
+            var matchValues = new RouteValueDictionary();
+
             foreach (var b in bindings)
             {
                 var score = 0;
 
-                var defaults = new RouteValueDictionary();
-                var matchValues = new RouteValueDictionary();
-
-                if (b.Template != null)
+                if (b.Matcher != null)
                 {
-                    var matcher = new TemplateMatcher(b.Template, defaults);
+                    // Clear the previous values (if any)
+                    matchValues.Clear();
 
                     // If there's a template, it has to match the path
-                    if (matcher.TryMatch(context.Request.Path, matchValues))
+                    if (b.Matcher.TryMatch(context.Request.Path, matchValues))
                     {
                         if (b.HttpMethod != null)
                         {
@@ -300,7 +303,8 @@ namespace Web.Framework
                 {
                     currentMaxScore = score;
                     binding = b;
-                    routeValues = matchValues;
+                    // Copy the values here
+                    routeValues = new RouteValueDictionary(matchValues);
                 }
             }
 
@@ -428,7 +432,7 @@ namespace Web.Framework
         {
             public Func<HttpContext, RequestDelegate, Task> Invoke { get; set; }
 
-            public RouteTemplate Template { get; set; }
+            public TemplateMatcher Matcher { get; set; }
 
             public string HttpMethod { get; set; }
 
