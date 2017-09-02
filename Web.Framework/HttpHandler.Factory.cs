@@ -95,21 +95,21 @@ namespace Web.Framework
 
                 var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
 
-                foreach (var p in method.Parameters)
+                foreach (var parameter in method.Parameters)
                 {
-                    Expression paramterExpression = Expression.Default(p.ParameterType);
+                    Expression paramterExpression = Expression.Default(parameter.ParameterType);
 
-                    if (p.FromQuery != null)
+                    if (parameter.FromQuery != null)
                     {
                         var queryProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Query));
-                        paramterExpression = BindArgument(queryProperty, p, p.FromQuery);
+                        paramterExpression = BindArgument(queryProperty, parameter, parameter.FromQuery);
                     }
-                    else if (p.FromHeader != null)
+                    else if (parameter.FromHeader != null)
                     {
                         var headersProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
-                        paramterExpression = BindArgument(headersProperty, p, p.FromHeader);
+                        paramterExpression = BindArgument(headersProperty, parameter, parameter.FromHeader);
                     }
-                    else if (p.FromRoute != null)
+                    else if (parameter.FromRoute != null)
                     {
                         var itemsProperty = Expression.Property(httpContextArg, nameof(HttpContext.Items));
                         var routeValuesVar = Expression.Convert(
@@ -120,44 +120,44 @@ namespace Web.Framework
                                                                      }),
                                                 typeof(RouteValueDictionary));
 
-                        paramterExpression = BindArgument(routeValuesVar, p, p.FromRoute);
+                        paramterExpression = BindArgument(routeValuesVar, parameter, parameter.FromRoute);
                     }
-                    else if (p.FromCookie != null)
+                    else if (parameter.FromCookie != null)
                     {
                         var cookiesProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Cookies));
-                        paramterExpression = BindArgument(cookiesProperty, p, p.FromCookie);
+                        paramterExpression = BindArgument(cookiesProperty, parameter, parameter.FromCookie);
                     }
-                    else if (p.FromServices)
+                    else if (parameter.FromServices)
                     {
-                        paramterExpression = Expression.Call(GetRequiredServiceMethodInfo.MakeGenericMethod(p.ParameterType), requestServicesExpr);
+                        paramterExpression = Expression.Call(GetRequiredServiceMethodInfo.MakeGenericMethod(parameter.ParameterType), requestServicesExpr);
                     }
-                    else if (p.FromForm != null)
+                    else if (parameter.FromForm != null)
                     {
                         needForm = true;
 
                         var formProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
-                        paramterExpression = BindArgument(formProperty, p, p.FromForm);
+                        paramterExpression = BindArgument(formProperty, parameter, parameter.FromForm);
                     }
-                    else if (p.FromBody)
+                    else if (parameter.FromBody)
                     {
                         var bodyProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Body));
-                        paramterExpression = BindBody(bodyProperty, p);
+                        paramterExpression = BindBody(bodyProperty, parameter);
                     }
                     else
                     {
-                        if (p.ParameterType == typeof(IFormCollection))
+                        if (parameter.ParameterType == typeof(IFormCollection))
                         {
                             paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
                         }
-                        else if (p.ParameterType == typeof(HttpContext))
+                        else if (parameter.ParameterType == typeof(HttpContext))
                         {
                             paramterExpression = httpContextArg;
                         }
-                        else if (p.ParameterType == typeof(RequestDelegate))
+                        else if (parameter.ParameterType == typeof(RequestDelegate))
                         {
                             paramterExpression = nextArg;
                         }
-                        else if (p.ParameterType == typeof(IHeaderDictionary))
+                        else if (parameter.ParameterType == typeof(IHeaderDictionary))
                         {
                             paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
                         }
@@ -340,7 +340,7 @@ namespace Web.Framework
             return $"{methodInfo.Name}({string.Join(",", methodInfo.GetParameters().Select(p => p.ParameterType.Name))})";
         }
 
-        private static Expression BindBody(Expression httpBody, ParameterModel p)
+        private static Expression BindBody(Expression httpBody, ParameterModel parameter)
         {
             // Hard coded to JSON (and JSON.NET at that!)
             // Also this is synchronous, good luck generating async anything
@@ -355,7 +355,7 @@ namespace Web.Framework
             var textReaderCtor = typeof(JsonTextReader).GetConstructor(new[] { typeof(TextReader) });
             var textReader = Expression.New(textReaderCtor, streamReader);
 
-            Expression expr = Expression.Call(JsonDeserializeMethodInfo.MakeGenericMethod(p.ParameterType), textReader);
+            Expression expr = Expression.Call(JsonDeserializeMethodInfo.MakeGenericMethod(parameter.ParameterType), textReader);
 
             return expr;
         }
