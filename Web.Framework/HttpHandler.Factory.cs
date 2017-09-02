@@ -241,17 +241,20 @@ namespace Web.Framework
 
         private static Binding Match(HttpContext context, List<Binding> bindings, out RouteValueDictionary routeValues)
         {
-            // TODO: There needs to be tie breaker rules between bindings with the same score
-            // right now first wins
-
+            // Scores
+            // nothing = 1
+            // method = 2
+            // route = 3
+            // method + route = 5
             routeValues = null;
 
             var matchValues = new RouteValueDictionary();
             object match = null;
+            var matchScore = 0;
 
             foreach (var b in bindings)
             {
-                var matchedFound = false;
+                var score = 0;
 
                 if (b.Matcher != null)
                 {
@@ -266,12 +269,12 @@ namespace Web.Framework
                             // If there's a method, it has to match
                             if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                             {
-                                matchedFound = true;
+                                score = 5;
                             }
                         }
                         else
                         {
-                            matchedFound = true;
+                            score = 3;
                         }
                     }
                 }
@@ -280,22 +283,26 @@ namespace Web.Framework
                     // If there's a method, it has to match
                     if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                     {
-                        matchedFound = true;
+                        score = 2;
                     }
                 }
                 else
                 {
                     // No method, so this is a candidate (no method means wildcard)
-                    matchedFound = true;
+                    score = 1;
                 }
 
-                if (matchedFound)
+                if (score > matchScore)
+                {
+                    match = b;
+                    matchScore = score;
+                    // Copy the values here
+                    routeValues = new RouteValueDictionary(matchValues);
+                }
+                else if (score > 0 && score == matchScore)
                 {
                     switch (match)
                     {
-                        case null:
-                            match = b;
-                            break;
                         case Binding previous:
                             {
                                 match = new List<Binding>(bindings.Count)
@@ -309,9 +316,6 @@ namespace Web.Framework
                             candidates.Add(b);
                             break;
                     }
-
-                    // Copy the values here
-                    routeValues = new RouteValueDictionary(matchValues);
                 }
             }
 
