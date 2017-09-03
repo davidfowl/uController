@@ -18,7 +18,7 @@ namespace Web.Framework
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
                 var httpMethod = attribute?.Method;
 
-                var action = new MethodModel
+                var methodModel = new MethodModel
                 {
                     MethodInfo = method,
                     ReturnType = method.ReturnType,
@@ -26,31 +26,31 @@ namespace Web.Framework
                     Template = attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template
                 };
 
-                foreach (var p in method.GetParameters())
+                foreach (var parameter in method.GetParameters())
                 {
-                    var fromQuery = p.GetCustomAttribute<FromQueryAttribute>();
-                    var fromHeader = p.GetCustomAttribute<FromHeaderAttribute>();
-                    var fromForm = p.GetCustomAttribute<FromFormAttribute>();
-                    var fromBody = p.GetCustomAttribute<FromBodyAttribute>();
-                    var fromRoute = p.GetCustomAttribute<FromRouteAttribute>();
-                    var fromCookie = p.GetCustomAttribute<FromCookieAttribute>();
-                    var fromService = p.GetCustomAttribute<FromServicesAttribute>();
+                    var fromQuery = parameter.GetCustomAttribute<FromQueryAttribute>();
+                    var fromHeader = parameter.GetCustomAttribute<FromHeaderAttribute>();
+                    var fromForm = parameter.GetCustomAttribute<FromFormAttribute>();
+                    var fromBody = parameter.GetCustomAttribute<FromBodyAttribute>();
+                    var fromRoute = parameter.GetCustomAttribute<FromRouteAttribute>();
+                    var fromCookie = parameter.GetCustomAttribute<FromCookieAttribute>();
+                    var fromService = parameter.GetCustomAttribute<FromServicesAttribute>();
 
-                    action.Parameters.Add(new ParameterModel
+                    methodModel.Parameters.Add(new ParameterModel
                     {
-                        Name = p.Name,
-                        ParameterType = p.ParameterType,
-                        FromQuery = fromQuery == null ? null : fromQuery?.Name ?? p.Name,
-                        FromHeader = fromHeader == null ? null : fromHeader?.Name ?? p.Name,
-                        FromForm = fromForm == null ? null : fromForm?.Name ?? p.Name,
-                        FromRoute = fromRoute == null ? null : fromRoute?.Name ?? p.Name,
+                        Name = parameter.Name,
+                        ParameterType = parameter.ParameterType,
+                        FromQuery = fromQuery == null ? null : fromQuery?.Name ?? parameter.Name,
+                        FromHeader = fromHeader == null ? null : fromHeader?.Name ?? parameter.Name,
+                        FromForm = fromForm == null ? null : fromForm?.Name ?? parameter.Name,
+                        FromRoute = fromRoute == null ? null : fromRoute?.Name ?? parameter.Name,
                         FromCookie = fromCookie == null ? null : fromCookie?.Name,
                         FromBody = fromBody != null,
                         FromServices = fromService != null
                     });
                 }
 
-                model.Methods.Add(action);
+                model.Methods.Add(methodModel);
             }
 
             return model;
