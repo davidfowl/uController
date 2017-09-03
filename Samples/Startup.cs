@@ -31,19 +31,19 @@ namespace Samples
 
             app.UseHttpHandler<AuthenticationHttpHandler>();
 
-            app.UseHttpHandler<Handler>(model =>
+            app.UseHttpHandler<ProductsApi>(model =>
             {
-                model.Method(nameof(Handler.GetAll))
+                model.Method(nameof(ProductsApi.GetAll))
                      .Get("/products");
 
-                model.Method(nameof(Handler.Get))
+                model.Method(nameof(ProductsApi.Get))
                      .Get("/products/{id}");
 
-                model.Method(nameof(Handler.Post))
+                model.Method(nameof(ProductsApi.Post))
                      .Post("/products")
                      .FromBody("product");
 
-                model.Method(nameof(Handler.Delete))
+                model.Method(nameof(ProductsApi.Delete))
                      .Delete("/products/{id}");
 
                 // Automatically map route parameters to method arguments with a matching name

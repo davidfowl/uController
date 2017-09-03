@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Samples
 {
-    public class Handler
+    public class ProductsApi
     {
         private static List<Product> _products = new List<Product>();
 
