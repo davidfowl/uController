@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
 {
@@ -17,14 +18,15 @@ namespace Web.Framework
             {
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
                 var httpMethod = attribute?.Method;
+                var template = attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template;
 
                 var methodModel = new MethodModel
                 {
                     MethodInfo = method,
                     ReturnType = method.ReturnType,
                     HttpMethod = httpMethod,
-                    Template = attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template
-                };
+                }
+                .Route(template);
 
                 foreach (var parameter in method.GetParameters())
                 {
@@ -63,7 +65,7 @@ namespace Web.Framework
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public Type ReturnType { get; set; }
         public string HttpMethod { get; set; }
-        public string Template { get; set; }
+        public RouteTemplate RouteTemplate { get; set; }
     }
 
     public class ParameterModel

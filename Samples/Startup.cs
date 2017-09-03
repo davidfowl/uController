@@ -37,16 +37,17 @@ namespace Samples
                      .Get("/products");
 
                 model.Method(nameof(Handler.Get))
-                     .Get("/products/{id}")
-                     .FromRoute("id");
+                     .Get("/products/{id}");
 
                 model.Method(nameof(Handler.Post))
                      .Post("/products")
                      .FromBody("product");
 
                 model.Method(nameof(Handler.Delete))
-                     .Delete("/products/{id}")
-                     .FromRoute("id");
+                     .Delete("/products/{id}");
+
+                // Automatically map route parameters to method arguments with a matching name
+                model.MapRouteParametersToMethodArguments();
             });
 
             app.UseHttpHandler<MyHandler>();

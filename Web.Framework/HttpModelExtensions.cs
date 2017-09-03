@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
 {
@@ -16,36 +17,32 @@ namespace Web.Framework
 
         public static MethodModel Route(this MethodModel model, string template)
         {
-            model.Template = template;
+            model.RouteTemplate = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/'));
             return model;
         }
 
         public static MethodModel Get(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Get;
-            model.Template = template;
-            return model;
+            return model.Route(template);
         }
 
         public static MethodModel Post(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Post;
-            model.Template = template;
-            return model;
+            return model.Route(template);
         }
 
         public static MethodModel Put(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Put;
-            model.Template = template;
-            return model;
+            return model.Route(template);
         }
 
         public static MethodModel Delete(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Delete;
-            model.Template = template;
-            return model;
+            return model.Route(template);
         }
 
         public static ParameterModel Parameter(this MethodModel model, string parameter)

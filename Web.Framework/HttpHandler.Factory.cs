@@ -50,7 +50,7 @@ namespace Web.Framework
             {
                 var needForm = false;
                 var httpMethod = method.HttpMethod;
-                var template = method.Template;
+                var template = method.RouteTemplate;
 
                 // Non void return type
 
@@ -199,8 +199,8 @@ namespace Web.Framework
 
                 var lambda = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg);
 
-                // REVIEW: Trimming ~ and /, is that right?
-                var routeTemplate = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/'));
+                var routeTemplate = method.RouteTemplate;
+                var matcher = routeTemplate == null ? null : new TemplateMatcher(routeTemplate, new RouteValueDictionary());
 
                 bindings.Add(new Binding
                 {
@@ -208,7 +208,7 @@ namespace Web.Framework
                     Invoke = lambda.Compile(),
                     NeedForm = needForm,
                     HttpMethod = httpMethod,
-                    Matcher = routeTemplate == null ? null : new TemplateMatcher(routeTemplate, new RouteValueDictionary())
+                    Matcher = matcher
                 });
             }
 
