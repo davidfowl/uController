@@ -207,9 +207,7 @@ namespace Web.Framework
             {
                 return async context =>
                 {
-                    var binding = Match(context, bindings, out var routeValues);
-
-                    if (binding != null)
+                    if (TryMatch(context, bindings, out var binding, out var routeValues))
                     {
                         // Generating async code would just be insane so if the method needs the form populate it here
                         // so the within the method it's cached
@@ -227,7 +225,7 @@ namespace Web.Framework
             };
         }
 
-        private static Binding Match(HttpContext context, List<Binding> bindings, out RouteValueDictionary routeValues)
+        private static bool TryMatch(HttpContext context, List<Binding> bindings, out Binding binding, out RouteValueDictionary routeValues)
         {
             // Scores
             // nothing = 1
@@ -235,6 +233,7 @@ namespace Web.Framework
             // route = 3
             // method + route = 5
             routeValues = null;
+            binding = null;
 
             var matchValues = new RouteValueDictionary();
             object match = null;
@@ -309,13 +308,14 @@ namespace Web.Framework
 
             switch (match)
             {
-                case Binding binding:
-                    return binding;
+                case Binding b:
+                    binding = b;
+                    break;
                 case List<Binding> candidates:
                     throw new InvalidOperationException($"Ambiguous match found: \r\n{GetCandidiatesString(candidates)}");
             }
 
-            return null;
+            return binding != null;
         }
 
         private static string GetCandidiatesString(List<Binding> candidates)
