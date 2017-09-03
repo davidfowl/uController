@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Web.Framework
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class RouteAttribute : Attribute
     {
         public RouteAttribute(string template)

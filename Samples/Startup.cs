@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Samples;
 using Web.Framework;
 
 namespace Samples
@@ -31,6 +25,7 @@ namespace Samples
 
             app.UseHttpHandler<AuthenticationHttpHandler>();
 
+            // Full external metadata
             app.UseHttpHandler<ProductsApi>(model =>
             {
                 model.Method(nameof(ProductsApi.GetAll))
@@ -50,6 +45,14 @@ namespace Samples
 
                 // Automatically map route parameters to method arguments with a matching name
                 model.MapRouteParametersToMethodArguments();
+            });
+
+            // Routes are in attributes here
+            app.UseHttpHandler<ProductsApi2>(model =>
+            {
+                model.MapMethodNamesToHttpMethods();
+                model.MapRouteParametersToMethodArguments();
+                model.MapComplexTypeArgsToFromBody();
             });
 
             app.UseHttpHandler<MyHandler>();

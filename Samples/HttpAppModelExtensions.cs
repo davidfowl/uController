@@ -1,13 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Web.Framework;
 
 namespace Samples
 {
     public static class HttpAppModelExtensions
     {
+        public static HttpModel MapComplexTypeArgsToFromBody(this HttpModel model)
+        {
+            foreach (var m in model.Methods)
+            {
+                if (HttpMethods.IsPost(m.HttpMethod) || HttpMethods.IsPut(m.HttpMethod) || m.HttpMethod == null)
+                {
+                    foreach (var p in m.Parameters)
+                    {
+                        if (p.HasBindingSource)
+                        {
+                            continue;
+                        }
+                        // This is an MVC heuristic
+                        p.FromBody = !TypeDescriptor.GetConverter(p.ParameterType).CanConvertFrom(typeof(string));
+                    }
+                }
+            }
+            return model;
+        }
+
         public static HttpModel MapMethodNamesToHttpMethods(this HttpModel model)
         {
             foreach (var m in model.Methods)
@@ -52,13 +74,7 @@ namespace Samples
 
             foreach (var p in model.Parameters)
             {
-                if (p.FromBody ||
-                    p.FromServices ||
-                    p.FromCookie != null ||
-                    p.FromForm != null ||
-                    p.FromQuery != null ||
-                    p.FromHeader != null ||
-                    p.FromRoute != null)
+                if (p.HasBindingSource)
                 {
                     // Something set, don't override
                     continue;

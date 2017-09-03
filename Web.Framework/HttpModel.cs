@@ -14,11 +14,13 @@ namespace Web.Framework
             var model = new HttpModel();
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
+            var routeAttribute = type.GetCustomAttribute<RouteAttribute>();
+
             foreach (var method in methods)
             {
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
                 var httpMethod = attribute?.Method;
-                var template = attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template;
+                var template = CombineRoute(routeAttribute?.Template, attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template);
 
                 var methodModel = new MethodModel
                 {
@@ -61,6 +63,21 @@ namespace Web.Framework
 
             return model;
         }
+
+        private static string CombineRoute(string prefix, string template)
+        {
+            if (prefix == null)
+            {
+                return template;
+            }
+
+            if (template == null)
+            {
+                return prefix;
+            }
+
+            return prefix + '/' + template.TrimStart('/');
+        }
     }
 
     public class MethodModel
@@ -83,5 +100,8 @@ namespace Web.Framework
         public string FromCookie { get; set; }
         public bool FromBody { get; set; }
         public bool FromServices { get; set; }
+
+        public bool HasBindingSource => FromBody || FromServices || FromCookie != null ||
+            FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
     }
 }
