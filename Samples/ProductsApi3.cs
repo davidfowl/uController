@@ -6,7 +6,8 @@ using Web.Framework;
 
 namespace Samples
 {
-    public class ProductsApi2
+    [Route("products3")]
+    public class ProductsApi3
     {
         private static List<Product> _products = new List<Product>();
 
@@ -15,6 +16,7 @@ namespace Samples
             return _products;
         }
 
+        [Route("{id}")]
         public Product Get(int id)
         {
             lock (_products)
@@ -31,6 +33,7 @@ namespace Samples
             }
         }
 
+        [Route("{id}")]
         public void Delete(int id)
         {
             lock (_products)

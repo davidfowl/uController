@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Framework;
@@ -25,31 +26,60 @@ namespace Samples
 
             app.UseHttpHandler<AuthenticationHttpHandler>();
 
-            // Full external metadata
+            // Example 1
+            // - Routes and http methods are mapped per method
+            // - [FromRoute] parameters are explicitly declared
+            // - [FromBody] paramters are explictly declared
             app.UseHttpHandler<ProductsApi>(model =>
             {
                 model.Method(nameof(ProductsApi.GetAll))
-                     .Route("/products");
+                     .Get("/products");
 
                 model.Method(nameof(ProductsApi.Get))
-                     .Route("/products/{id}");
+                     .Get("/products/{id}")
+                     .FromRoute("id");
 
                 model.Method(nameof(ProductsApi.Post))
-                     .Route("/products")
+                     .Post("/products")
                      .FromBody("product");
 
                 model.Method(nameof(ProductsApi.Delete))
-                     .Route("/products/{id}");
+                     .Delete("/products/{id}")
+                     .FromRoute("id");
+            });
+
+            // Example2
+            // - Routes in startup
+            // - method names map to http verbs
+            // - route paramters are automatically bound by name
+            // - [FromBody] paramters are explictly declared
+            app.UseHttpHandler<ProductsApi2>(model =>
+            {
+                model.Method(nameof(ProductsApi.GetAll))
+                     .Route("/products2");
+
+                model.Method(nameof(ProductsApi.Get))
+                     .Route("/products2/{id}");
+
+                model.Method(nameof(ProductsApi.Post))
+                     .Route("/products2")
+                     .FromBody("product");
+
+                model.Method(nameof(ProductsApi.Delete))
+                     .Route("/products2/{id}");
 
                 model.MapMethodNamesToHttpMethods();
-
-                // Automatically map route parameters to method arguments with a matching name
                 model.MapRouteParametersToMethodArguments();
             });
 
-            // Routes are in attributes here
-            app.UseHttpHandler<ProductsApi2>(model =>
+            // Example 3
+            // - Routes on the class itself
+            // - method names map to http verbs
+            // - route paramters are automatically bound by name
+            // - complex types are automatically [FromBody]
+            app.UseHttpHandler<ProductsApi3>(model =>
             {
+                // Automatically map route parameters to method arguments with a matching name
                 model.MapMethodNamesToHttpMethods();
                 model.MapRouteParametersToMethodArguments();
                 model.MapComplexTypeArgsToFromBody();
