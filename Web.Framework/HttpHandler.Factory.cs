@@ -19,11 +19,11 @@ namespace Web.Framework
     public partial class HttpHandler
     {
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
+        private static readonly MethodInfo ExecuteTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTask), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ExecuteAsyncMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteResultAsync), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo JsonDeserializeMethodInfo = typeof(HttpHandler).GetMethod(nameof(JsonDeserialize), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ConvertToTaskMethodInfo = typeof(HttpHandler).GetMethod(nameof(ConvertTask), BindingFlags.NonPublic | BindingFlags.Static);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
@@ -179,13 +179,17 @@ namespace Web.Framework
                     {
                         var typeArg = method.ReturnType.GetGenericArguments()[0];
 
-                        // Convert<T>(handler.Method(..))
-                        methodCall = Expression.Call(
-                                           ConvertToTaskMethodInfo.MakeGenericMethod(typeArg),
-                                           methodCall);
+                        // ExecuteTask<T>(handler.Method(..), httpContext);
+                        body = Expression.Call(
+                                           ExecuteTaskOfTMethodInfo.MakeGenericMethod(typeArg),
+                                           methodCall,
+                                           httpContextArg);
                     }
-
-                    body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
+                    else
+                    {
+                        // ExecuteResult(handler.Method(..), httpContext);
+                        body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
+                    }
                 }
 
                 var lambda = Expression.Lambda<Func<HttpContext, RouteValueDictionary, RequestDelegate, Task>>(body, httpContextArg, routeValuesArg, nextArg);
@@ -418,27 +422,24 @@ namespace Web.Framework
             return new JsonSerializer().Deserialize<T>(jsonReader);
         }
 
-        private static async Task<object> ConvertTask<T>(Task<T> task)
+        private static async Task ExecuteTask<T>(Task<T> task, HttpContext httpContext)
         {
-            return await task;
+            var result = await task;
+            await ExecuteResultAsync(result, httpContext);
         }
 
         private static async Task ExecuteResultAsync(object result, HttpContext httpContext)
         {
             switch (result)
             {
-                case Task<object> task:
-                    {
-                        var val = await task;
-                        // We normalize to Task<object> then we execute the actual result
-                        await ExecuteResultAsync(val, httpContext);
-                    }
-                    break;
                 case Task task:
                     await task;
                     break;
                 case RequestDelegate val:
                     await val(httpContext);
+                    break;
+                case null:
+                    httpContext.Response.StatusCode = 404;
                     break;
                 default:
                     {
