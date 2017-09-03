@@ -44,7 +44,6 @@ namespace Web.Framework
             configure?.Invoke(model);
 
             var bindings = new List<Binding>();
-            var routeKey = new object();
 
             foreach (var method in model.Methods)
             {
@@ -54,7 +53,7 @@ namespace Web.Framework
 
                 // Non void return type
 
-                // Task Invoke(HttpContext httpContext, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext, RouteValueDictionary routeValues, RequestDelegate next)
                 // {
                 //     // The type is activated via DI if it has args
                 //     return ExecuteResult(new THttpHandler(...).Method(..), httpContext);
@@ -62,13 +61,14 @@ namespace Web.Framework
 
                 // void return type
 
-                // Task Invoke(HttpContext httpContext, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext, RouteValueDictionary routeValues, RequestDelegate next)
                 // {
                 //     new THttpHandler(...).Method(..)
                 //     return Task.CompletedTask;
                 // }
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
+                var routeValuesArg = Expression.Parameter(typeof(RouteValueDictionary), "routeValues");
                 var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
                 var requestServicesExpr = Expression.Property(httpContextArg, nameof(HttpContext.RequestServices));
 
@@ -111,16 +111,7 @@ namespace Web.Framework
                     }
                     else if (parameter.FromRoute != null)
                     {
-                        var itemsProperty = Expression.Property(httpContextArg, nameof(HttpContext.Items));
-                        var routeValuesVar = Expression.Convert(
-                                                Expression.MakeIndex(itemsProperty,
-                                                                     itemsProperty.Type.GetProperty("Item"),
-                                                                     new[] {
-                                                                         Expression.Constant(routeKey)
-                                                                     }),
-                                                typeof(RouteValueDictionary));
-
-                        paramterExpression = BindArgument(routeValuesVar, parameter, parameter.FromRoute);
+                        paramterExpression = BindArgument(routeValuesArg, parameter, parameter.FromRoute);
                     }
                     else if (parameter.FromCookie != null)
                     {
@@ -197,7 +188,7 @@ namespace Web.Framework
                     body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
                 }
 
-                var lambda = Expression.Lambda<Func<HttpContext, RequestDelegate, Task>>(body, httpContextArg, nextArg);
+                var lambda = Expression.Lambda<Func<HttpContext, RouteValueDictionary, RequestDelegate, Task>>(body, httpContextArg, routeValuesArg, nextArg);
 
                 var routeTemplate = method.RouteTemplate;
                 var matcher = routeTemplate == null ? null : new TemplateMatcher(routeTemplate, new RouteValueDictionary());
@@ -220,9 +211,6 @@ namespace Web.Framework
 
                     if (binding != null)
                     {
-                        // This is routing without routing
-                        context.Items[routeKey] = routeValues;
-
                         // Generating async code would just be insane so if the method needs the form populate it here
                         // so the within the method it's cached
                         if (binding.NeedForm)
@@ -230,7 +218,7 @@ namespace Web.Framework
                             await context.Request.ReadFormAsync();
                         }
 
-                        await binding.Invoke(context, next);
+                        await binding.Invoke(context, routeValues, next);
                         return;
                     }
 
@@ -465,7 +453,7 @@ namespace Web.Framework
         {
             public MethodInfo MethodInfo { get; set; }
 
-            public Func<HttpContext, RequestDelegate, Task> Invoke { get; set; }
+            public Func<HttpContext, RouteValueDictionary, RequestDelegate, Task> Invoke { get; set; }
 
             public TemplateMatcher Matcher { get; set; }
 
