@@ -69,7 +69,7 @@ namespace Samples
             if (model.RouteTemplate == null)
             {
                 // No route, nothing to do here
-                return null;
+                return model;
             }
 
             foreach (var p in model.Parameters)
