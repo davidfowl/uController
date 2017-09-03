@@ -8,6 +8,31 @@ namespace Samples
 {
     public static class HttpAppModelExtensions
     {
+        public static HttpModel MapMethodNamesToHttpMethods(this HttpModel model)
+        {
+            foreach (var m in model.Methods)
+            {
+                if (m.MethodInfo.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase))
+                {
+                    m.Get();
+                }
+                else if (m.MethodInfo.Name.StartsWith("Post", StringComparison.OrdinalIgnoreCase))
+                {
+                    m.Post();
+                }
+                else if (m.MethodInfo.Name.StartsWith("Put", StringComparison.OrdinalIgnoreCase))
+                {
+                    m.Put();
+                }
+                else if (m.MethodInfo.Name.StartsWith("Delete", StringComparison.OrdinalIgnoreCase))
+                {
+                    m.Delete();
+                }
+            }
+
+            return model;
+        }
+
         public static HttpModel MapRouteParametersToMethodArguments(this HttpModel model)
         {
             foreach (var m in model.Methods)

@@ -25,8 +25,12 @@ namespace Web.Framework
                     MethodInfo = method,
                     ReturnType = method.ReturnType,
                     HttpMethod = httpMethod,
+                };
+
+                if (template != null)
+                {
+                    methodModel.Route(template);
                 }
-                .Route(template);
 
                 foreach (var parameter in method.GetParameters())
                 {

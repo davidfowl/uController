@@ -17,6 +17,7 @@ namespace Web.Framework
 
         public static MethodModel Route(this MethodModel model, string template)
         {
+            template = template ?? throw new ArgumentNullException(nameof(template));
             model.RouteTemplate = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/'));
             return model;
         }
@@ -24,24 +25,48 @@ namespace Web.Framework
         public static MethodModel Get(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Get;
+
+            if (template == null)
+            {
+                return model;
+            }
+
             return model.Route(template);
         }
 
         public static MethodModel Post(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Post;
+
+            if (template == null)
+            {
+                return model;
+            }
+
             return model.Route(template);
         }
 
         public static MethodModel Put(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Put;
+
+            if (template == null)
+            {
+                return model;
+            }
+
             return model.Route(template);
         }
 
         public static MethodModel Delete(this MethodModel model, string template = null)
         {
             model.HttpMethod = HttpMethods.Delete;
+
+            if (template == null)
+            {
+                return model;
+            }
+
             return model.Route(template);
         }
 

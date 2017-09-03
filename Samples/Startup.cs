@@ -34,17 +34,19 @@ namespace Samples
             app.UseHttpHandler<ProductsApi>(model =>
             {
                 model.Method(nameof(ProductsApi.GetAll))
-                     .Get("/products");
+                     .Route("/products");
 
                 model.Method(nameof(ProductsApi.Get))
-                     .Get("/products/{id}");
+                     .Route("/products/{id}");
 
                 model.Method(nameof(ProductsApi.Post))
-                     .Post("/products")
+                     .Route("/products")
                      .FromBody("product");
 
                 model.Method(nameof(ProductsApi.Delete))
-                     .Delete("/products/{id}");
+                     .Route("/products/{id}");
+
+                model.MapMethodNamesToHttpMethods();
 
                 // Automatically map route parameters to method arguments with a matching name
                 model.MapRouteParametersToMethodArguments();
