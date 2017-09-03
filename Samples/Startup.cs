@@ -79,7 +79,6 @@ namespace Samples
             // - complex types are automatically [FromBody]
             app.UseHttpHandler<ProductsApi3>(model =>
             {
-                // Automatically map route parameters to method arguments with a matching name
                 model.MapMethodNamesToHttpMethods();
                 model.MapRouteParametersToMethodArguments();
                 model.MapComplexTypeArgsToFromBody();
