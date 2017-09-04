@@ -255,17 +255,19 @@ namespace Web.Framework
                     // If there's a template, it has to match the path
                     if (b.Matcher.TryMatch(context.Request.Path, matchValues))
                     {
+                        var routeMatchValue = b.Matcher.Template.Segments.Count - matchValues.Count;
+
                         if (b.HttpMethod != null)
                         {
                             // If there's a method, it has to match
                             if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
                             {
-                                score = 5;
+                                score = 5 + routeMatchValue;
                             }
                         }
                         else
                         {
-                            score = 3;
+                            score = 3 + routeMatchValue;
                         }
                     }
                 }

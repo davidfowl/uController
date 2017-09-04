@@ -23,6 +23,9 @@ namespace Samples
             return context.Response.WriteAsync("Hello World");
         }
 
+        [HttpGet("/hey/david")]
+        public string HelloDavid() => "Hello David!";
+
         [HttpGet("/hey/{name?}")]
         public async Task<string> GetAsync([FromRoute]string name)
         {
