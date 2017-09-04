@@ -23,6 +23,12 @@ namespace Samples
             return context.Response.WriteAsync("Hello World");
         }
 
+        [HttpGet("{a}/{b}/c")]
+        public string Foo([FromRoute]string a, [FromRoute]string b) => $"a={a} b={b} constant c";
+
+        [HttpGet("{a}/{*b}")]
+        public string Foo2([FromRoute]string a, [FromRoute]string b) => $"a={a} b={b}";
+
         [HttpGet("/hey/david")]
         public string HelloDavid() => "Hello David!";
 

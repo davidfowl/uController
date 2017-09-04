@@ -199,6 +199,9 @@ namespace Web.Framework
 
                 bindings.Add(new Binding
                 {
+#if DEBUG
+                    DebugExpression = lambda,
+#endif
                     MethodInfo = method.MethodInfo,
                     Invoke = lambda.Compile(),
                     NeedForm = needForm,
@@ -377,10 +380,14 @@ namespace Web.Framework
             {
                 expr = Expression.Call(parseMethod, valueArg);
             }
-            else
+            else if (parameter.ParameterType != valueArg.Type)
             {
                 // Convert.ChangeType()
                 expr = Expression.Call(ChangeTypeMethodInfo, valueArg, Expression.Constant(type));
+            }
+            else
+            {
+                expr = valueArg;
             }
 
             if (expr.Type != parameter.ParameterType)
@@ -455,6 +462,8 @@ namespace Web.Framework
         private class Binding
         {
             public MethodInfo MethodInfo { get; set; }
+
+            public Expression DebugExpression { get; set; }
 
             public Func<HttpContext, RouteValueDictionary, RequestDelegate, Task> Invoke { get; set; }
 
