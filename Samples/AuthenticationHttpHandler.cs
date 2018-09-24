@@ -9,16 +9,18 @@ using Web.Framework;
 
 namespace Samples
 {
-    public class AuthenticationHttpHandler
+    public class AuthenticationMiddleware
     {
         private readonly AuthenticationOptions _options;
+        private readonly RequestDelegate _next;
 
-        public AuthenticationHttpHandler(IOptions<AuthenticationOptions> options)
+        public AuthenticationMiddleware(RequestDelegate next, IOptions<AuthenticationOptions> options)
         {
             _options = options.Value;
+            _next = next;
         }
 
-        public async Task<RequestDelegate> InvokeAsync(HttpContext context, RequestDelegate next)
+        public async Task<RequestDelegate> InvokeAsync(HttpContext context)
         {
             var result = await context.AuthenticateAsync(_options.DefaultAuthenticateScheme);
 
@@ -27,7 +29,7 @@ namespace Samples
                 context.User = result.Principal;
             }
 
-            return next;
+            return _next;
         }
     }
 }

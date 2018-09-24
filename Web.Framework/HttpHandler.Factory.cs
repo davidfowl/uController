@@ -45,7 +45,7 @@ namespace Web.Framework
 
             var bindings = new List<Binding>();
 
-            foreach (var method in model.Methods)
+            foreach (var method in model.Methods.Where(m => m.RouteTemplate != null))
             {
                 var needForm = false;
                 var httpMethod = method.HttpMethod;
