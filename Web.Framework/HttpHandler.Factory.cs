@@ -27,29 +27,29 @@ namespace Web.Framework
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
-        public static Func<RequestDelegate, RequestDelegate> Build<THttpHandler>(Action<HttpModel> configure = null)
+        public static List<Endpoint> Build<THttpHandler>(Action<HttpModel> configure = null)
         {
             return Build(typeof(THttpHandler), configure);
         }
 
-        public static Func<RequestDelegate, RequestDelegate> Build(Type handlerType, Action<HttpModel> configure = null)
+        public static List<Endpoint> Build(Type handlerType, Action<HttpModel> configure = null)
         {
             return BuildWithoutCache(handlerType, configure);
         }
 
-        private static Func<RequestDelegate, RequestDelegate> BuildWithoutCache(Type handlerType, Action<HttpModel> configure)
+        private static List<Endpoint> BuildWithoutCache(Type handlerType, Action<HttpModel> configure)
         {
             var model = HttpModel.FromType(handlerType);
 
             configure?.Invoke(model);
 
-            var bindings = new List<Binding>();
+            var endpoints = new List<Endpoint>();
 
-            foreach (var method in model.Methods.Where(m => m.RouteTemplate != null))
+            foreach (var method in model.Methods.Where(m => m.RoutePattern != null))
             {
                 var needForm = false;
                 var httpMethod = method.HttpMethod;
-                var template = method.RouteTemplate;
+                var template = method.RoutePattern;
 
                 // Non void return type
 
@@ -194,147 +194,36 @@ namespace Web.Framework
 
                 var lambda = Expression.Lambda<Func<HttpContext, RouteValueDictionary, RequestDelegate, Task>>(body, httpContextArg, routeValuesArg, nextArg);
 
-                var routeTemplate = method.RouteTemplate;
-                var matcher = routeTemplate == null ? null : new TemplateMatcher(routeTemplate, new RouteValueDictionary());
+                var routeTemplate = method.RoutePattern;
 
-                bindings.Add(new Binding
-                {
-#if DEBUG
-                    DebugExpression = lambda,
-#endif
-                    MethodInfo = method.MethodInfo,
-                    Invoke = lambda.Compile(),
-                    NeedForm = needForm,
-                    HttpMethod = httpMethod,
-                    Matcher = matcher
-                });
-            }
+                var invoker = lambda.Compile();
 
-            return next =>
-            {
-                return async context =>
+                var metadata = new List<object>();
+                if (!string.IsNullOrEmpty(method.HttpMethod))
                 {
-                    if (TryMatch(context, bindings, out var binding, out var routeValues))
+                    metadata.Add(new HttpMethodMetadata(new[] { method.HttpMethod }));
+                }
+
+                endpoints.Add(new RouteEndpoint(
+                    async httpContext =>
                     {
                         // Generating async code would just be insane so if the method needs the form populate it here
                         // so the within the method it's cached
-                        if (binding.NeedForm)
+                        if (needForm)
                         {
-                            await context.Request.ReadFormAsync();
+                            await httpContext.Request.ReadFormAsync();
                         }
 
-                        await binding.Invoke(context, routeValues, next);
-                        return;
-                    }
-
-                    await next(context);
-                };
-            };
-        }
-
-        private static bool TryMatch(HttpContext context, List<Binding> bindings, out Binding binding, out RouteValueDictionary routeValues)
-        {
-            // Scores
-            // nothing = 1
-            // method = 2
-            // route = 3
-            // method + route = 5
-            routeValues = null;
-            binding = null;
-
-            var matchValues = new RouteValueDictionary();
-            object match = null;
-            var matchScore = 0;
-
-            foreach (var b in bindings)
-            {
-                var score = 0;
-
-                if (b.Matcher != null)
-                {
-                    // Clear the previous values (if any)
-                    matchValues.Clear();
-
-                    // If there's a template, it has to match the path
-                    if (b.Matcher.TryMatch(context.Request.Path, matchValues))
-                    {
-                        var routeMatchValue = b.Matcher.Template.Segments.Count - matchValues.Count;
-
-                        if (b.HttpMethod != null)
-                        {
-                            // If there's a method, it has to match
-                            if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
-                            {
-                                score = 5 + routeMatchValue;
-                            }
-                        }
-                        else
-                        {
-                            score = 3 + routeMatchValue;
-                        }
-                    }
-                }
-                else if (b.HttpMethod != null)
-                {
-                    // If there's a method, it has to match
-                    if (string.Equals(context.Request.Method, b.HttpMethod, StringComparison.OrdinalIgnoreCase))
-                    {
-                        score = 2;
-                    }
-                }
-                else
-                {
-                    // No method, so this is a candidate (no method means wildcard)
-                    score = 1;
-                }
-
-                if (score > matchScore)
-                {
-                    match = b;
-                    matchScore = score;
-                    // Copy the values here
-                    routeValues = new RouteValueDictionary(matchValues);
-                }
-                else if (score > 0 && score == matchScore)
-                {
-                    switch (match)
-                    {
-                        case Binding previous:
-                            {
-                                match = new List<Binding>(bindings.Count)
-                                {
-                                    previous,
-                                    b
-                                };
-                            }
-                            break;
-                        case List<Binding> candidates:
-                            candidates.Add(b);
-                            break;
-                    }
-                }
+                        await invoker.Invoke(httpContext, httpContext.GetRouteData().Values, (c) => Task.CompletedTask);
+                    },
+                    routeTemplate,
+                    0,
+                    new EndpointMetadataCollection(metadata),
+                    method.RoutePattern.RawText
+                ));
             }
 
-            switch (match)
-            {
-                case Binding b:
-                    binding = b;
-                    break;
-                case List<Binding> candidates:
-                    throw new InvalidOperationException($"Ambiguous match found: \r\n{GetCandidiatesString(candidates)}");
-            }
-
-            return binding != null;
-        }
-
-        private static string GetCandidiatesString(List<Binding> candidates)
-        {
-            return string.Join("\n", candidates.Select(c => GetMethodInfoString(c.MethodInfo)));
-        }
-
-        private static string GetMethodInfoString(MethodInfo methodInfo)
-        {
-            return $"{methodInfo.Name}({string.Join(",", methodInfo.GetParameters().Select(p => p.ParameterType.Name))})";
+            return endpoints;
         }
 
         private static Expression BindBody(Expression httpBody, ParameterModel parameter)

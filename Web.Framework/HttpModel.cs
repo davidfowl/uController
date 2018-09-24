@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
@@ -86,7 +87,7 @@ namespace Web.Framework
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public Type ReturnType { get; set; }
         public string HttpMethod { get; set; }
-        public RouteTemplate RouteTemplate { get; set; }
+        public RoutePattern RoutePattern { get; set; }
     }
 
     public class ParameterModel
