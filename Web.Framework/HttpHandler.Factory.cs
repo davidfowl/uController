@@ -198,13 +198,7 @@ namespace Web.Framework
 
                 var invoker = lambda.Compile();
 
-                var metadata = new List<object>();
-                if (!string.IsNullOrEmpty(method.HttpMethod))
-                {
-                    metadata.Add(new HttpMethodMetadata(new[] { method.HttpMethod }));
-                }
-
-                endpoints.Add(new RouteEndpoint(
+                var routeEndpointModel = new RouteEndpointModel(
                     async httpContext =>
                     {
                         // Generating async code would just be insane so if the method needs the form populate it here
@@ -217,10 +211,25 @@ namespace Web.Framework
                         await invoker.Invoke(httpContext, httpContext.GetRouteData().Values, (c) => Task.CompletedTask);
                     },
                     routeTemplate,
-                    0,
-                    new EndpointMetadataCollection(metadata),
-                    method.RoutePattern.RawText
-                ));
+                    0);
+                routeEndpointModel.DisplayName = routeTemplate.RawText;
+
+                if (!string.IsNullOrEmpty(method.HttpMethod))
+                {
+                    routeEndpointModel.Metadata.Add(new HttpMethodMetadata(new[] { method.HttpMethod }));
+                }
+
+                foreach (var attribute in method.MethodInfo.GetCustomAttributes(true))
+                {
+                    routeEndpointModel.Metadata.Add(attribute);
+                }
+
+                foreach (var convention in method.Conventions)
+                {
+                    convention(routeEndpointModel);
+                }
+
+                endpoints.Add(routeEndpointModel.Build());
             }
 
             return endpoints;

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Samples.Authorization;
 using Web.Framework;
 
 namespace Samples
@@ -31,7 +32,7 @@ namespace Samples
 
             app.UseEndpointRouting(ConfigureRouting);
 
-            app.UseMiddleware<AuthenticationMiddleware>();
+            app.UseMiddleware<AuthorizationMiddleware>();
 
             app.UseEndpoint();
         }
