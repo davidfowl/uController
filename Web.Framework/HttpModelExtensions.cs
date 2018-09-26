@@ -19,7 +19,7 @@ namespace Web.Framework
         public static MethodModel Route(this MethodModel model, string template)
         {
             template = template ?? throw new ArgumentNullException(nameof(template));
-            model.RoutePattern = template == null ? null : RoutePatternFactory.Parse(template.TrimStart('~', '/'));
+            model.RoutePattern = template == null ? null : RoutePatternFactory.Parse(template);
             return model;
         }
 
