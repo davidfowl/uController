@@ -15,11 +15,11 @@ namespace Web.Framework
         {
             var endpoints = HttpHandler.Build<THttpHandler>(configure);
 
-            var dataSource = builder.EndpointDataSources.OfType<HandlerEndpointsDataSource>().SingleOrDefault();
+            var dataSource = builder.DataSources.OfType<HandlerEndpointsDataSource>().SingleOrDefault();
             if (dataSource == null)
             {
                 dataSource = new HandlerEndpointsDataSource();
-                builder.EndpointDataSources.Add(dataSource);
+                builder.DataSources.Add(dataSource);
             }
 
             dataSource.AddEndpoints(endpoints);
