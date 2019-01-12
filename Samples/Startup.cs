@@ -1,7 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Samples.Authorization;
 using Web.Framework;
 
 namespace Samples
@@ -12,8 +16,10 @@ namespace Samples
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthentication("Cookies")
-                    .AddCookie();
+            services
+                .AddRouting()
+                .AddAuthentication("Cookies")
+                .AddCookie();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -24,13 +30,20 @@ namespace Samples
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpHandler<AuthenticationHttpHandler>();
+            app.UseEndpointRouting(ConfigureRouting);
 
+            app.UseMiddleware<AuthorizationMiddleware>();
+
+            app.UseEndpoint();
+        }
+
+        private void ConfigureRouting(IEndpointRouteBuilder routes)
+        {
             // Example 1
             // - Routes and http methods are mapped per method
             // - [FromRoute] parameters are explicitly declared
             // - [FromBody] paramters are explictly declared
-            app.UseHttpHandler<ProductsApi>(model =>
+            routes.MapHttpHandler<ProductsApi>(model =>
             {
                 model.Method(nameof(ProductsApi.GetAll))
                      .Get("/products");
@@ -53,7 +66,7 @@ namespace Samples
             // - method names map to http verbs
             // - route paramters are automatically bound by name
             // - [FromBody] paramters are explictly declared
-            app.UseHttpHandler<ProductsApi2>(model =>
+            routes.MapHttpHandler<ProductsApi2>(model =>
             {
                 model.Method(nameof(ProductsApi.GetAll))
                      .Route("/products2");
@@ -77,14 +90,14 @@ namespace Samples
             // - method names map to http verbs
             // - route paramters are automatically bound by name
             // - complex types are automatically [FromBody]
-            app.UseHttpHandler<ProductsApi3>(model =>
+            routes.MapHttpHandler<ProductsApi3>(model =>
             {
                 model.MapMethodNamesToHttpMethods();
                 model.MapRouteParametersToMethodArguments();
                 model.MapComplexTypeArgsToFromBody();
             });
 
-            app.UseHttpHandler<MyHandler>();
+            routes.MapHttpHandler<MyHandler>();
         }
     }
 }

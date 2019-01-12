@@ -66,7 +66,7 @@ namespace Samples
 
         public static MethodModel MapRouteParameters(this MethodModel model)
         {
-            if (model.RouteTemplate == null)
+            if (model.RoutePattern == null)
             {
                 // No route, nothing to do here
                 return model;
@@ -80,7 +80,7 @@ namespace Samples
                     continue;
                 }
 
-                var part = model.RouteTemplate.GetParameter(p.Name);
+                var part = model.RoutePattern.GetParameter(p.Name);
                 if (part != null)
                 {
                     p.FromRoute = part.Name;

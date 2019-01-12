@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
@@ -80,13 +82,20 @@ namespace Web.Framework
         }
     }
 
-    public class MethodModel
+    public class MethodModel : IEndpointConventionBuilder
     {
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public Type ReturnType { get; set; }
         public string HttpMethod { get; set; }
-        public RouteTemplate RouteTemplate { get; set; }
+        public RoutePattern RoutePattern { get; set; }
+
+        internal List<Action<EndpointModel>> Conventions { get; } = new List<Action<EndpointModel>>();
+
+        public void Apply(Action<EndpointModel> convention)
+        {
+            Conventions.Add(convention);
+        }
     }
 
     public class ParameterModel

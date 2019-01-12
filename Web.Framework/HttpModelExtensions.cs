@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
@@ -18,7 +19,7 @@ namespace Web.Framework
         public static MethodModel Route(this MethodModel model, string template)
         {
             template = template ?? throw new ArgumentNullException(nameof(template));
-            model.RouteTemplate = template == null ? null : TemplateParser.Parse(template.TrimStart('~', '/'));
+            model.RoutePattern = template == null ? null : RoutePatternFactory.Parse(template);
             return model;
         }
 
