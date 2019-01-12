@@ -208,7 +208,7 @@ namespace Web.Framework
                             await httpContext.Request.ReadFormAsync();
                         }
 
-                        await invoker.Invoke(httpContext, httpContext.GetRouteData().Values, (c) => Task.CompletedTask);
+                        await invoker.Invoke(httpContext, httpContext.Request.RouteValues, (c) => Task.CompletedTask);
                     },
                     routeTemplate,
                     0);
