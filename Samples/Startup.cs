@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Samples.Authorization;
 using Web.Framework;
 
 namespace Samples
@@ -18,6 +18,8 @@ namespace Samples
         {
             services
                 .AddRouting()
+                .AddAuthorization()
+                .AddAuthorizationPolicyEvaluator()
                 .AddAuthentication("Cookies")
                 .AddCookie();
         }
@@ -32,9 +34,7 @@ namespace Samples
 
             app.UseEndpointRouting(ConfigureRouting);
 
-            app.UseMiddleware<AuthorizationMiddleware>();
-
-            app.UseEndpoint();
+            app.UseAuthorization();
         }
 
         private void ConfigureRouting(IEndpointRouteBuilder routes)
@@ -95,6 +95,15 @@ namespace Samples
                 model.MapMethodNamesToHttpMethods();
                 model.MapRouteParametersToMethodArguments();
                 model.MapComplexTypeArgsToFromBody();
+            });
+
+            // Example 4
+            // - Method requires authenticated user
+            routes.MapHttpHandler<UserApi>(model =>
+            {
+                model.Method(nameof(UserApi.CurrentUser))
+                     .Route("/user")
+                     .RequireAuthorization(new AuthorizeAttribute());
             });
 
             routes.MapHttpHandler<MyHandler>();
