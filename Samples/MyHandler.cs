@@ -9,15 +9,7 @@ namespace Samples
     public class MyHandler : HttpHandler
     {
         [HttpGet("/")]
-        public async Task<Result> Get([FromQuery]int? id)
-        {
-            await Task.Delay(100);
-
-            return Json(new { A = id.GetValueOrDefault() });
-        }
-
-        [HttpGet("/foo")]
-        public static Task Another(HttpContext context)
+        public Task Get(HttpContext context)
         {
             return context.Response.WriteAsync("Hello World");
         }
@@ -34,7 +26,7 @@ namespace Samples
         }
 
         [HttpGet("/hello")]
-        public string Get() => "Hello!";
+        public string Hello() => "Hello!";
 
         [HttpPost("/")]
         public Result Post([FromBody]JToken obj)

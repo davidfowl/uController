@@ -14,7 +14,7 @@ namespace Samples
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                .ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Trace))
+                .ConfigureLogging(logging => logging.ClearProviders())
                 .Build();
     }
 }
