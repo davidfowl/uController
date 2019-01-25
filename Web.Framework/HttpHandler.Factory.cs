@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -357,21 +356,5 @@ namespace Web.Framework
                     break;
             }
         }
-
-        private class Binding
-        {
-            public MethodInfo MethodInfo { get; set; }
-
-            public Expression DebugExpression { get; set; }
-
-            public Func<HttpContext, RouteValueDictionary, RequestDelegate, Task> Invoke { get; set; }
-
-            public TemplateMatcher Matcher { get; set; }
-
-            public string HttpMethod { get; set; }
-
-            public bool NeedForm { get; set; }
-        }
     }
 }
-

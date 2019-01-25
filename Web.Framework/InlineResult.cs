@@ -6,7 +6,7 @@ namespace Web.Framework
 {
     public class InlineResult : Result
     {
-        private RequestDelegate _callback;
+        private readonly RequestDelegate _callback;
 
         public InlineResult(RequestDelegate callback)
         {
