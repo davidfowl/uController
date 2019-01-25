@@ -68,8 +68,6 @@ namespace Web.Framework
                 // }
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
-                var routeValuesArg = Expression.Parameter(typeof(RouteValueDictionary), "routeValues");
-                var nextArg = Expression.Parameter(typeof(RequestDelegate), "next");
                 var requestServicesExpr = Expression.Property(httpContextArg, nameof(HttpContext.RequestServices));
 
                 // Fast path: We can skip the activator if there's only a default ctor with 0 args
@@ -111,7 +109,8 @@ namespace Web.Framework
                     }
                     else if (parameter.FromRoute != null)
                     {
-                        paramterExpression = BindArgument(routeValuesArg, parameter, parameter.FromRoute);
+                        var routeValuesProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.RouteValues));
+                        paramterExpression = BindArgument(routeValuesProperty, parameter, parameter.FromRoute);
                     }
                     else if (parameter.FromCookie != null)
                     {
@@ -143,10 +142,6 @@ namespace Web.Framework
                         else if (parameter.ParameterType == typeof(HttpContext))
                         {
                             paramterExpression = httpContextArg;
-                        }
-                        else if (parameter.ParameterType == typeof(RequestDelegate))
-                        {
-                            paramterExpression = nextArg;
                         }
                         else if (parameter.ParameterType == typeof(IHeaderDictionary))
                         {
@@ -192,27 +187,39 @@ namespace Web.Framework
                     }
                 }
 
-                var lambda = Expression.Lambda<Func<HttpContext, RouteValueDictionary, RequestDelegate, Task>>(body, httpContextArg, routeValuesArg, nextArg);
+                var lambda = Expression.Lambda<RequestDelegate>(body, httpContextArg);
 
                 var routeTemplate = method.RoutePattern;
 
                 var invoker = lambda.Compile();
 
-                var routeEndpointModel = new RouteEndpointModel(
-                    async httpContext =>
+                var routeEndpointModel = new RouteEndpointBuilder(
+                    httpContext =>
                     {
-                        // Generating async code would just be insane so if the method needs the form populate it here
-                        // so the within the method it's cached
-                        if (needForm)
+                        async Task ExecuteAsyncAwaited()
                         {
-                            await httpContext.Request.ReadFormAsync();
+                            // Generating async code would just be insane so if the method needs the form populate it here
+                            // so the within the method it's cached
+                            if (needForm)
+                            {
+                                await httpContext.Request.ReadFormAsync();
+                            }
+
+                            await invoker(httpContext);
                         }
 
-                        await invoker.Invoke(httpContext, httpContext.Request.RouteValues, (c) => Task.CompletedTask);
+                        if (needForm)
+                        {
+                            return ExecuteAsyncAwaited();
+                        }
+
+                        return invoker(httpContext);
                     },
                     routeTemplate,
-                    0);
-                routeEndpointModel.DisplayName = routeTemplate.RawText;
+                    0)
+                {
+                    DisplayName = routeTemplate.RawText
+                };
 
                 if (!string.IsNullOrEmpty(method.HttpMethod))
                 {

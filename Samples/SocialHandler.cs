@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Web.Framework;
 
@@ -18,30 +19,9 @@ namespace Samples
             _schemeProvider = schemeProvider;
         }
 
+        [Authorize]
         public async Task Get(HttpContext context)
         {
-            // Setting DefaultAuthenticateScheme causes User to be set
-            var user = context.User;
-
-            // This is what [Authorize] calls
-            // var user = await context.AuthenticateAsync();
-
-            // This is what [Authorize(ActiveAuthenticationSchemes = MicrosoftAccountDefaults.AuthenticationScheme)] calls
-            // var user = await context.AuthenticateAsync(MicrosoftAccountDefaults.AuthenticationScheme);
-
-            // Deny anonymous request beyond this point.
-            if (user == null || !user.Identities.Any(identity => identity.IsAuthenticated))
-            {
-                // This is what [Authorize] calls
-                // The cookie middleware will handle this and redirect to /login
-                await context.ChallengeAsync();
-
-                // This is what [Authorize(ActiveAuthenticationSchemes = MicrosoftAccountDefaults.AuthenticationScheme)] calls
-                // await context.ChallengeAsync(MicrosoftAccountDefaults.AuthenticationScheme);
-
-                return;
-            }
-
             // Display user information
             var response = context.Response;
             response.ContentType = "text/html";

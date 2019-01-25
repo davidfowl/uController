@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Web.Framework;
 
@@ -9,7 +7,7 @@ namespace Samples
 {
     public class MyHandler : HttpHandler
     {
-        [HttpGet]
+        [HttpGet("/")]
         public async Task<Result> Get([FromQuery]int? id)
         {
             await Task.Delay(100);
@@ -43,7 +41,7 @@ namespace Samples
         [HttpGet("/hello")]
         public string Get() => "Hello!";
 
-        [HttpPost]
+        [HttpPost("/")]
         public Result Post([FromBody]JToken obj)
         {
             return Json(obj);

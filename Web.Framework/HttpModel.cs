@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing.Patterns;
-using Microsoft.AspNetCore.Routing.Template;
 
 namespace Web.Framework
 {
@@ -90,9 +89,9 @@ namespace Web.Framework
         public string HttpMethod { get; set; }
         public RoutePattern RoutePattern { get; set; }
 
-        internal List<Action<EndpointModel>> Conventions { get; } = new List<Action<EndpointModel>>();
+        internal List<Action<EndpointBuilder>> Conventions { get; } = new List<Action<EndpointBuilder>>();
 
-        public void Apply(Action<EndpointModel> convention)
+        public void Add(Action<EndpointBuilder> convention)
         {
             Conventions.Add(convention);
         }

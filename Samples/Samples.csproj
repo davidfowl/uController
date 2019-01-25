@@ -9,10 +9,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="3.0.0-preview-18579-0056" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Web.Framework\Web.Framework.csproj" />
   </ItemGroup>
 
