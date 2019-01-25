@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -41,6 +43,7 @@ namespace Web.Framework
             foreach (var method in model.Methods.Where(m => m.RoutePattern != null))
             {
                 var needForm = false;
+                var needBody = false;
                 var httpMethod = method.HttpMethod;
                 var template = method.RoutePattern;
 
@@ -123,6 +126,8 @@ namespace Web.Framework
                     }
                     else if (parameter.FromBody)
                     {
+                        needBody = true;
+
                         var bodyProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Body));
                         paramterExpression = BindBody(bodyProperty, parameter);
                     }
@@ -197,11 +202,25 @@ namespace Web.Framework
                             {
                                 await httpContext.Request.ReadFormAsync();
                             }
+                            else if (needBody)
+                            {
+                                var request = httpContext.Request;
+                                if (!request.Body.CanSeek)
+                                {
+                                    // JSON.Net does synchronous reads. In order to avoid blocking on the stream, we asynchronously
+                                    // read everything into a buffer, and then seek back to the beginning.
+                                    request.EnableBuffering();
+                                    Debug.Assert(request.Body.CanSeek);
+
+                                    await request.Body.DrainAsync(CancellationToken.None);
+                                    request.Body.Seek(0L, SeekOrigin.Begin);
+                                }
+                            }
 
                             await invoker(httpContext);
                         }
 
-                        if (needForm)
+                        if (needForm || needBody)
                         {
                             return ExecuteAsyncAwaited();
                         }
@@ -238,7 +257,7 @@ namespace Web.Framework
         private static Expression BindBody(Expression httpBody, ParameterModel parameter)
         {
             // Hard coded to JSON (and JSON.NET at that!)
-            // Also this is synchronous, good luck generating async anything
+            // Also this is synchronous but we buffer the request body
             // new JsonSerializer().Deserialize(
             //     new JsonTextReader(
             //         new HttpRequestStreamReader(
