@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,11 +32,6 @@ namespace Web.Framework
         }
 
         public static List<Endpoint> Build(Type handlerType, Action<HttpModel> configure = null)
-        {
-            return BuildWithoutCache(handlerType, configure);
-        }
-
-        private static List<Endpoint> BuildWithoutCache(Type handlerType, Action<HttpModel> configure)
         {
             var model = HttpModel.FromType(handlerType);
 
