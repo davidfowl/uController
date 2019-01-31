@@ -12,7 +12,9 @@ namespace Samples
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAuthorization()
-                    .AddAuthorizationPolicyEvaluator();
+                    .AddAuthorizationPolicyEvaluator()
+                    .AddSingleton<IHttpRequestFormatter, JsonRequestFormatter>()
+                    .AddSingleton<IHttpResponseFormatter, JsonResponseFormatter>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

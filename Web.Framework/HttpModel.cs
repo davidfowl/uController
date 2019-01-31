@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing.Patterns;
 
 namespace Web.Framework
@@ -20,19 +19,18 @@ namespace Web.Framework
             foreach (var method in methods)
             {
                 var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
-                var httpMethod = attribute?.Method;
                 var template = CombineRoute(routeAttribute?.Template, attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template);
 
                 var methodModel = new MethodModel
                 {
                     MethodInfo = method,
-                    ReturnType = method.ReturnType,
-                    HttpMethod = httpMethod,
+                    RoutePattern = template == null ? null : RoutePatternFactory.Parse(template)
                 };
 
-                if (template != null)
+                // Add all attributes as metadata
+                foreach (var metadata in method.GetCustomAttributes(inherit: true))
                 {
-                    methodModel.Route(template);
+                    methodModel.Metadata.Add(metadata);
                 }
 
                 foreach (var parameter in method.GetParameters())
@@ -81,20 +79,12 @@ namespace Web.Framework
         }
     }
 
-    public class MethodModel : IEndpointConventionBuilder
+    public class MethodModel
     {
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
-        public Type ReturnType { get; set; }
-        public string HttpMethod { get; set; }
+        public List<object> Metadata { get; } = new List<object>();
         public RoutePattern RoutePattern { get; set; }
-
-        internal List<Action<EndpointBuilder>> Conventions { get; } = new List<Action<EndpointBuilder>>();
-
-        public void Add(Action<EndpointBuilder> convention)
-        {
-            Conventions.Add(convention);
-        }
     }
 
     public class ParameterModel

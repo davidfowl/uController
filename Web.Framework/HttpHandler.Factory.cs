@@ -21,32 +21,33 @@ namespace Web.Framework
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
         private static readonly MethodInfo ExecuteTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTask), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ExecuteAsyncMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteResultAsync), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo JsonDeserializeMethodInfo = typeof(HttpHandler).GetMethod(nameof(JsonDeserialize), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo FormatterRead = typeof(IHttpRequestFormatter).GetMethod(nameof(IHttpRequestFormatter.Read), BindingFlags.Public | BindingFlags.Instance);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
-        public static List<Endpoint> Build<THttpHandler>(Action<HttpModel> configure = null)
+        public static List<Endpoint> Build<THttpHandler>()
         {
-            return Build(typeof(THttpHandler), configure);
+            return Build(typeof(THttpHandler));
         }
 
-        public static List<Endpoint> Build(Type handlerType, Action<HttpModel> configure = null)
+        public static List<Endpoint> Build(Type handlerType)
         {
             var model = HttpModel.FromType(handlerType);
 
-            configure?.Invoke(model);
-
             var endpoints = new List<Endpoint>();
 
-            foreach (var method in model.Methods.Where(m => m.RoutePattern != null))
+            foreach (var method in model.Methods)
             {
+                // Nothing to route to
+                if (method.RoutePattern == null)
+                {
+                    continue;
+                }
+
                 var needForm = false;
                 var needBody = false;
-                var httpMethod = method.HttpMethod;
-                var template = method.RoutePattern;
-
                 // Non void return type
 
                 // Task Invoke(HttpContext httpContext, RouteValueDictionary routeValues, RequestDelegate next)
@@ -128,8 +129,7 @@ namespace Web.Framework
                     {
                         needBody = true;
 
-                        var bodyProperty = Expression.Property(httpRequestExpr, nameof(HttpRequest.Body));
-                        paramterExpression = BindBody(bodyProperty, parameter);
+                        paramterExpression = BindBody(httpContextArg, requestServicesExpr, parameter);
                     }
                     else
                     {
@@ -152,7 +152,7 @@ namespace Web.Framework
 
                 Expression body = null;
 
-                if (method.ReturnType == typeof(void))
+                if (method.MethodInfo.ReturnType == typeof(void))
                 {
                     var bodyExpressions = new List<Expression>
                     {
@@ -167,10 +167,10 @@ namespace Web.Framework
                     var methodCall = Expression.Call(httpHandlerExpression, method.MethodInfo, args);
 
                     // Coerce Task<T> to Task<object>
-                    if (method.ReturnType.IsGenericType &&
-                        method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                    if (method.MethodInfo.ReturnType.IsGenericType &&
+                        method.MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
                     {
-                        var typeArg = method.ReturnType.GetGenericArguments()[0];
+                        var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
 
                         // ExecuteTask<T>(handler.Method(..), httpContext);
                         body = Expression.Call(
@@ -230,22 +230,12 @@ namespace Web.Framework
                     routeTemplate,
                     0)
                 {
-                    DisplayName = routeTemplate.RawText
+                    DisplayName = method.MethodInfo.DeclaringType.Name + "." + method.MethodInfo.Name
                 };
 
-                if (!string.IsNullOrEmpty(method.HttpMethod))
+                foreach (var metadata in method.Metadata)
                 {
-                    routeEndpointModel.Metadata.Add(new HttpMethodMetadata(new[] { method.HttpMethod }));
-                }
-
-                foreach (var attribute in method.MethodInfo.GetCustomAttributes(true))
-                {
-                    routeEndpointModel.Metadata.Add(attribute);
-                }
-
-                foreach (var convention in method.Conventions)
-                {
-                    convention(routeEndpointModel);
+                    routeEndpointModel.Metadata.Add(metadata);
                 }
 
                 endpoints.Add(routeEndpointModel.Build());
@@ -254,24 +244,16 @@ namespace Web.Framework
             return endpoints;
         }
 
-        private static Expression BindBody(Expression httpBody, ParameterModel parameter)
+        private static Expression BindBody(Expression httpContext, Expression requestServicesExpr, ParameterModel parameter)
         {
-            // Hard coded to JSON (and JSON.NET at that!)
-            // Also this is synchronous but we buffer the request body
-            // new JsonSerializer().Deserialize(
-            //     new JsonTextReader(
-            //         new HttpRequestStreamReader(
-            //            context.Request.Body, Encoding.UTF8)), p.ParameterType);
-            //
-            var streamReaderCtor = typeof(HttpRequestStreamReader).GetConstructor(new[] { typeof(Stream), typeof(Encoding) });
-            var streamReader = Expression.New(streamReaderCtor, httpBody, Expression.Constant(Encoding.UTF8));
+            // TODO: This *really* needs to generate async code but that's too hard
+            // var formatter = httpContext.GetRequiredService<IHttpRequestFormatter>();
+            // formatter.Read(httpContext, parameter.ParameterType);
 
-            var textReaderCtor = typeof(JsonTextReader).GetConstructor(new[] { typeof(TextReader) });
-            var textReader = Expression.New(textReaderCtor, streamReader);
+            var formatterExpr = Expression.Call(GetRequiredServiceMethodInfo.MakeGenericMethod(typeof(IHttpRequestFormatter)), requestServicesExpr);
+            var readExpr = Expression.Call(formatterExpr, FormatterRead.MakeGenericMethod(parameter.ParameterType), httpContext);
 
-            Expression expr = Expression.Call(JsonDeserializeMethodInfo.MakeGenericMethod(parameter.ParameterType), textReader);
-
-            return expr;
+            return readExpr;
         }
 
         private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)
@@ -343,11 +325,6 @@ namespace Web.Framework
             return ActivatorUtilities.CreateInstance<T>(sp);
         }
 
-        private static T JsonDeserialize<T>(JsonTextReader jsonReader)
-        {
-            return new JsonSerializer().Deserialize<T>(jsonReader);
-        }
-
         private static async Task ExecuteTask<T>(Task<T> task, HttpContext httpContext)
         {
             var result = await task;
@@ -369,7 +346,7 @@ namespace Web.Framework
                     break;
                 default:
                     {
-                        var val = new JsonResult(result);
+                        var val = new ObjectResult(result);
                         await val.ExecuteAsync(httpContext);
                     }
                     break;

@@ -13,6 +13,12 @@ namespace Samples
         {
             return context.Response.WriteAsync("Hello World");
         }
+
+        [HttpGet("/blah")]
+        public object Blah()
+        {
+            return new { name = "David Fowler" };
+        }
         
         [HttpGet("/hey/david")]
         public string HelloDavid() => "Hello David!";
@@ -31,7 +37,7 @@ namespace Samples
         [HttpPost("/")]
         public Result Post([FromBody]JToken obj)
         {
-            return Json(obj);
+            return Ok(obj);
         }
 
         [HttpGet("/auth")]

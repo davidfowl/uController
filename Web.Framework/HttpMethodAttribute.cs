@@ -1,26 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace Web.Framework
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-    public class HttpMethodAttribute : Attribute
+    public class HttpMethodAttribute : Attribute, IHttpMethodMetadata
     {
         public string Method { get; }
         public string Template { get; set; }
+
+        public bool AcceptCorsPreflight => false;
+
+        public IReadOnlyList<string> HttpMethods { get; }
 
         public HttpMethodAttribute(string method, string template)
         {
             Method = method;
             Template = template;
+            HttpMethods = new List<string>() { method };
         }
     }
 
     public class HttpGetAttribute : HttpMethodAttribute
     {
-        public HttpGetAttribute(string template = null) : base(HttpMethods.Get, template)
+        public HttpGetAttribute(string template = null) : base(Microsoft.AspNetCore.Http.HttpMethods.Get, template)
         {
 
         }
@@ -28,7 +32,7 @@ namespace Web.Framework
 
     public class HttpPostAttribute : HttpMethodAttribute
     {
-        public HttpPostAttribute(string template = null) : base(HttpMethods.Post, template)
+        public HttpPostAttribute(string template = null) : base(Microsoft.AspNetCore.Http.HttpMethods.Post, template)
         {
 
         }
@@ -36,7 +40,7 @@ namespace Web.Framework
 
     public class HttpDeleteAttribute : HttpMethodAttribute
     {
-        public HttpDeleteAttribute(string template = null) : base(HttpMethods.Delete, template)
+        public HttpDeleteAttribute(string template = null) : base(Microsoft.AspNetCore.Http.HttpMethods.Delete, template)
         {
 
         }
@@ -44,7 +48,7 @@ namespace Web.Framework
 
     public class HttpPutAttribute : HttpMethodAttribute
     {
-        public HttpPutAttribute(string template = null) : base(HttpMethods.Put, template)
+        public HttpPutAttribute(string template = null) : base(Microsoft.AspNetCore.Http.HttpMethods.Put, template)
         {
 
         }
