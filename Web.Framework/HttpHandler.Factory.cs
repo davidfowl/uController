@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Internal;
 
 namespace Web.Framework
 {
@@ -22,8 +23,11 @@ namespace Web.Framework
         private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo FormatterRead = typeof(IHttpRequestFormatter).GetMethod(nameof(IHttpRequestFormatter.Read), BindingFlags.Public | BindingFlags.Instance);
+        private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
+
+        private static readonly ConstructorInfo ObjectResultCtor = typeof(ObjectResult).GetConstructors()[0];
 
         public static List<Endpoint> Build<THttpHandler>()
         {
@@ -150,19 +154,27 @@ namespace Web.Framework
 
                 Expression body = null;
 
-                if (method.MethodInfo.ReturnType == typeof(void))
+                var methodCall = Expression.Call(httpHandlerExpression, method.MethodInfo, args);
+
+                // Exact request delegate match
+                if (method.MethodInfo.ReturnType == typeof(Task) && method.MethodInfo.GetParameters().Length == 1 &&
+                    method.MethodInfo.GetParameters()[0].ParameterType == typeof(HttpContext))
+                {
+                    body = methodCall;
+                }
+                else if (method.MethodInfo.ReturnType == typeof(void))
                 {
                     var bodyExpressions = new List<Expression>
                     {
-                        Expression.Call(httpHandlerExpression, method.MethodInfo, args),
+                        methodCall,
                         Expression.Property(null, (PropertyInfo)CompletedTaskMemberInfo)
                     };
 
                     body = Expression.Block(bodyExpressions);
                 }
-                else
+                else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out var info))
                 {
-                    var methodCall = Expression.Call(httpHandlerExpression, method.MethodInfo, args);
+                    // TODO: Handle custom awaitables
 
                     // Coerce Task<T> to Task<object>
                     if (method.MethodInfo.ReturnType.IsGenericType &&
@@ -182,51 +194,55 @@ namespace Web.Framework
                         body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
                     }
                 }
+                else
+                {
+                    var newObjectResult = Expression.New(ObjectResultCtor, methodCall);
+                    body = Expression.Call(newObjectResult, ObjectResultExecuteAsync, httpContextArg);
+                }
 
                 var lambda = Expression.Lambda<RequestDelegate>(body, httpContextArg);
 
-                var routeTemplate = method.RoutePattern;
-
                 var invoker = lambda.Compile();
 
-                var routeEndpointModel = new RouteEndpointBuilder(
-                    httpContext =>
+                RequestDelegate requestDelegate = null;
+
+                if (needForm)
+                {
+                    requestDelegate = async httpContext =>
                     {
-                        async Task ExecuteAsyncAwaited()
+                        // Generating async code would just be insane so if the method needs the form populate it here
+                        // so the within the method it's cached
+                        await httpContext.Request.ReadFormAsync();
+
+                        await invoker(httpContext);
+                    };
+                }
+                else if (needBody)
+                {
+                    requestDelegate = async httpContext =>
+                    {
+                        var request = httpContext.Request;
+                        if (!request.Body.CanSeek)
                         {
-                            // Generating async code would just be insane so if the method needs the form populate it here
-                            // so the within the method it's cached
-                            if (needForm)
-                            {
-                                await httpContext.Request.ReadFormAsync();
-                            }
-                            else if (needBody)
-                            {
-                                var request = httpContext.Request;
-                                if (!request.Body.CanSeek)
-                                {
-                                    // JSON.Net does synchronous reads. In order to avoid blocking on the stream, we asynchronously
-                                    // read everything into a buffer, and then seek back to the beginning.
-                                    request.EnableBuffering();
-                                    Debug.Assert(request.Body.CanSeek);
+                            // JSON.Net does synchronous reads. In order to avoid blocking on the stream, we asynchronously
+                            // read everything into a buffer, and then seek back to the beginning.
+                            request.EnableBuffering();
+                            Debug.Assert(request.Body.CanSeek);
 
-                                    await request.Body.DrainAsync(CancellationToken.None);
-                                    request.Body.Seek(0L, SeekOrigin.Begin);
-                                }
-                            }
-
-                            await invoker(httpContext);
+                            await request.Body.DrainAsync(CancellationToken.None);
+                            request.Body.Seek(0L, SeekOrigin.Begin);
                         }
 
-                        if (needForm || needBody)
-                        {
-                            return ExecuteAsyncAwaited();
-                        }
+                        await invoker(httpContext);
 
-                        return invoker(httpContext);
-                    },
-                    routeTemplate,
-                    0)
+                    };
+                }
+                else
+                {
+                    requestDelegate = invoker;
+                }
+
+                var routeEndpointModel = new RouteEndpointBuilder(requestDelegate, method.RoutePattern, 0)
                 {
                     DisplayName = method.MethodInfo.DeclaringType.Name + "." + method.MethodInfo.Name
                 };
