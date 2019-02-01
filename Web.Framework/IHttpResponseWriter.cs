@@ -8,12 +8,12 @@ using Newtonsoft.Json;
 
 namespace Web.Framework
 {
-    public interface IHttpResponseFormatter
+    public interface IHttpResponseWriter
     {
         Task WriteAsync(HttpContext httpContext, object value);
     }
 
-    public class JsonResponseFormatter : IHttpResponseFormatter
+    public class JsonResponseWriter : IHttpResponseWriter
     {
         public async Task WriteAsync(HttpContext httpContext, object value)
         {

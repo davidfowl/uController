@@ -22,7 +22,6 @@ namespace Web.Framework
         private static readonly MethodInfo ExecuteAsyncMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteResultAsync), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo FormatterRead = typeof(IHttpRequestFormatter).GetMethod(nameof(IHttpRequestFormatter.Read), BindingFlags.Public | BindingFlags.Instance);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
@@ -50,23 +49,28 @@ namespace Web.Framework
 
                 var needForm = false;
                 var needBody = false;
+                Type bodyType = null;
                 // Non void return type
 
-                // Task Invoke(HttpContext httpContext, RouteValueDictionary routeValues, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext)
                 // {
                 //     // The type is activated via DI if it has args
-                //     return ExecuteResult(new THttpHandler(...).Method(..), httpContext);
+                //     return ExecuteResultAsync(new THttpHandler(...).Method(..), httpContext);
                 // }
 
                 // void return type
 
-                // Task Invoke(HttpContext httpContext, RouteValueDictionary routeValues, RequestDelegate next)
+                // Task Invoke(HttpContext httpContext)
                 // {
                 //     new THttpHandler(...).Method(..)
                 //     return Task.CompletedTask;
                 // }
 
                 var httpContextArg = Expression.Parameter(typeof(HttpContext), "httpContext");
+                // This argument represents the deserialized body returned from IHttpRequestReader
+                // when the method has a FromBody attribute declared
+                var deserializedBodyArg = Expression.Parameter(typeof(object), "bodyValue");
+
                 var requestServicesExpr = Expression.Property(httpContextArg, nameof(HttpContext.RequestServices));
 
                 // Fast path: We can skip the activator if there's only a default ctor with 0 args
@@ -91,7 +95,6 @@ namespace Web.Framework
                 var args = new List<Expression>();
 
                 var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
-
                 foreach (var parameter in method.Parameters)
                 {
                     Expression paramterExpression = Expression.Default(parameter.ParameterType);
@@ -129,9 +132,19 @@ namespace Web.Framework
                     }
                     else if (parameter.FromBody)
                     {
-                        needBody = true;
+                        if (needBody)
+                        {
+                            throw new InvalidOperationException(method.MethodInfo.Name + " cannot have more than one FromBody attribute.");
+                        }
 
-                        paramterExpression = BindBody(httpContextArg, requestServicesExpr, parameter);
+                        if (needForm)
+                        {
+                            throw new InvalidOperationException(method.MethodInfo.Name + " cannot mix FromBody and FromForm on the same method.");
+                        }
+
+                        needBody = true;
+                        bodyType = parameter.ParameterType;
+                        paramterExpression = Expression.Convert(deserializedBodyArg, bodyType);
                     }
                     else
                     {
@@ -200,14 +213,28 @@ namespace Web.Framework
                     body = Expression.Call(newObjectResult, ObjectResultExecuteAsync, httpContextArg);
                 }
 
-                var lambda = Expression.Lambda<RequestDelegate>(body, httpContextArg);
-
-                var invoker = lambda.Compile();
-
                 RequestDelegate requestDelegate = null;
 
-                if (needForm)
+                if (needBody)
                 {
+                    // We need to generate the code for reading from the body before calling into the 
+                    // delegate
+                    var lambda = Expression.Lambda<Func<HttpContext, object, Task>>(body, httpContextArg, deserializedBodyArg);
+                    var invoker = lambda.Compile();
+
+                    requestDelegate = async httpContext =>
+                    {
+                        var reader = httpContext.RequestServices.GetRequiredService<IHttpRequestReader>();
+                        var bodyValue = await reader.ReadAsync(httpContext, bodyType);
+
+                        await invoker(httpContext, bodyValue);
+                    };
+                }
+                else if (needForm)
+                {
+                    var lambda = Expression.Lambda<RequestDelegate>(body, httpContextArg);
+                    var invoker = lambda.Compile();
+
                     requestDelegate = async httpContext =>
                     {
                         // Generating async code would just be insane so if the method needs the form populate it here
@@ -217,28 +244,11 @@ namespace Web.Framework
                         await invoker(httpContext);
                     };
                 }
-                else if (needBody)
-                {
-                    requestDelegate = async httpContext =>
-                    {
-                        var request = httpContext.Request;
-                        if (!request.Body.CanSeek)
-                        {
-                            // JSON.Net does synchronous reads. In order to avoid blocking on the stream, we asynchronously
-                            // read everything into a buffer, and then seek back to the beginning.
-                            request.EnableBuffering();
-                            Debug.Assert(request.Body.CanSeek);
-
-                            await request.Body.DrainAsync(CancellationToken.None);
-                            request.Body.Seek(0L, SeekOrigin.Begin);
-                        }
-
-                        await invoker(httpContext);
-
-                    };
-                }
                 else
                 {
+                    var lambda = Expression.Lambda<RequestDelegate>(body, httpContextArg);
+                    var invoker = lambda.Compile();
+
                     requestDelegate = invoker;
                 }
 
@@ -256,18 +266,6 @@ namespace Web.Framework
             }
 
             return endpoints;
-        }
-
-        private static Expression BindBody(Expression httpContext, Expression requestServicesExpr, ParameterModel parameter)
-        {
-            // TODO: This *really* needs to generate async code but that's too hard
-            // var formatter = httpContext.GetRequiredService<IHttpRequestFormatter>();
-            // formatter.Read(httpContext, parameter.ParameterType);
-
-            var formatterExpr = Expression.Call(GetRequiredServiceMethodInfo.MakeGenericMethod(typeof(IHttpRequestFormatter)), requestServicesExpr);
-            var readExpr = Expression.Call(formatterExpr, FormatterRead.MakeGenericMethod(parameter.ParameterType), httpContext);
-
-            return readExpr;
         }
 
         private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)

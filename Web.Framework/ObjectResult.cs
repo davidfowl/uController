@@ -18,7 +18,7 @@ namespace Web.Framework
 
         public override Task ExecuteAsync(HttpContext httpContext)
         {
-            var responseFormatter = httpContext.RequestServices.GetRequiredService<IHttpResponseFormatter>();
+            var responseFormatter = httpContext.RequestServices.GetRequiredService<IHttpResponseWriter>();
 
             return responseFormatter.WriteAsync(httpContext, Value);
         }

@@ -13,8 +13,8 @@ namespace Samples
         {
             services.AddAuthorization()
                     .AddAuthorizationPolicyEvaluator()
-                    .AddSingleton<IHttpRequestFormatter, JsonRequestFormatter>()
-                    .AddSingleton<IHttpResponseFormatter, JsonResponseFormatter>();
+                    .AddSingleton<IHttpRequestReader, JsonRequestReader>()
+                    .AddSingleton<IHttpResponseWriter, JsonResponseWriter>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
