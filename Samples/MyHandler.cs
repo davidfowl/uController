@@ -20,6 +20,26 @@ namespace Samples
             return new { name = "David Fowler" };
         }
 
+        [HttpGet("/status/{status}")]
+        public Result StatusCode([FromRoute]int status)
+        {
+            return Status(status);
+        }
+
+        [HttpGet("/slow/status/{status}")]
+        public async Task<Result> SlowTaskStatusCode()
+        {
+            await Task.Delay(1000);
+
+            return StatusCode(400);
+        }
+
+        [HttpGet("/fast/status/{status}")]
+        public ValueTask<Result> FastValueTaskStatusCode()
+        {
+            return new ValueTask<Result>(Status(201));
+        }
+
         [HttpGet("/lag")]
         public async Task DoAsync(HttpContext context, [FromQuery]string q)
         {

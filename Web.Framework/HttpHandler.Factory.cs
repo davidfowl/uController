@@ -15,10 +15,13 @@ namespace Web.Framework
     {
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
         private static readonly MethodInfo ExecuteTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTask), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ExecuteAsyncMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteResultAsync), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteValueTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTask), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteTaskResultOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteValueResultTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
+        private static readonly MethodInfo ResultExecuteAsync = typeof(Result).GetMethod(nameof(Result.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
@@ -166,12 +169,7 @@ namespace Web.Framework
                 var methodCall = Expression.Call(httpHandlerExpression, method.MethodInfo, args);
 
                 // Exact request delegate match
-                if (method.MethodInfo.ReturnType == typeof(Task) && method.MethodInfo.GetParameters().Length == 1 &&
-                    method.MethodInfo.GetParameters()[0].ParameterType == typeof(HttpContext))
-                {
-                    body = methodCall;
-                }
-                else if (method.MethodInfo.ReturnType == typeof(void))
+                if (method.MethodInfo.ReturnType == typeof(void))
                 {
                     var bodyExpressions = new List<Expression>
                     {
@@ -183,29 +181,61 @@ namespace Web.Framework
                 }
                 else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out var info))
                 {
-                    // TODO: Handle custom awaitables
-
-                    // Coerce Task<T> to Task<object>
-                    if (method.MethodInfo.ReturnType.IsGenericType &&
-                        method.MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
-                    {
-                        var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
-
-                        // ExecuteTask<T>(handler.Method(..), httpContext);
-                        body = Expression.Call(
-                                           ExecuteTaskOfTMethodInfo.MakeGenericMethod(typeArg),
-                                           methodCall,
-                                           httpContextArg);
-                    }
-                    else if (method.MethodInfo.ReturnType == typeof(Task))
+                    if (method.MethodInfo.ReturnType == typeof(Task))
                     {
                         body = methodCall;
                     }
+                    else if (method.MethodInfo.ReturnType.IsGenericType &&
+                             method.MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                    {
+                        var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
+
+                        if (typeof(Result).IsAssignableFrom(typeArg))
+                        {
+                            body = Expression.Call(
+                                               ExecuteTaskResultOfTMethodInfo.MakeGenericMethod(typeArg),
+                                               methodCall,
+                                               httpContextArg);
+                        }
+                        else
+                        {
+                            // ExecuteTask<T>(handler.Method(..), httpContext);
+                            body = Expression.Call(
+                                               ExecuteTaskOfTMethodInfo.MakeGenericMethod(typeArg),
+                                               methodCall,
+                                               httpContextArg);
+                        }
+                    }
+                    else if (method.MethodInfo.ReturnType.IsGenericType &&
+                             method.MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+                    {
+                        var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
+
+                        if (typeof(Result).IsAssignableFrom(typeArg))
+                        {
+                            body = Expression.Call(
+                                               ExecuteValueResultTaskOfTMethodInfo.MakeGenericMethod(typeArg),
+                                               methodCall,
+                                               httpContextArg);
+                        }
+                        else
+                        {
+                            // ExecuteTask<T>(handler.Method(..), httpContext);
+                            body = Expression.Call(
+                                           ExecuteValueTaskOfTMethodInfo.MakeGenericMethod(typeArg),
+                                           methodCall,
+                                           httpContextArg);
+                        }
+                    }
                     else
                     {
-                        // ExecuteResult(handler.Method(..), httpContext);
-                        body = Expression.Call(ExecuteAsyncMethodInfo, methodCall, httpContextArg);
+                        // TODO: Handle custom awaitables
+                        throw new NotSupportedException("Unsupported return type " + method.MethodInfo.ReturnType);
                     }
+                }
+                else if (typeof(Result).IsAssignableFrom(method.MethodInfo.ReturnType))
+                {
+                    body = Expression.Call(methodCall, ResultExecuteAsync, httpContextArg);
                 }
                 else
                 {
@@ -339,27 +369,42 @@ namespace Web.Framework
 
         private static async Task ExecuteTask<T>(Task<T> task, HttpContext httpContext)
         {
-            var result = await task;
-            await ExecuteResultAsync(result, httpContext);
+            await new ObjectResult(await task).ExecuteAsync(httpContext);
         }
 
-        private static async Task ExecuteResultAsync(object result, HttpContext httpContext)
+        private static Task ExecuteValueTask<T>(ValueTask<T> task, HttpContext httpContext)
         {
-            switch (result)
+            static async Task ExecuteAwaited(ValueTask<T> task, HttpContext httpContext)
             {
-                case Task task:
-                    await task;
-                    break;
-                case RequestDelegate val:
-                    await val(httpContext);
-                    break;
-                default:
-                    {
-                        var val = new ObjectResult(result);
-                        await val.ExecuteAsync(httpContext);
-                    }
-                    break;
+                await new ObjectResult(await task).ExecuteAsync(httpContext);
             }
+
+            if (task.IsCompletedSuccessfully)
+            {
+                return new ObjectResult(task.GetAwaiter().GetResult()).ExecuteAsync(httpContext);
+            }
+
+            return ExecuteAwaited(task, httpContext);
+        }
+
+        private static Task ExecuteValueTaskResult<T>(ValueTask<T> task, HttpContext httpContext) where T : Result
+        {
+            static async Task ExecuteAwaited(ValueTask<T> task, HttpContext httpContext)
+            {
+                await (await task).ExecuteAsync(httpContext);
+            }
+
+            if (task.IsCompletedSuccessfully)
+            {
+                return task.GetAwaiter().GetResult().ExecuteAsync(httpContext);
+            }
+
+            return ExecuteAwaited(task, httpContext);
+        }
+
+        private static async Task ExecuteTaskResult<T>(Task<T> task, HttpContext httpContext) where T : Result
+        {
+            await (await task).ExecuteAsync(httpContext);
         }
     }
 }
