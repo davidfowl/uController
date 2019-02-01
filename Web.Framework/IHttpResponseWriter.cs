@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
@@ -6,16 +8,14 @@ using Newtonsoft.Json;
 
 namespace Web.Framework
 {
-    public class JsonResult : Result
+    public interface IHttpResponseWriter
     {
-        public object Value { get; }
+        Task WriteAsync(HttpContext httpContext, object value);
+    }
 
-        public JsonResult(object value)
-        {
-            Value = value;
-        }
-
-        public override async Task ExecuteAsync(HttpContext httpContext)
+    public class JsonResponseWriter : IHttpResponseWriter
+    {
+        public async Task WriteAsync(HttpContext httpContext, object value)
         {
             httpContext.Response.ContentType = "application/json";
 
@@ -25,7 +25,7 @@ namespace Web.Framework
                 {
                     var json = new JsonSerializer();
 
-                    json.Serialize(jsonWriter, Value);
+                    json.Serialize(jsonWriter, value);
 
                     await writer.FlushAsync();
                 }

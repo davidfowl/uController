@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Samples
@@ -11,10 +12,13 @@ namespace Samples
             BuildWebHost(args).Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
+        public static IHost BuildWebHost(string[] args) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging => logging.ClearProviders())
+                .ConfigureWebHostDefaults(webHostBuilder =>
+                {
+                    webHostBuilder.UseStartup<Startup>();
+                })
                 .Build();
     }
 }

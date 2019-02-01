@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.FileProviders;
@@ -11,9 +9,9 @@ namespace Web.Framework
 {
     public static class EndpointRouteBuilderExtensions
     {
-        public static void MapHttpHandler<THttpHandler>(this IEndpointRouteBuilder builder, Action<HttpModel> configure = null)
+        public static void MapHttpHandler<THttpHandler>(this IEndpointRouteBuilder builder)
         {
-            var endpoints = HttpHandler.Build<THttpHandler>(configure);
+            var endpoints = HttpHandler.Build<THttpHandler>();
 
             var dataSource = builder.DataSources.OfType<HandlerEndpointsDataSource>().SingleOrDefault();
             if (dataSource == null)

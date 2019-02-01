@@ -10,7 +10,7 @@ namespace Web.Framework
         public Result BadRequest() => Status(StatusCodes.Status400BadRequest);
         public Result NotFound() => Status(StatusCodes.Status404NotFound);
         public Result Ok() => Status(StatusCodes.Status200OK);
+        public Result Ok(object value) => new ObjectResult(value);
         public Result Status(int statusCode) => new StatusCodeResult(statusCode);
-        public Result Json(object value) => new JsonResult(value);
     }
 }
