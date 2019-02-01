@@ -37,6 +37,7 @@ namespace Web.Framework
             var model = HttpModel.FromType(handlerType);
 
             var endpoints = new List<Endpoint>();
+            ObjectFactory factory = null;
 
             foreach (var method in model.Methods)
             {
@@ -87,8 +88,15 @@ namespace Web.Framework
                 }
                 else
                 {
-                    // CreateInstance<THttpHandler>(context.RequestServices)
-                    httpHandlerExpression = Expression.Call(ActivatorMethodInfo.MakeGenericMethod(handlerType), requestServicesExpr);
+                    // Create a factory lazily for this handlerType
+                    if (factory == null)
+                    {
+                        factory = ActivatorUtilities.CreateFactory(handlerType, Type.EmptyTypes);
+                    }
+
+                    // This invokes the cached factory to create the instance then casts it to the target type
+                    var invokeFactoryExpr = Expression.Invoke(Expression.Constant(factory), requestServicesExpr, Expression.Constant(null, typeof(object[])));
+                    httpHandlerExpression = Expression.Convert(invokeFactoryExpr, handlerType);
                 }
 
                 var args = new List<Expression>();
