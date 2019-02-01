@@ -11,7 +11,7 @@ namespace Web.Framework
     {
         public static void MapHttpHandler<THttpHandler>(this IEndpointRouteBuilder builder)
         {
-            var endpoints = HttpHandler.Build<THttpHandler>();
+            var endpoints = HttpHandler.Build<THttpHandler>(builder.ServiceProvider);
 
             var dataSource = builder.DataSources.OfType<HandlerEndpointsDataSource>().SingleOrDefault();
             if (dataSource == null)

@@ -27,17 +27,19 @@ namespace Web.Framework
 
         private static readonly ConstructorInfo ObjectResultCtor = typeof(ObjectResult).GetConstructors()[0];
 
-        public static List<Endpoint> Build<THttpHandler>()
+        internal static List<Endpoint> Build<THttpHandler>(IServiceProvider serviceProvider)
         {
-            return Build(typeof(THttpHandler));
+            return Build(typeof(THttpHandler), serviceProvider);
         }
 
-        public static List<Endpoint> Build(Type handlerType)
+        internal static List<Endpoint> Build(Type handlerType, IServiceProvider serviceProvider)
         {
             var model = HttpModel.FromType(handlerType);
 
             var endpoints = new List<Endpoint>();
             ObjectFactory factory = null;
+            // REVIEW: Should this be lazy?
+            var httpRequestReader = serviceProvider.GetRequiredService<IHttpRequestReader>();
 
             foreach (var method in model.Methods)
             {
@@ -262,8 +264,7 @@ namespace Web.Framework
 
                     requestDelegate = async httpContext =>
                     {
-                        var reader = httpContext.RequestServices.GetRequiredService<IHttpRequestReader>();
-                        var bodyValue = await reader.ReadAsync(httpContext, bodyType);
+                        var bodyValue = await httpRequestReader.ReadAsync(httpContext, bodyType);
 
                         await invoker(httpContext, bodyValue);
                     };
