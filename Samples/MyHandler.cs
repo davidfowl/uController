@@ -19,6 +19,14 @@ namespace Samples
         {
             return new { name = "David Fowler" };
         }
+
+        [HttpGet("/lag")]
+        public async Task DoAsync(HttpContext context, [FromQuery]string q)
+        {
+            await Task.Delay(100);
+
+            await context.Response.WriteAsync(q);
+        }
         
         [HttpGet("/hey/david")]
         public string HelloDavid() => "Hello David!";

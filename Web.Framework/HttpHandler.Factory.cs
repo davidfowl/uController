@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
 
@@ -201,6 +197,10 @@ namespace Web.Framework
                                            methodCall,
                                            httpContextArg);
                     }
+                    else if (method.MethodInfo.ReturnType == typeof(Task))
+                    {
+                        body = methodCall;
+                    }
                     else
                     {
                         // ExecuteResult(handler.Method(..), httpContext);
@@ -352,9 +352,6 @@ namespace Web.Framework
                     break;
                 case RequestDelegate val:
                     await val(httpContext);
-                    break;
-                case null:
-                    httpContext.Response.StatusCode = 404;
                     break;
                 default:
                     {
