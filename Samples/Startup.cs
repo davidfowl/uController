@@ -27,7 +27,8 @@ namespace Samples
 
             app.UseRouting(routes =>
             {
-                routes.MapHttpHandler<MyHandler>();
+                routes.MapMyHandler();
+               // routes.MapHttpHandler<MyHandler>();
             });
 
             app.UseAuthorization();

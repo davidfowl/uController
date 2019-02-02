@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using Web.Framework;
 
@@ -161,46 +157,20 @@ namespace Samples
     {
         public static void MapMyHandler(this IEndpointRouteBuilder builder)
         {
-            var dataSource = builder.DataSources.OfType<HandlerEndpointsDataSource>().SingleOrDefault();
-            if (dataSource == null)
-            {
-                dataSource = new HandlerEndpointsDataSource();
-                builder.DataSources.Add(dataSource);
-            }
-
             var generated = ActivatorUtilities.CreateInstance<MyHandler_Generated>(builder.ServiceProvider);
 
-            dataSource.AddEndpoints(new List<Endpoint> {
-                new RouteEndpointBuilder(generated.GetAsync_Delegate, RoutePatternFactory.Parse("/"), 0).Build(),
-                new RouteEndpointBuilder(generated.Blah_Delegate, RoutePatternFactory.Parse("/blah"), 0).Build(),
-                new RouteEndpointBuilder(generated.StatusCode_Delegate, RoutePatternFactory.Parse("/status/{status}"), 0).Build(),
-                new RouteEndpointBuilder(generated.SlowTaskStatusCode_Delegate, RoutePatternFactory.Parse("/slow/status/{status}"), 0).Build(),
-                new RouteEndpointBuilder(generated.FastValueTaskStatusCode_Delegate, RoutePatternFactory.Parse("/fast/status/{status}"), 0).Build(),
-                new RouteEndpointBuilder(generated.DoAsync_Delegate, RoutePatternFactory.Parse("/lag"), 0).Build(),
-                new RouteEndpointBuilder(generated.HelloDavid_Delegate, RoutePatternFactory.Parse("/hey/david"), 0).Build(),
-                new RouteEndpointBuilder(generated.GetAsync_Delegate, RoutePatternFactory.Parse("/hey/{name?}"), 0).Build(),
-                new RouteEndpointBuilder(generated.Hello_Delegate, RoutePatternFactory.Parse("/hello"), 0).Build(),
-                new RouteEndpointBuilder(generated.Post_Delegate, RoutePatternFactory.Parse("/"), 0).Build(),
-                new RouteEndpointBuilder(generated.PostAForm_Delegate, RoutePatternFactory.Parse("/post-form"), 0).Build(),
-                new RouteEndpointBuilder(generated.Authed_Delegate, RoutePatternFactory.Parse("/auth"), 0).Build(),
-            });
-        }
-
-        private class HandlerEndpointsDataSource : EndpointDataSource
-        {
-            private readonly List<Endpoint> _endpoints = new List<Endpoint>();
-
-            public void AddEndpoints(IList<Endpoint> endpoints)
-            {
-                _endpoints.AddRange(endpoints);
-            }
-
-            public override IReadOnlyList<Endpoint> Endpoints => _endpoints;
-
-            public override IChangeToken GetChangeToken()
-            {
-                return NullChangeToken.Singleton;
-            }
+            builder.Map("/", generated.Get_Delegate, new HttpGetAttribute());
+            builder.Map("/blah", generated.Blah_Delegate, new HttpGetAttribute());
+            builder.Map("/status/{status}", generated.StatusCode_Delegate, new HttpGetAttribute());
+            builder.Map("/slow/status/{status}", generated.SlowTaskStatusCode_Delegate, new HttpGetAttribute());
+            builder.Map("/fast/status/{status}", generated.FastValueTaskStatusCode_Delegate, new HttpGetAttribute());
+            builder.Map("/lag", generated.DoAsync_Delegate, new HttpGetAttribute());
+            builder.Map("/hey/david", generated.HelloDavid_Delegate, new HttpGetAttribute());
+            builder.Map("/hey/{name?}", generated.GetAsync_Delegate, new HttpGetAttribute());
+            builder.Map("/hello", generated.Hello_Delegate, new HttpGetAttribute());
+            builder.Map("/", generated.Post_Delegate, new HttpPostAttribute());
+            builder.Map("/post-form", generated.PostAForm_Delegate, new HttpPostAttribute());
+            builder.Map("/auth", generated.Authed_Delegate, new HttpPostAttribute());
         }
     }
 }
