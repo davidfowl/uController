@@ -1,7 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Web.Framework;
 
@@ -48,7 +48,7 @@ namespace Samples
 
             await context.Response.WriteAsync(q);
         }
-        
+
         [HttpGet("/hey/david")]
         public string HelloDavid() => "Hello David!";
 
@@ -67,6 +67,12 @@ namespace Samples
         public Result Post([FromBody]JToken obj)
         {
             return Ok(obj);
+        }
+
+        [HttpPost("/post-form")]
+        public void PostAForm(IFormCollection form)
+        {
+
         }
 
         [HttpGet("/auth")]

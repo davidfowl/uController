@@ -18,7 +18,6 @@ namespace Web.Framework
         private static readonly MethodInfo ExecuteValueTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTask), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ExecuteTaskResultOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ExecuteValueResultTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ActivatorMethodInfo = typeof(HttpHandler).GetMethod(nameof(CreateInstance), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
         private static readonly MethodInfo ResultExecuteAsync = typeof(Result).GetMethod(nameof(Result.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
@@ -32,6 +31,7 @@ namespace Web.Framework
             return Build(typeof(THttpHandler), serviceProvider);
         }
 
+        // Expression tree impl
         internal static List<Endpoint> Build(Type handlerType, IServiceProvider serviceProvider)
         {
             var model = HttpModel.FromType(handlerType);
@@ -159,15 +159,13 @@ namespace Web.Framework
                     {
                         if (parameter.ParameterType == typeof(IFormCollection))
                         {
+                            needForm = true;
+
                             paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Form));
                         }
                         else if (parameter.ParameterType == typeof(HttpContext))
                         {
                             paramterExpression = httpContextArg;
-                        }
-                        else if (parameter.ParameterType == typeof(IHeaderDictionary))
-                        {
-                            paramterExpression = Expression.Property(httpRequestExpr, nameof(HttpRequest.Headers));
                         }
                     }
 
@@ -307,6 +305,13 @@ namespace Web.Framework
             return endpoints;
         }
 
+        // DynamicMethod impl
+        internal static List<Endpoint> BuildILEmit(Type handerType, IServiceProvider serviceProvider)
+        {
+            // TODO: A ILEmit implementation..
+            return new List<Endpoint>();
+        }
+
         private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)
         {
             var key = name ?? parameter.Name;
@@ -369,11 +374,6 @@ namespace Web.Framework
         private static T GetRequiredService<T>(IServiceProvider sp)
         {
             return sp.GetRequiredService<T>();
-        }
-
-        private static T CreateInstance<T>(IServiceProvider sp)
-        {
-            return ActivatorUtilities.CreateInstance<T>(sp);
         }
 
         private static async Task ExecuteTask<T>(Task<T> task, HttpContext httpContext)
