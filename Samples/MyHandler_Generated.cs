@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -11,7 +12,7 @@ using Web.Framework;
 namespace Samples
 {
     /// <summary>
-    /// An example of what the generated C# binding code would be for the MyHandler class. This
+    /// An example of what the generated C# binding code would be for the MyHandler class.
     /// </summary>
     public class MyHandler_Generated
     {
@@ -170,7 +171,7 @@ namespace Samples
             builder.Map("/hello", generated.Hello_Delegate, new HttpGetAttribute());
             builder.Map("/", generated.Post_Delegate, new HttpPostAttribute());
             builder.Map("/post-form", generated.PostAForm_Delegate, new HttpPostAttribute());
-            builder.Map("/auth", generated.Authed_Delegate, new HttpPostAttribute());
+            builder.Map("/auth", generated.Authed_Delegate, new HttpPostAttribute(), new AuthorizeAttribute());
         }
     }
 }
