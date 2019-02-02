@@ -16,7 +16,11 @@ namespace Samples
     /// </summary>
     public class MyHandler_Generated
     {
+        // This only gets used/generated for [FromBody] methods
         private readonly IHttpRequestReader _reader;
+
+        // This only gets used/generated if there's the type is activated via DI
+        private readonly ObjectFactory _factory;
 
         public readonly RequestDelegate Get_Delegate;
         public readonly RequestDelegate Blah_Delegate;
@@ -34,6 +38,7 @@ namespace Samples
         public MyHandler_Generated(IHttpRequestReader reader)
         {
             _reader = reader;
+            _factory = ActivatorUtilities.CreateFactory(typeof(MyHandler), Type.EmptyTypes);
 
             Get_Delegate = Get;
             Blah_Delegate = Blah;
