@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Framework;
 
@@ -27,8 +28,7 @@ namespace Samples
 
             app.UseRouting(routes =>
             {
-                routes.MapMyHandler();
-               // routes.MapHttpHandler<MyHandler>();
+                routes.MapRouteProviders<Startup>();
             });
 
             app.UseAuthorization();

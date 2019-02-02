@@ -7,14 +7,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using Samples;
 using Web.Framework;
+
+// This assembly attribute is part of the generated code to help register the routes
+[assembly: EndpointRouteProvider(typeof(MyHandlerRouteProvider))]
 
 namespace Samples
 {
     /// <summary>
     /// An example of what the generated C# binding code would be for the MyHandler class.
     /// </summary>
-    public class MyHandler_Generated
+    public class MyHandlerRouteProvider : IEndpointRouteProvider
     {
         // This only gets used/generated for [FromBody] methods
         private readonly IHttpRequestReader _reader;
@@ -22,36 +26,36 @@ namespace Samples
         // This only gets used/generated if there's the type is activated via DI
         private readonly ObjectFactory _factory;
 
-        public readonly RequestDelegate Get_Delegate;
-        public readonly RequestDelegate Blah_Delegate;
-        public readonly RequestDelegate StatusCode_Delegate;
-        public readonly RequestDelegate SlowTaskStatusCode_Delegate;
-        public readonly RequestDelegate FastValueTaskStatusCode_Delegate;
-        public readonly RequestDelegate DoAsync_Delegate;
-        public readonly RequestDelegate HelloDavid_Delegate;
-        public readonly RequestDelegate GetAsync_Delegate;
-        public readonly RequestDelegate Hello_Delegate;
-        public readonly RequestDelegate Post_Delegate;
-        public readonly RequestDelegate Authed_Delegate;
-        public readonly RequestDelegate PostAForm_Delegate;
+        private readonly RequestDelegate _getDelegate;
+        private readonly RequestDelegate _blahDelegate;
+        private readonly RequestDelegate _statusCodeDelegate;
+        private readonly RequestDelegate _slowTaskStatusCodeDelegate;
+        private readonly RequestDelegate _fastValueTaskStatusCodeDelegate;
+        private readonly RequestDelegate _doAsyncDelegate;
+        private readonly RequestDelegate _helloDavidDelegate;
+        private readonly RequestDelegate _getAsyncDelegate;
+        private readonly RequestDelegate _helloDelegate;
+        private readonly RequestDelegate _postDelegate;
+        private readonly RequestDelegate _authedDelegate;
+        private readonly RequestDelegate _postAFormDelegate;
 
-        public MyHandler_Generated(IHttpRequestReader reader)
+        public MyHandlerRouteProvider(IHttpRequestReader reader)
         {
             _reader = reader;
             _factory = ActivatorUtilities.CreateFactory(typeof(MyHandler), Type.EmptyTypes);
 
-            Get_Delegate = Get;
-            Blah_Delegate = Blah;
-            StatusCode_Delegate = StatusCode;
-            SlowTaskStatusCode_Delegate = SlowTaskStatusCode;
-            FastValueTaskStatusCode_Delegate = FastValueTaskStatusCode;
-            DoAsync_Delegate = DoAsync;
-            HelloDavid_Delegate = HelloDavid;
-            GetAsync_Delegate = GetAsync;
-            Hello_Delegate = Hello;
-            Post_Delegate = Post;
-            Authed_Delegate = Authed;
-            PostAForm_Delegate = PostAForm;
+            _getDelegate = Get;
+            _blahDelegate = Blah;
+            _statusCodeDelegate = StatusCode;
+            _slowTaskStatusCodeDelegate = SlowTaskStatusCode;
+            _fastValueTaskStatusCodeDelegate = FastValueTaskStatusCode;
+            _doAsyncDelegate = DoAsync;
+            _helloDavidDelegate = HelloDavid;
+            _getAsyncDelegate = GetAsync;
+            _helloDelegate = Hello;
+            _postDelegate = Post;
+            _authedDelegate = Authed;
+            _postAFormDelegate = PostAForm;
         }
 
         [DebuggerStepThrough]
@@ -154,29 +158,24 @@ namespace Samples
         private async Task PostAForm(HttpContext httpContext)
         {
             var handler = new MyHandler();
-            await httpContext.Request.ReadFormAsync();
-            handler.PostAForm(httpContext.Request.Form);
+            var form = await httpContext.Request.ReadFormAsync();
+            handler.PostAForm(form);
         }
-    }
 
-    public static class MyHandlerRoutingExtensions
-    {
-        public static void MapMyHandler(this IEndpointRouteBuilder builder)
+        public void MapRoutes(IEndpointRouteBuilder routes)
         {
-            var generated = ActivatorUtilities.CreateInstance<MyHandler_Generated>(builder.ServiceProvider);
-
-            builder.Map("/", generated.Get_Delegate, new HttpGetAttribute());
-            builder.Map("/blah", generated.Blah_Delegate, new HttpGetAttribute());
-            builder.Map("/status/{status}", generated.StatusCode_Delegate, new HttpGetAttribute());
-            builder.Map("/slow/status/{status}", generated.SlowTaskStatusCode_Delegate, new HttpGetAttribute());
-            builder.Map("/fast/status/{status}", generated.FastValueTaskStatusCode_Delegate, new HttpGetAttribute());
-            builder.Map("/lag", generated.DoAsync_Delegate, new HttpGetAttribute());
-            builder.Map("/hey/david", generated.HelloDavid_Delegate, new HttpGetAttribute());
-            builder.Map("/hey/{name?}", generated.GetAsync_Delegate, new HttpGetAttribute());
-            builder.Map("/hello", generated.Hello_Delegate, new HttpGetAttribute());
-            builder.Map("/", generated.Post_Delegate, new HttpPostAttribute());
-            builder.Map("/post-form", generated.PostAForm_Delegate, new HttpPostAttribute());
-            builder.Map("/auth", generated.Authed_Delegate, new HttpPostAttribute(), new AuthorizeAttribute());
+            routes.Map("/", _getDelegate, new HttpGetAttribute());
+            routes.Map("/blah", _blahDelegate, new HttpGetAttribute());
+            routes.Map("/status/{status}", _statusCodeDelegate, new HttpGetAttribute());
+            routes.Map("/slow/status/{status}", _slowTaskStatusCodeDelegate, new HttpGetAttribute());
+            routes.Map("/fast/status/{status}", _fastValueTaskStatusCodeDelegate, new HttpGetAttribute());
+            routes.Map("/lag", _doAsyncDelegate, new HttpGetAttribute());
+            routes.Map("/hey/david", _helloDavidDelegate, new HttpGetAttribute());
+            routes.Map("/hey/{name?}", _getAsyncDelegate, new HttpGetAttribute());
+            routes.Map("/hello", _helloDelegate, new HttpGetAttribute());
+            routes.Map("/", _postDelegate, new HttpPostAttribute());
+            routes.Map("/post-form", _postAFormDelegate, new HttpPostAttribute());
+            routes.Map("/auth", _authedDelegate, new HttpPostAttribute(), new AuthorizeAttribute());
         }
     }
 }
