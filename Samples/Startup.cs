@@ -14,8 +14,8 @@ namespace Samples
         {
             services.AddAuthorization()
                     .AddAuthorizationPolicyEvaluator()
-                    .AddSingleton<IHttpRequestReader, JsonRequestReader>()
-                    .AddSingleton<IHttpResponseWriter, JsonResponseWriter>();
+                    .AddSingleton<IHttpRequestReader, NewtonsoftJsonRequestReader>()
+                    .AddSingleton<IHttpResponseWriter, NewtonsoftJsonResponseWriter>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

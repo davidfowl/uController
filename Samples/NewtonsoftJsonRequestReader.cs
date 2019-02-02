@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
+using Web.Framework;
 
-namespace Web.Framework
+namespace Samples
 {
-    public class JsonRequestReader : IHttpRequestReader
+    public class NewtonsoftJsonRequestReader : IHttpRequestReader
     {
         public async ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
         {

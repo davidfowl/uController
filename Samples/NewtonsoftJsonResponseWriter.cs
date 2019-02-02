@@ -3,10 +3,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
+using Web.Framework;
 
-namespace Web.Framework
+namespace Samples
 {
-    public class JsonResponseWriter : IHttpResponseWriter
+    public class NewtonsoftJsonResponseWriter : IHttpResponseWriter
     {
         public async Task WriteAsync(HttpContext httpContext, object value)
         {
