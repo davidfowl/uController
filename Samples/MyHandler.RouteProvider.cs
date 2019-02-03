@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Samples;
 using Web.Framework;
@@ -99,7 +100,8 @@ namespace Samples
         private async Task FastValueTaskStatusCode(HttpContext httpContext)
         {
             var handler = new MyHandler();
-            var result = await handler.FastValueTaskStatusCode();
+            var loggerFactory = httpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+            var result = await handler.FastValueTaskStatusCode(loggerFactory);
             await result.ExecuteAsync(httpContext);
         }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,20 +27,20 @@ namespace Web.Framework
 
         private static readonly ConstructorInfo ObjectResultCtor = typeof(ObjectResult).GetConstructors()[0];
 
-        internal static List<Endpoint> Build<THttpHandler>(IServiceProvider serviceProvider)
+        internal static void Build<THttpHandler>(IEndpointRouteBuilder routes)
         {
-            return Build(typeof(THttpHandler), serviceProvider);
+            Build(typeof(THttpHandler), routes);
         }
 
         // Expression tree impl
-        internal static List<Endpoint> Build(Type handlerType, IServiceProvider serviceProvider)
+        internal static void Build(Type handlerType, IEndpointRouteBuilder routes)
         {
             var model = HttpModel.FromType(handlerType);
 
             var endpoints = new List<Endpoint>();
             ObjectFactory factory = null;
             // REVIEW: Should this be lazy?
-            var httpRequestReader = serviceProvider.GetRequiredService<IHttpRequestReader>();
+            var httpRequestReader = routes.ServiceProvider.GetRequiredService<IHttpRequestReader>();
 
             foreach (var method in model.Methods)
             {
@@ -289,27 +290,22 @@ namespace Web.Framework
                     requestDelegate = invoker;
                 }
 
-                var routeEndpointModel = new RouteEndpointBuilder(requestDelegate, method.RoutePattern, 0)
-                {
-                    DisplayName = method.MethodInfo.DeclaringType.Name + "." + method.MethodInfo.Name
-                };
+                var displayName = method.MethodInfo.DeclaringType.Name + "." + method.MethodInfo.Name;
 
-                foreach (var metadata in method.Metadata)
+                routes.Map(method.RoutePattern, requestDelegate).Add(b =>
                 {
-                    routeEndpointModel.Metadata.Add(metadata);
-                }
-
-                endpoints.Add(routeEndpointModel.Build());
+                    foreach (var item in method.Metadata)
+                    {
+                        b.Metadata.Add(item);
+                    }
+                });
             }
-
-            return endpoints;
         }
 
         // DynamicMethod impl
-        internal static List<Endpoint> BuildILEmit(Type handerType, IServiceProvider serviceProvider)
+        internal static void BuildILEmit(Type handerType, IEndpointRouteBuilder builder)
         {
             // TODO: A ILEmit implementation..
-            return new List<Endpoint>();
         }
 
         private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)

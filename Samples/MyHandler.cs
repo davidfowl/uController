@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Web.Framework;
 
@@ -36,7 +37,7 @@ namespace Samples
         }
 
         [HttpGet("/fast/status/{status}")]
-        public ValueTask<Result> FastValueTaskStatusCode()
+        public ValueTask<Result> FastValueTaskStatusCode([FromServices]ILoggerFactory loggerFactory)
         {
             return new ValueTask<Result>(Status(201));
         }
