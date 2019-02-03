@@ -302,12 +302,6 @@ namespace Web.Framework
             }
         }
 
-        // DynamicMethod impl
-        internal static void BuildILEmit(Type handerType, IEndpointRouteBuilder builder)
-        {
-            // TODO: A ILEmit implementation..
-        }
-
         private static Expression BindArgument(Expression sourceExpression, ParameterModel parameter, string name)
         {
             var key = name ?? parameter.Name;

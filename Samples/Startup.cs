@@ -28,8 +28,8 @@ namespace Samples
 
             app.UseRouting(routes =>
             {
-                // routes.MapRouteProviders<Startup>();
-                routes.MapHttpHandler<MyHandler>();
+                routes.MapRouteProviders<Startup>();
+                // routes.MapHttpHandler<MyHandler>();
             });
 
             app.UseAuthorization();

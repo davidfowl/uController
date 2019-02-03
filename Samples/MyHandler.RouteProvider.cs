@@ -27,36 +27,10 @@ namespace Samples
         // This only gets used/generated if there's the type is activated via DI
         private readonly ObjectFactory _factory;
 
-        private readonly RequestDelegate _getDelegate;
-        private readonly RequestDelegate _blahDelegate;
-        private readonly RequestDelegate _statusCodeDelegate;
-        private readonly RequestDelegate _slowTaskStatusCodeDelegate;
-        private readonly RequestDelegate _fastValueTaskStatusCodeDelegate;
-        private readonly RequestDelegate _doAsyncDelegate;
-        private readonly RequestDelegate _helloDavidDelegate;
-        private readonly RequestDelegate _getAsyncDelegate;
-        private readonly RequestDelegate _helloDelegate;
-        private readonly RequestDelegate _postDelegate;
-        private readonly RequestDelegate _authedDelegate;
-        private readonly RequestDelegate _postAFormDelegate;
-
         public MyHandlerRouteProvider(IHttpRequestReader reader)
         {
             _reader = reader;
             _factory = ActivatorUtilities.CreateFactory(typeof(MyHandler), Type.EmptyTypes);
-
-            _getDelegate = Get;
-            _blahDelegate = Blah;
-            _statusCodeDelegate = StatusCode;
-            _slowTaskStatusCodeDelegate = SlowTaskStatusCode;
-            _fastValueTaskStatusCodeDelegate = FastValueTaskStatusCode;
-            _doAsyncDelegate = DoAsync;
-            _helloDavidDelegate = HelloDavid;
-            _getAsyncDelegate = GetAsync;
-            _helloDelegate = Hello;
-            _postDelegate = Post;
-            _authedDelegate = Authed;
-            _postAFormDelegate = PostAForm;
         }
 
         [DebuggerStepThrough]
@@ -166,18 +140,18 @@ namespace Samples
 
         public void MapRoutes(IEndpointRouteBuilder routes)
         {
-            routes.Map("/", _getDelegate, new HttpGetAttribute());
-            routes.Map("/blah", _blahDelegate, new HttpGetAttribute());
-            routes.Map("/status/{status}", _statusCodeDelegate, new HttpGetAttribute());
-            routes.Map("/slow/status/{status}", _slowTaskStatusCodeDelegate, new HttpGetAttribute());
-            routes.Map("/fast/status/{status}", _fastValueTaskStatusCodeDelegate, new HttpGetAttribute());
-            routes.Map("/lag", _doAsyncDelegate, new HttpGetAttribute());
-            routes.Map("/hey/david", _helloDavidDelegate, new HttpGetAttribute());
-            routes.Map("/hey/{name?}", _getAsyncDelegate, new HttpGetAttribute());
-            routes.Map("/hello", _helloDelegate, new HttpGetAttribute());
-            routes.Map("/", _postDelegate, new HttpPostAttribute());
-            routes.Map("/post-form", _postAFormDelegate, new HttpPostAttribute());
-            routes.Map("/auth", _authedDelegate, new HttpPostAttribute(), new AuthorizeAttribute());
+            routes.Map("/", Get, new HttpGetAttribute());
+            routes.Map("/blah", Blah, new HttpGetAttribute());
+            routes.Map("/status/{status}", StatusCode, new HttpGetAttribute());
+            routes.Map("/slow/status/{status}", SlowTaskStatusCode, new HttpGetAttribute());
+            routes.Map("/fast/status/{status}", FastValueTaskStatusCode, new HttpGetAttribute());
+            routes.Map("/lag", DoAsync, new HttpGetAttribute());
+            routes.Map("/hey/david", HelloDavid, new HttpGetAttribute());
+            routes.Map("/hey/{name?}", GetAsync, new HttpGetAttribute());
+            routes.Map("/hello", Hello, new HttpGetAttribute());
+            routes.Map("/", Post, new HttpPostAttribute());
+            routes.Map("/post-form", PostAForm, new HttpPostAttribute());
+            routes.Map("/auth", Authed, new HttpPostAttribute(), new AuthorizeAttribute());
         }
     }
 }
