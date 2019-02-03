@@ -37,8 +37,8 @@ namespace Web.Framework
         {
             var model = HttpModel.FromType(handlerType);
 
-            var endpoints = new List<Endpoint>();
             ObjectFactory factory = null;
+
             // REVIEW: Should this be lazy?
             var httpRequestReader = routes.ServiceProvider.GetRequiredService<IHttpRequestReader>();
 
