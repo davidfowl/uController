@@ -14,8 +14,7 @@ namespace Samples
         {
             services.AddAuthorization()
                     .AddAuthorizationPolicyEvaluator()
-                    .AddSingleton<IHttpRequestReader, NewtonsoftJsonRequestReader>()
-                    .AddSingleton<IHttpResponseWriter, NewtonsoftJsonResponseWriter>();
+                    .AddJson();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -28,8 +27,8 @@ namespace Samples
 
             app.UseRouting(routes =>
             {
-                routes.MapRouteProviders<Startup>();
-                // routes.MapHttpHandler<MyHandler>();
+                // routes.MapRouteProviders<Startup>();
+                routes.MapHttpHandler<MyHandler>();
             });
 
             app.UseAuthorization();

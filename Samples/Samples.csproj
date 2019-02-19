@@ -2,10 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Web.Framework\Web.Framework.csproj" />
+    <PackageReference Include="System.Text.JsonLab.Serialization" Version="0.1.1-e190216-1" />
   </ItemGroup>
 
 </Project>
