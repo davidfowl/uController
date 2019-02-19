@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -65,7 +66,7 @@ namespace Samples
         public string Hello() => "Hello!";
 
         [HttpPost("/")]
-        public Result Post([FromBody]JToken obj)
+        public Result Post([FromBody]JsonDocument obj)
         {
             return Ok(obj);
         }

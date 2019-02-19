@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -116,7 +117,7 @@ namespace Samples
         {
             var handler = new MyHandler();
 
-            var bodyValue = (JValue)await _reader.ReadAsync(httpContext, typeof(JValue));
+            var bodyValue = (JsonDocument)await _reader.ReadAsync(httpContext, typeof(JsonDocument));
 
             var result = handler.Post(bodyValue);
             await result.ExecuteAsync(httpContext);

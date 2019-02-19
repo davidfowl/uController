@@ -14,7 +14,6 @@ namespace Samples
 
         public static IHost BuildWebHost(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureLogging(logging => logging.ClearProviders())
                 .ConfigureWebHostDefaults(webHostBuilder =>
                 {
                     webHostBuilder.UseStartup<Startup>();
