@@ -8,9 +8,9 @@ namespace Samples
 {
     internal class JsonRequestReader : IHttpRequestReader
     {
-        public async ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
+        public ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
         {
-            return await JsonSerializer.ReadAsync(httpContext.Request.BodyPipe, targetType);
+            return JsonSerializer.ReadAsync(httpContext.Request.Body, targetType);
         }
     }
 }

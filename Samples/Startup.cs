@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Web.Framework;
 
 namespace Samples
 {
@@ -26,13 +25,15 @@ namespace Samples
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting(routes =>
-            {
-                // routes.MapRouteProviders<Startup>();
-                routes.MapHttpHandler<MyHandler>();
-            });
+            app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                // endpoints.MapRouteProviders<Startup>();
+                endpoints.MapHttpHandler<MyHandler>();
+            });
         }
     }
 }

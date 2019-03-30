@@ -141,18 +141,18 @@ namespace Samples
 
         public void MapRoutes(IEndpointRouteBuilder routes)
         {
-            routes.Map("/", Get, new HttpGetAttribute());
-            routes.Map("/blah", Blah, new HttpGetAttribute());
-            routes.Map("/status/{status}", StatusCode, new HttpGetAttribute());
-            routes.Map("/slow/status/{status}", SlowTaskStatusCode, new HttpGetAttribute());
-            routes.Map("/fast/status/{status}", FastValueTaskStatusCode, new HttpGetAttribute());
-            routes.Map("/lag", DoAsync, new HttpGetAttribute());
-            routes.Map("/hey/david", HelloDavid, new HttpGetAttribute());
-            routes.Map("/hey/{name?}", GetAsync, new HttpGetAttribute());
-            routes.Map("/hello", Hello, new HttpGetAttribute());
-            routes.Map("/", Post, new HttpPostAttribute());
-            routes.Map("/post-form", PostAForm, new HttpPostAttribute());
-            routes.Map("/auth", Authed, new HttpPostAttribute(), new AuthorizeAttribute());
+            routes.Map("/", Get).WithMetadata(new HttpGetAttribute());
+            routes.Map("/blah", Blah).WithMetadata(new HttpGetAttribute());
+            routes.Map("/status/{status}", StatusCode).WithMetadata(new HttpGetAttribute());
+            routes.Map("/slow/status/{status}", SlowTaskStatusCode).WithMetadata(new HttpGetAttribute());
+            routes.Map("/fast/status/{status}", FastValueTaskStatusCode).WithMetadata(new HttpGetAttribute());
+            routes.Map("/lag", DoAsync).WithMetadata(new HttpGetAttribute());
+            routes.Map("/hey/david", HelloDavid).WithMetadata(new HttpGetAttribute());
+            routes.Map("/hey/{name?}", GetAsync).WithMetadata(new HttpGetAttribute());
+            routes.Map("/hello", Hello).WithMetadata(new HttpGetAttribute());
+            routes.Map("/", Post).WithMetadata(new HttpPostAttribute());
+            routes.Map("/post-form", PostAForm).WithMetadata(new HttpPostAttribute());
+            routes.Map("/auth", Authed).WithMetadata(new HttpPostAttribute(), new AuthorizeAttribute());
         }
     }
 }
