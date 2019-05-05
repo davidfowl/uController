@@ -13,7 +13,6 @@ namespace Samples
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAuthorization()
-                    .AddAuthorizationPolicyEvaluator()
                     .AddJson();
         }
 
