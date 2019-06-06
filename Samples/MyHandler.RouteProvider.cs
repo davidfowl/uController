@@ -116,7 +116,7 @@ namespace Samples
         {
             var handler = new MyHandler();
 
-            var bodyValue = (JsonDocument)await _reader.ReadAsync(httpContext, typeof(JsonDocument));
+            var bodyValue = (JsonElement)await _reader.ReadAsync(httpContext, typeof(JsonElement));
 
             var result = handler.Post(bodyValue);
             await result.ExecuteAsync(httpContext);

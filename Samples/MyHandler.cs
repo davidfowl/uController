@@ -1,10 +1,8 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using Web.Framework;
 
 namespace Samples
@@ -66,7 +64,7 @@ namespace Samples
         public string Hello() => "Hello!";
 
         [HttpPost("/")]
-        public Result Post([FromBody]JsonDocument obj)
+        public Result Post([FromBody]JsonElement obj)
         {
             return Ok(obj);
         }
