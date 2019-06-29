@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Web.Framework;
@@ -10,7 +10,7 @@ namespace Samples
     {
         public ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
         {
-            return JsonSerializer.ReadAsync(httpContext.Request.Body, targetType);
+            return JsonSerializer.DeserializeAsync(httpContext.Request.Body, targetType);
         }
     }
 }

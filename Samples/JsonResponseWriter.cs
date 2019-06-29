@@ -1,7 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Web.Framework;
 
 namespace Samples
@@ -10,7 +9,7 @@ namespace Samples
     {
         public Task WriteAsync(HttpContext httpContext, object value)
         {
-            return JsonSerializer.WriteAsync(value, value.GetType(), httpContext.Response.Body);
+            return JsonSerializer.SerializeAsync(httpContext.Response.Body, value, value?.GetType());
         }
     }
 }

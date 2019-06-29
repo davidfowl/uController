@@ -13,17 +13,19 @@ namespace Samples
         {
             httpContext.Response.ContentType = "application/json";
 
-            using (var writer = new HttpResponseStreamWriter(httpContext.Response.Body, Encoding.UTF8))
+            await using var bufferingStream = new FileBufferingWriteStream();
+
+            using (var writer = new HttpResponseStreamWriter(bufferingStream, Encoding.UTF8))
             {
                 using (var jsonWriter = new JsonTextWriter(writer))
                 {
                     var json = new JsonSerializer();
 
                     json.Serialize(jsonWriter, value);
-
-                    await writer.FlushAsync();
                 }
             }
+
+            await bufferingStream.DrainBufferAsync(httpContext.Response.Body);
         }
     }
 }
