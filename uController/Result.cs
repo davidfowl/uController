@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Web.Framework
+namespace uController
 {
     // Result is the class version of a RequestDelegate
     // it can be used as a return value so it can be observed, but has an implcit

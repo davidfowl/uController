@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Web.Framework
+namespace uController
 {
     public class ObjectResult : Result
     {

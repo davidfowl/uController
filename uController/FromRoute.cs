@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Web.Framework
+namespace uController
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    public sealed class FromQueryAttribute : Attribute
+    public sealed class FromRouteAttribute : Attribute
     {
         public string Name { get; private set; }
 
-        public FromQueryAttribute()
+        public FromRouteAttribute()
         {
         }
 
-        public FromQueryAttribute(string name)
+        public FromRouteAttribute(string name)
         {
             Name = name;
         }

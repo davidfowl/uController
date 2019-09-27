@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Web.Framework
+namespace uController
 {
     public abstract partial class HttpHandler
     {

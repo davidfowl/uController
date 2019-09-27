@@ -2,19 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Web.Framework
+namespace uController
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    public sealed class FromHeaderAttribute : Attribute
+    public sealed class FromQueryAttribute : Attribute
     {
         public string Name { get; private set; }
 
-        public FromHeaderAttribute()
+        public FromQueryAttribute()
         {
-
         }
 
-        public FromHeaderAttribute(string name)
+        public FromQueryAttribute(string name)
         {
             Name = name;
         }

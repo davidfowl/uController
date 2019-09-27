@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
 
-namespace Web.Framework
+namespace uController
 {
     public partial class HttpHandler
     {

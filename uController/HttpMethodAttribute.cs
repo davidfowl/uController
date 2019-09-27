@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Routing;
 
-namespace Web.Framework
+namespace uController
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public class HttpMethodAttribute : Attribute, IHttpMethodMetadata

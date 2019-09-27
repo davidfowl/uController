@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Web.Framework\Web.Framework.csproj" />
+    <ProjectReference Include="..\uController\uController.csproj" />
   </ItemGroup>
 
 </Project>

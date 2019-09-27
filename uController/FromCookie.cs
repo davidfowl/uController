@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Web.Framework
+namespace uController
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    public sealed class FromFormAttribute : Attribute
+    public sealed class FromCookieAttribute : Attribute
     {
         public string Name { get; private set; }
 
-        public FromFormAttribute()
+        public FromCookieAttribute()
         {
 
         }
 
-        public FromFormAttribute(string name)
+        public FromCookieAttribute(string name)
         {
             Name = name;
         }

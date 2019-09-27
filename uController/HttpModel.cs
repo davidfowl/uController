@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNetCore.Routing.Patterns;
 
-namespace Web.Framework
+namespace uController
 {
     public class HttpModel
     {

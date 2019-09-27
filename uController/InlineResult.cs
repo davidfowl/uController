@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Web.Framework
+namespace uController
 {
     public class InlineResult : Result
     {

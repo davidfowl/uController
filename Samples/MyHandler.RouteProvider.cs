@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Samples;
-using Web.Framework;
+using uController;
 
 // This assembly attribute is part of the generated code to help register the routes
 [assembly: EndpointRouteProvider(typeof(MyHandlerRouteProvider))]
