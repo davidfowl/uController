@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
   </ItemGroup>
 

@@ -12,14 +12,14 @@ using Microsoft.Extensions.Internal;
 
 namespace uController
 {
-    public partial class HttpHandler
+    internal class HttpHandlerBuilder
     {
         private static readonly MethodInfo ChangeTypeMethodInfo = GetMethodInfo<Func<object, Type, object>>((value, type) => Convert.ChangeType(value, type));
-        private static readonly MethodInfo ExecuteTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTask), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ExecuteValueTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTask), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ExecuteTaskResultOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo ExecuteValueResultTaskOfTMethodInfo = typeof(HttpHandler).GetMethod(nameof(ExecuteValueTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandler).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteTaskOfTMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(ExecuteTask), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteValueTaskOfTMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(ExecuteValueTask), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteTaskResultOfTMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(ExecuteTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ExecuteValueResultTaskOfTMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(ExecuteValueTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
         private static readonly MethodInfo ResultExecuteAsync = typeof(Result).GetMethod(nameof(Result.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
 

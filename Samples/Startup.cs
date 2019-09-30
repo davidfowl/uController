@@ -30,8 +30,10 @@ namespace Samples
 
             app.UseEndpoints(endpoints =>
             {
-                // endpoints.MapRouteProviders<Startup>();
-                endpoints.MapHttpHandler<MyHandler>();
+                endpoints.MapRouteProviders<Startup>();
+
+                // This is the runtime dispatched version
+                // endpoints.MapHttpHandler<MyHandler>();
             });
         }
     }
