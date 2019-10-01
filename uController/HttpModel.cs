@@ -7,19 +7,37 @@ namespace uController
 {
     public class HttpModel
     {
+        public HttpModel(Type handlerType)
+        {
+            HandlerType = handlerType;
+        }
+
         public List<MethodModel> Methods { get; } = new List<MethodModel>();
+
+        public Type HandlerType { get; }
 
         public static HttpModel FromType(Type type)
         {
-            var model = new HttpModel();
+            var model = new HttpModel(type);
+
+            var routeAttributeType = type.BaseType.Assembly.GetType(typeof(RouteAttribute).FullName);
+            var httpMethodAttributeType = type.BaseType.Assembly.GetType(typeof(HttpMethodAttribute).FullName);
+            var fromQueryAttributeType = type.BaseType.Assembly.GetType(typeof(FromQueryAttribute).FullName);
+            var fromHeaderAttributeType = type.BaseType.Assembly.GetType(typeof(FromHeaderAttribute).FullName);
+            var fromFormAttributeType = type.BaseType.Assembly.GetType(typeof(FromFormAttribute).FullName);
+            var fromBodyAttributeType = type.BaseType.Assembly.GetType(typeof(FromBodyAttribute).FullName);
+            var fromRouteAttributeType = type.BaseType.Assembly.GetType(typeof(FromRouteAttribute).FullName);
+            var fromCookieAttributeType = type.BaseType.Assembly.GetType(typeof(FromCookieAttribute).FullName);
+            var fromServicesAttributeType = type.BaseType.Assembly.GetType(typeof(FromServicesAttribute).FullName);
+
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
-            var routeAttribute = type.GetCustomAttribute<RouteAttribute>();
+            var routeAttribute = type.GetCustomAttributeData(routeAttributeType);
 
             foreach (var method in methods)
             {
-                var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
-                var template = CombineRoute(routeAttribute?.Template, attribute?.Template ?? method.GetCustomAttribute<RouteAttribute>()?.Template);
+                var attribute = method.GetCustomAttributeData(httpMethodAttributeType);
+                var template = CombineRoute(routeAttribute?.GetConstructorArgument<string>(0), attribute?.GetConstructorArgument<string>(0) ?? method.GetCustomAttributeData(routeAttributeType)?.GetConstructorArgument<string>(0));
 
                 var methodModel = new MethodModel
                 {
@@ -28,30 +46,39 @@ namespace uController
                 };
 
                 // Add all attributes as metadata
-                foreach (var metadata in method.GetCustomAttributes(inherit: true))
+                //foreach (var metadata in method.GetCustomAttributes(inherit: true))
+                //{
+                //    methodModel.Metadata.Add(metadata);
+                //}
+                foreach (var metadata in method.CustomAttributes)
                 {
+                    if (metadata.AttributeType.Namespace == "System.Runtime.CompilerServices" ||
+                        metadata.AttributeType.Name == "DebuggerStepThroughAttribute")
+                    {
+                        continue;
+                    }
                     methodModel.Metadata.Add(metadata);
                 }
 
                 foreach (var parameter in method.GetParameters())
                 {
-                    var fromQuery = parameter.GetCustomAttribute<FromQueryAttribute>();
-                    var fromHeader = parameter.GetCustomAttribute<FromHeaderAttribute>();
-                    var fromForm = parameter.GetCustomAttribute<FromFormAttribute>();
-                    var fromBody = parameter.GetCustomAttribute<FromBodyAttribute>();
-                    var fromRoute = parameter.GetCustomAttribute<FromRouteAttribute>();
-                    var fromCookie = parameter.GetCustomAttribute<FromCookieAttribute>();
-                    var fromService = parameter.GetCustomAttribute<FromServicesAttribute>();
+                    var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
+                    var fromHeader = parameter.GetCustomAttributeData(fromHeaderAttributeType);
+                    var fromForm = parameter.GetCustomAttributeData(fromFormAttributeType);
+                    var fromBody = parameter.GetCustomAttributeData(fromBodyAttributeType);
+                    var fromRoute = parameter.GetCustomAttributeData(fromRouteAttributeType);
+                    var fromCookie = parameter.GetCustomAttributeData(fromCookieAttributeType);
+                    var fromService = parameter.GetCustomAttributeData(fromServicesAttributeType);
 
                     methodModel.Parameters.Add(new ParameterModel
                     {
                         Name = parameter.Name,
                         ParameterType = parameter.ParameterType,
-                        FromQuery = fromQuery == null ? null : fromQuery?.Name ?? parameter.Name,
-                        FromHeader = fromHeader == null ? null : fromHeader?.Name ?? parameter.Name,
-                        FromForm = fromForm == null ? null : fromForm?.Name ?? parameter.Name,
-                        FromRoute = fromRoute == null ? null : fromRoute?.Name ?? parameter.Name,
-                        FromCookie = fromCookie == null ? null : fromCookie?.Name,
+                        FromQuery = fromQuery == null ? null : fromQuery?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromHeader = fromHeader == null ? null : fromHeader?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromForm = fromForm == null ? null : fromForm?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromRoute = fromRoute == null ? null : fromRoute?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromCookie = fromCookie == null ? null : fromCookie?.GetConstructorArgument<string>(0),
                         FromBody = fromBody != null,
                         FromServices = fromService != null
                     });

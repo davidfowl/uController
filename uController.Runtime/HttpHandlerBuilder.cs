@@ -188,7 +188,7 @@ namespace uController
 
                     body = Expression.Block(bodyExpressions);
                 }
-                else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out var info))
+                else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, t => t, out var info))
                 {
                     if (method.MethodInfo.ReturnType == typeof(Task))
                     {
@@ -294,9 +294,10 @@ namespace uController
 
                 routes.Map(method.RoutePattern, requestDelegate).Add(b =>
                 {
-                    foreach (var item in method.Metadata)
+                    foreach (CustomAttributeData item in method.Metadata)
                     {
-                        b.Metadata.Add(item);
+                        var attr = item.Constructor.Invoke(item.ConstructorArguments.Select(a => a.Value).ToArray());
+                        b.Metadata.Add(attr);
                     }
                 });
             }

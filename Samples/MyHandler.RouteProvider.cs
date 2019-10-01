@@ -1,157 +1,130 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Samples;
-using uController;
-
 // This assembly attribute is part of the generated code to help register the routes
-[assembly: EndpointRouteProvider(typeof(MyHandlerRouteProvider))]
-
+[assembly: Microsoft.AspNetCore.Routing.EndpointRouteProviderAttribute(typeof(Samples.MyHandler_Generated))]
 namespace Samples
 {
-    /// <summary>
-    /// An example of what the generated C# binding code would be for the MyHandler class.
-    /// </summary>
-    public class MyHandlerRouteProvider : IEndpointRouteProvider
+    public class MyHandler_Generated : Microsoft.AspNetCore.Routing.IEndpointRouteProvider
     {
-        // This only gets used/generated for [FromBody] methods
-        private readonly IHttpRequestReader _reader;
-
-        // This only gets used/generated if there's the type is activated via DI
-        private readonly ObjectFactory _factory;
-
-        public MyHandlerRouteProvider(IHttpRequestReader reader)
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task Get(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            _reader = reader;
-            _factory = ActivatorUtilities.CreateFactory(typeof(MyHandler), Type.EmptyTypes);
+            var handler = new Samples.MyHandler();
+            var context = httpContext;
+            await handler.Get(context);
         }
-
-        [DebuggerStepThrough]
-        private Task Get(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task Blah(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            return handler.Get(httpContext);
+            var handler = new Samples.MyHandler();
+            var result = handler.Blah();
+            await new uController.ObjectResult(result).ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private Task Blah(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task StatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            return new ObjectResult(handler.Blah()).ExecuteAsync(httpContext);
-        }
-
-        [DebuggerStepThrough]
-        private Task StatusCode(HttpContext httpContext)
-        {
-            var handler = new MyHandler();
-            var statusValue = (string)httpContext.Request.RouteValues["status"];
-            int? status = null;
-
-            if (statusValue != null && Int32.TryParse(statusValue, out var val))
+            var handler = new Samples.MyHandler();
+            var statusValue = httpContext.Request.RouteValues["status"]?.ToString();
+            if (statusValue == null || !System.Int32.TryParse(statusValue, out var status))
             {
-                status = val;
+                status = default;
             }
-
-            return handler.StatusCode(status ?? 0).ExecuteAsync(httpContext);
+            var result = handler.StatusCode(status);
+            await result.ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private async Task SlowTaskStatusCode(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task SlowTaskStatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
+            var handler = new Samples.MyHandler();
             var result = await handler.SlowTaskStatusCode();
             await result.ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private async Task FastValueTaskStatusCode(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task FastValueTaskStatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            var loggerFactory = httpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+            var handler = new Samples.MyHandler();
+            var loggerFactory = httpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>();
             var result = await handler.FastValueTaskStatusCode(loggerFactory);
             await result.ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private Task DoAsync(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task DoAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            return handler.DoAsync(httpContext, httpContext.Request.Query["q"]);
+            var handler = new Samples.MyHandler();
+            var context = httpContext;
+            var q = httpContext.Request.Query["q"].ToString();
+            await handler.DoAsync(context, q);
         }
-
-        [DebuggerStepThrough]
-        private Task HelloDavid(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task HelloDavid(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
+            var handler = new Samples.MyHandler();
             var result = handler.HelloDavid();
-            return new ObjectResult(result).ExecuteAsync(httpContext);
+            await new uController.ObjectResult(result).ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private async Task GetAsync(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task GetAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            var name = (string)httpContext.Request.RouteValues["name"];
+            var handler = new Samples.MyHandler();
+            var name = httpContext.Request.RouteValues["name"]?.ToString();
             var result = await handler.GetAsync(name);
-            await new ObjectResult(result).ExecuteAsync(httpContext);
+            await new uController.ObjectResult(result).ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private Task Hello(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task Hello(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
+            var handler = new Samples.MyHandler();
             var result = handler.Hello();
-            return new ObjectResult(result).ExecuteAsync(httpContext);
+            await new uController.ObjectResult(result).ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private async Task Post(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task Post(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-
-            var bodyValue = (JsonElement)await _reader.ReadAsync(httpContext, typeof(JsonElement));
-
-            var result = handler.Post(bodyValue);
+            var handler = new Samples.MyHandler();
+            var reader = httpContext.RequestServices.GetRequiredService<uController.IHttpRequestReader>();
+            var obj = (System.Text.Json.JsonElement)await reader.ReadAsync(httpContext, typeof(System.Text.Json.JsonElement));
+            var result = handler.Post(obj);
             await result.ExecuteAsync(httpContext);
         }
-
-        [DebuggerStepThrough]
-        private Task Authed(HttpContext httpContext)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task PostAForm(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            var handler = new MyHandler();
-            handler.Authed();
-            return Task.CompletedTask;
-        }
-
-        [DebuggerStepThrough]
-        private async Task PostAForm(HttpContext httpContext)
-        {
-            var handler = new MyHandler();
+            var handler = new Samples.MyHandler();
             var form = await httpContext.Request.ReadFormAsync();
             handler.PostAForm(form);
         }
-
-        public void MapRoutes(IEndpointRouteBuilder routes)
+        
+        [System.Diagnostics.DebuggerStepThroughAttribute]
+        public async System.Threading.Tasks.Task Authed(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
-            routes.Map("/", Get).WithMetadata(new HttpGetAttribute());
-            routes.Map("/blah", Blah).WithMetadata(new HttpGetAttribute());
-            routes.Map("/status/{status}", StatusCode).WithMetadata(new HttpGetAttribute());
-            routes.Map("/slow/status/{status}", SlowTaskStatusCode).WithMetadata(new HttpGetAttribute());
-            routes.Map("/fast/status/{status}", FastValueTaskStatusCode).WithMetadata(new HttpGetAttribute());
-            routes.Map("/lag", DoAsync).WithMetadata(new HttpGetAttribute());
-            routes.Map("/hey/david", HelloDavid).WithMetadata(new HttpGetAttribute());
-            routes.Map("/hey/{name?}", GetAsync).WithMetadata(new HttpGetAttribute());
-            routes.Map("/hello", Hello).WithMetadata(new HttpGetAttribute());
-            routes.Map("/", Post).WithMetadata(new HttpPostAttribute());
-            routes.Map("/post-form", PostAForm).WithMetadata(new HttpPostAttribute());
-            routes.Map("/auth", Authed).WithMetadata(new HttpPostAttribute(), new AuthorizeAttribute());
+            var handler = new Samples.MyHandler();
+            handler.Authed();
+        }
+        
+        void Microsoft.AspNetCore.Routing.IEndpointRouteProvider.MapRoutes(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes)
+        {
+            routes.Map("/", Get).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/blah", Blah).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/status/{status}", StatusCode).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/slow/status/{status}", SlowTaskStatusCode).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/fast/status/{status}", FastValueTaskStatusCode).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/lag", DoAsync).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/hey/david", HelloDavid).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/hey/{name?}", GetAsync).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/hello", Hello).WithMetadata(new uController.HttpGetAttribute());
+            routes.Map("/", Post).WithMetadata(new uController.HttpPostAttribute());
+            routes.Map("/post-form", PostAForm).WithMetadata(new uController.HttpPostAttribute());
+            routes.Map("/auth", Authed).WithMetadata(new uController.HttpGetAttribute(), new Microsoft.AspNetCore.Authorization.AuthorizeAttribute());
         }
     }
 }

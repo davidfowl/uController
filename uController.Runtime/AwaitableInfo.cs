@@ -36,7 +36,7 @@ namespace Microsoft.Extensions.Internal
             GetAwaiterMethod = getAwaiterMethod;
         }
 
-        public static bool IsTypeAwaitable(Type type, out AwaitableInfo awaitableInfo)
+        public static bool IsTypeAwaitable(Type type, Func<Type, Type> getType, out AwaitableInfo awaitableInfo)
         {
             // Based on Roslyn code: http://source.roslyn.io/#Microsoft.CodeAnalysis.Workspaces/Shared/Extensions/ISymbolExtensions.cs,db4d48ba694b9347
 
@@ -56,7 +56,7 @@ namespace Microsoft.Extensions.Internal
             // Awaiter must have property matching "bool IsCompleted { get; }"
             var isCompletedProperty = awaiterType.GetRuntimeProperties().FirstOrDefault(p =>
                 p.Name.Equals("IsCompleted", StringComparison.OrdinalIgnoreCase)
-                && p.PropertyType == typeof(bool)
+                && p.PropertyType == getType(typeof(bool))
                 && p.GetMethod != null);
             if (isCompletedProperty == null)
             {
@@ -66,7 +66,7 @@ namespace Microsoft.Extensions.Internal
 
             // Awaiter must implement INotifyCompletion
             var awaiterInterfaces = awaiterType.GetInterfaces();
-            var implementsINotifyCompletion = awaiterInterfaces.Any(t => t == typeof(INotifyCompletion));
+            var implementsINotifyCompletion = awaiterInterfaces.Any(t => t == getType(typeof(INotifyCompletion)));
             if (!implementsINotifyCompletion)
             {
                 awaitableInfo = default(AwaitableInfo);
@@ -74,29 +74,30 @@ namespace Microsoft.Extensions.Internal
             }
 
             // INotifyCompletion supplies a method matching "void OnCompleted(Action action)"
-            var iNotifyCompletionMap = awaiterType
-                .GetTypeInfo()
-                .GetRuntimeInterfaceMap(typeof(INotifyCompletion));
-            var onCompletedMethod = iNotifyCompletionMap.InterfaceMethods.Single(m =>
+            //var iNotifyCompletionMap = awaiterType
+            //    .GetTypeInfo()
+            //    .DeclaredMethods
+            //    .GetRuntimeInterfaceMap(getType(typeof(INotifyCompletion)));
+            var onCompletedMethod = awaiterType.GetTypeInfo().DeclaredMethods.Single(m =>
                 m.Name.Equals("OnCompleted", StringComparison.OrdinalIgnoreCase)
-                && m.ReturnType == typeof(void)
+                && m.ReturnType == getType(typeof(void))
                 && m.GetParameters().Length == 1
-                && m.GetParameters()[0].ParameterType == typeof(Action));
+                && m.GetParameters()[0].ParameterType == getType(typeof(Action)));
 
             // Awaiter optionally implements ICriticalNotifyCompletion
-            var implementsICriticalNotifyCompletion = awaiterInterfaces.Any(t => t == typeof(ICriticalNotifyCompletion));
+            var implementsICriticalNotifyCompletion = awaiterInterfaces.Any(t => t == getType(typeof(ICriticalNotifyCompletion)));
             MethodInfo unsafeOnCompletedMethod;
             if (implementsICriticalNotifyCompletion)
             {
                 // ICriticalNotifyCompletion supplies a method matching "void UnsafeOnCompleted(Action action)"
-                var iCriticalNotifyCompletionMap = awaiterType
-                    .GetTypeInfo()
-                    .GetRuntimeInterfaceMap(typeof(ICriticalNotifyCompletion));
-                unsafeOnCompletedMethod = iCriticalNotifyCompletionMap.InterfaceMethods.Single(m =>
+                //var iCriticalNotifyCompletionMap = awaiterType
+                //    .GetTypeInfo()
+                //    .GetRuntimeInterfaceMap(typeof(ICriticalNotifyCompletion));
+                unsafeOnCompletedMethod = awaiterType.GetTypeInfo().DeclaredMethods.Single(m =>
                     m.Name.Equals("UnsafeOnCompleted", StringComparison.OrdinalIgnoreCase)
-                    && m.ReturnType == typeof(void)
+                    && m.ReturnType == getType(typeof(void))
                     && m.GetParameters().Length == 1
-                    && m.GetParameters()[0].ParameterType == typeof(Action));
+                    && m.GetParameters()[0].ParameterType == getType(typeof(Action)));
             }
             else
             {
