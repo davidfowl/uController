@@ -4,10 +4,22 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <CoreCompileDependsOn>
+      $(CoreCompileDependsOn);
+      GenerateController
+    </CoreCompileDependsOn>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
   </ItemGroup>
- 
+
+
+  <Target Name="GenerateController">
+    <Message Text="Foo bar" Importance="high" />
+    <Exec Command="$(ProjectDir)..\uController.CodeGeneration\bin\$(Configuration)\netcoreapp3.0\uController.CodeGeneration.exe $(TargetPath) $(ProjectDir)" />
+  </Target>
 
 </Project>

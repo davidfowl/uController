@@ -60,7 +60,7 @@ namespace uController.CodeGeneration
                 WriteLine($"public {className}()");
                 WriteLine("{");
                 Indent();
-                WriteLine($"_factory = {S(typeof(ActivatorUtilities))}.CreateFactory(typeof({S(_model.HandlerType)}), Type.EmptyTypes);");
+                WriteLine($"_factory = {S(typeof(ActivatorUtilities))}.CreateFactory(typeof({S(_model.HandlerType)}), {S(typeof(Type))}.EmptyTypes);");
                 Unindent();
                 WriteLine("}");
                 WriteLine("");
@@ -120,7 +120,7 @@ namespace uController.CodeGeneration
             if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
             {
                 // Lazy, defer to DI system if
-                WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices);");
+                WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {S(typeof(Array))}.Empty<{S(typeof(object))}>());");
             }
             else
             {
