@@ -27,7 +27,8 @@ namespace Samples
         {
             var handler = new Samples.MyHandler();
             var statusValue = httpContext.Request.RouteValues["status"]?.ToString();
-            if (statusValue == null || !System.Int32.TryParse(statusValue, out var status))
+            System.Int32 status = default;
+            if (statusValue == null || !System.Int32.TryParse(statusValue, out status))
             {
                 status = default;
             }
@@ -82,7 +83,22 @@ namespace Samples
         public async System.Threading.Tasks.Task Hello(Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
             var handler = new Samples.MyHandler();
-            var result = handler.Hello();
+            var formCollection = await httpContext.Request.ReadFormAsync();
+            var s = formCollection["foo"].ToString();
+            var id = httpContext.Request.Headers["X-Id"].ToString();
+            var pageValue = httpContext.Request.Query["page"].ToString();
+            System.Nullable<System.Int32> page = default;
+            if (pageValue != null && System.Int32.TryParse(pageValue, out var pageTemp))
+            {
+                page = pageTemp;
+            }
+            var pageSizeValue = httpContext.Request.Query["pageSize"].ToString();
+            System.Nullable<System.Int32> pageSize = default;
+            if (pageSizeValue != null && System.Int32.TryParse(pageSizeValue, out var pageSizeTemp))
+            {
+                pageSize = pageSizeTemp;
+            }
+            var result = handler.Hello(s, id, page, pageSize);
             await new uController.ObjectResult(result).ExecuteAsync(httpContext);
         }
         

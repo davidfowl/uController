@@ -30,6 +30,20 @@ namespace uController.CodeGeneration
         // Pretty print the type name
         private string S(Type type) => TypeNameHelper.GetTypeDisplayName(type);
 
+        private Type Unwrap(Type type)
+        {
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                // instantiated generic type only
+                Type genericType = type.GetGenericTypeDefinition();
+                if (object.ReferenceEquals(genericType, T(typeof(Nullable<>))))
+                {
+                    return type.GetGenericArguments()[0];
+                }
+            }
+            return null;
+        }
+
         public void Indent()
         {
             _indent++;
@@ -148,7 +162,7 @@ namespace uController.CodeGeneration
                 }
                 else if (parameter.FromHeader != null)
                 {
-                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.Headers");
+                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
                 }
                 else if (parameter.FromServices)
                 {
@@ -157,7 +171,7 @@ namespace uController.CodeGeneration
                 else if (parameter.FromForm != null)
                 {
                     WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
-                    WriteLine($"var {parameter.Name} = formCollection[{parameter.FromForm}]");
+                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromForm, "formCollection");
                 }
                 else if (parameter.FromBody)
                 {
@@ -225,15 +239,30 @@ namespace uController.CodeGeneration
             else
             {
                 WriteLine($"var {sourceName}Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
+                WriteLine($"{S(type)} {sourceName} = default;");
 
                 // TODO: Handle cases where TryParse isn't available
-
-                WriteLine($"if ({sourceName}Value == null || !{S(type)}.TryParse({sourceName}Value, out var {sourceName}))");
-                WriteLine("{");
-                Indent();
-                WriteLine($"{sourceName} = default;");
-                Unindent();
-                WriteLine("}");
+                // type = Unwrap(type) ?? type;
+                var unwrappedType = Unwrap(type);
+                if (unwrappedType == null)
+                {
+                    // Type isn't nullable
+                    WriteLine($"if ({sourceName}Value == null || !{S(type)}.TryParse({sourceName}Value, out {sourceName}))");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{sourceName} = default;");
+                    Unindent();
+                    WriteLine("}");
+                }
+                else
+                {
+                    WriteLine($"if ({sourceName}Value != null && {S(unwrappedType)}.TryParse({sourceName}Value, out var {sourceName}Temp))");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{sourceName} = {sourceName}Temp;");
+                    Unindent();
+                    WriteLine("}");
+                }
             }
         }
 

@@ -61,7 +61,7 @@ namespace Samples
         }
 
         [HttpGet("/hello")]
-        public string Hello() => "Hello!";
+        public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")]string id, [FromQuery]int? page, [FromQuery]int? pageSize) => "Hello!";
 
         [HttpPost("/")]
         public Result Post([FromBody]JsonElement obj)
