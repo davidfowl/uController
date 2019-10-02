@@ -36,6 +36,11 @@ namespace uController.CodeGeneration
                 }
             }
 
+            if (models.Count > 0 && outputPath != null)
+            {
+                Directory.CreateDirectory(outputPath);
+            }
+
             foreach (var model in models)
             {
                 var gen = new CodeGenerator(model, metadataLoadContext);
