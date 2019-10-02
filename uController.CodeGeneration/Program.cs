@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 
@@ -15,12 +17,15 @@ namespace uController.CodeGeneration
                 Console.WriteLine("Required path to dll");
                 return;
             }
+            // input.dll outputDir references.txt
 
             var path = args[0];
             var outputPath = args.Length > 1 ? args[1] : null;
             var directory = Path.GetDirectoryName(path);
-            var resolver = new MyResolver(directory);
-            var metadataLoadContext = new MetadataLoadContext(resolver, typeof(object).Assembly.FullName);
+            var referencePaths = args.Length > 2 ? File.ReadAllLines(args[2]) : new string[0];
+            var resolver = new PathAssemblyResolver(referencePaths);
+            var corAssembly = referencePaths.Where(m => m.Contains("mscorlib")).Select(a => AssemblyName.GetAssemblyName(a).FullName).FirstOrDefault();
+            var metadataLoadContext = new MetadataLoadContext(resolver, corAssembly);
             var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName(typeof(HttpHandler).Assembly.FullName);
             var handler = uControllerAssembly.GetType(typeof(HttpHandler).FullName);
             var assembly = metadataLoadContext.LoadFromAssemblyPath(path);
@@ -54,33 +59,6 @@ namespace uController.CodeGeneration
                     Console.WriteLine(gen.Generate());
                 }
             }
-        }
-    }
-
-    internal class MyResolver : MetadataAssemblyResolver
-    {
-        private string[] _directory;
-
-        public MyResolver(string directory)
-        {
-            _directory = new[] {
-                directory, // application
-                Path.GetDirectoryName(typeof(object).Assembly.Location), // .NET Core
-                Path.GetDirectoryName(typeof(IApplicationBuilder).Assembly.Location) // ASP.NET Core
-            };
-        }
-
-        public override Assembly Resolve(MetadataLoadContext context, AssemblyName assemblyName)
-        {
-            foreach (var d in _directory)
-            {
-                var path = Path.Combine(d, assemblyName.Name + ".dll");
-                if (File.Exists(path))
-                {
-                    return context.LoadFromAssemblyPath(path);
-                }
-            }
-            return null;
         }
     }
 }
