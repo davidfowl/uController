@@ -9,7 +9,7 @@
     <ProjectReference Include="..\uController\uController.csproj" />
   </ItemGroup>
 
-  <Target Name="GenerateController" AfterTargets="CoreCompile" Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
+  <Target Name="GenerateController"  Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
     <PropertyGroup>
       <uControllerGenerator>$(ProjectDir)..\uController.CodeGeneration\bin\$(Configuration)\netcoreapp3.0\uController.CodeGeneration.exe</uControllerGenerator>
       <uControllerOutputPath>$(ProjectDir)\$(IntermediateOutputPath)uController</uControllerOutputPath>

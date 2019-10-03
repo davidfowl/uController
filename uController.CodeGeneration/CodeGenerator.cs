@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
@@ -79,12 +81,12 @@ namespace uController.CodeGeneration
             WriteLine("using Microsoft.AspNetCore.Builder;");
             WriteLine("using Microsoft.Extensions.DependencyInjection;");
             WriteLine("");
-            WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}))]");
+            //WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}))]");
             WriteLine("");
             WriteLine($"namespace {_model.HandlerType.Namespace}");
             WriteLine("{");
             Indent();
-            WriteLine($"public class {className} : {S(typeof(IEndpointRouteProvider))}");
+            WriteLine($"public class {className}"); // : {S(typeof(IEndpointRouteProvider))}");
             WriteLine("{");
             Indent();
             var ctors = _model.HandlerType.GetConstructors();
@@ -116,7 +118,7 @@ namespace uController.CodeGeneration
         private void GenerateRoutes()
         {
             // void IEndpointRouteProvider.MapRoutes(IEndpointRouteBuilder routes)
-            WriteLine($"{S(typeof(void))} {S(typeof(IEndpointRouteProvider))}.MapRoutes({S(typeof(IEndpointRouteBuilder))} routes)");
+            WriteLine($"public {S(typeof(void))} MapRoutes({S(typeof(IEndpointRouteBuilder))} routes)");
             WriteLine("{");
             Indent();
             foreach (var method in _model.Methods)
@@ -154,11 +156,11 @@ namespace uController.CodeGeneration
             if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
             {
                 // Lazy, defer to DI system if
-                WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {S(typeof(Array))}.Empty<{S(typeof(object))}>());");
+                WriteLine($"var controller = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {S(typeof(Array))}.Empty<{S(typeof(object))}>());");
             }
             else
             {
-                WriteLine($"var handler = new {S(_model.HandlerType)}();");
+                WriteLine($"var controller = new {S(_model.HandlerType)}();");
             }
 
             // Declare locals
@@ -195,8 +197,7 @@ namespace uController.CodeGeneration
                 }
                 else if (parameter.FromBody)
                 {
-                    WriteLine($"var reader = httpContext.RequestServices.GetRequiredService<{S(typeof(IHttpRequestReader))}>();");
-                    WriteLine($"var {parameter.Name} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
+                    WriteLine($"var {parameter.Name} = await {S(typeof(JsonSerializer))}.DeserializeAsync<{S(parameter.ParameterType)}>(httpContext.Request.Body);");
                 }
             }
 
@@ -224,7 +225,7 @@ namespace uController.CodeGeneration
                     Write("var result = ");
                 }
             }
-            WriteNoIndent($"handler.{method.MethodInfo.Name}(");
+            WriteNoIndent($"controller.{method.MethodInfo.Name}(");
             bool first = true;
             foreach (var parameter in method.Parameters)
             {
@@ -237,13 +238,13 @@ namespace uController.CodeGeneration
             }
             WriteLineNoIndent(");");
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
-            if (T(typeof(Result)).IsAssignableFrom(unwrappedType))
+            if (T(typeof(IActionResult)).IsAssignableFrom(unwrappedType))
             {
-                WriteLine("await result.ExecuteAsync(httpContext);");
+                WriteLine("await result.ExecuteResultAsync(controller.ControllerContext);");
             }
             else if (unwrappedType != T(typeof(void)))
             {
-                WriteLine($"await new {T(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
+                WriteLine($"await new {T(typeof(ObjectResult))}(result).ExecuteResultAsync(controller.ControllerContext);");
             }
             Unindent();
             WriteLine("}");

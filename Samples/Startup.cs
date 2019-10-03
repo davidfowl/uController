@@ -12,8 +12,7 @@ namespace Samples
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthorization()
-                    .AddJson();
+            services.AddAuthorization();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -30,7 +29,9 @@ namespace Samples
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapRouteProviders<Startup>();
+                var generated = new HomeController_Generated();
+                generated.MapRoutes(endpoints);
+                // endpoints.MapRouteProviders<Startup>();
 
                 // This is the runtime dispatched version
                 // endpoints.MapHttpHandler<MyHandler>();

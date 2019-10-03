@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 
 namespace uController.CodeGeneration
 {
@@ -26,8 +27,8 @@ namespace uController.CodeGeneration
             var resolver = new PathAssemblyResolver(referencePaths);
             var corAssembly = referencePaths.Where(m => m.Contains("mscorlib")).Select(a => AssemblyName.GetAssemblyName(a).FullName).FirstOrDefault();
             var metadataLoadContext = new MetadataLoadContext(resolver, corAssembly);
-            var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName(typeof(HttpHandler).Assembly.FullName);
-            var handler = uControllerAssembly.GetType(typeof(HttpHandler).FullName);
+            var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName(typeof(ControllerBase).Assembly.FullName);
+            var handler = uControllerAssembly.GetType(typeof(ControllerBase).FullName);
             var assembly = metadataLoadContext.LoadFromAssemblyPath(path);
 
             var models = new List<HttpModel>();

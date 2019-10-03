@@ -2,12 +2,12 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using uController;
 
 namespace Samples
 {
-    public class MyHandler : HttpHandler
+    public class HomeController : ControllerBase
     {
         [HttpGet("/")]
         public Task Get(HttpContext context)
@@ -22,13 +22,13 @@ namespace Samples
         }
 
         [HttpGet("/status/{status}")]
-        public Result StatusCode([FromRoute]int status)
+        public IActionResult Status([FromRoute]int status)
         {
-            return Status(status);
+            return StatusCode(status);
         }
 
         [HttpGet("/slow/status/{status}")]
-        public async Task<Result> SlowTaskStatusCode()
+        public async Task<IActionResult> SlowTaskStatusCode()
         {
             await Task.Delay(1000);
 
@@ -36,9 +36,9 @@ namespace Samples
         }
 
         [HttpGet("/fast/status/{status}")]
-        public ValueTask<Result> FastValueTaskStatusCode([FromServices]ILoggerFactory loggerFactory)
+        public ValueTask<IActionResult> FastValueTaskStatusCode([FromServices]ILoggerFactory loggerFactory)
         {
-            return new ValueTask<Result>(Status(201));
+            return new ValueTask<IActionResult>(StatusCode(201));
         }
 
         [HttpGet("/lag")]
@@ -61,10 +61,10 @@ namespace Samples
         }
 
         [HttpGet("/hello")]
-        public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")]string id, [FromQuery]int? page, [FromQuery]int? pageSize) => "Hello!";
+        public string Hello([FromForm(Name = "foo")] string s, [FromHeader(Name = "X-Id")]string id, [FromQuery]int? page, [FromQuery]int? pageSize) => "Hello!";
 
         [HttpPost("/")]
-        public Result Post([FromBody]JsonElement obj)
+        public IActionResult Post([FromBody]JsonElement obj)
         {
             return Ok(obj);
         }
