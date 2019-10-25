@@ -19,7 +19,7 @@
 
     <Delete Files="@(uControllerGeneratedFiles)" />
     <MakeDir Directories="$(uControllerOutputPath)" />
-    <WriteLinesToFile File="$(uControllerReferencesPath)" Lines="@(ReferencePathWithRefAssemblies)" />
+    <WriteLinesToFile Overwrite="true" File="$(uControllerReferencesPath)" Lines="@(ReferencePathWithRefAssemblies)" />
     <Exec Command="$(uControllerGenerator) @(IntermediateAssembly) $(uControllerOutputPath) $(uControllerReferencesPath)" />
 
     <ItemGroup>

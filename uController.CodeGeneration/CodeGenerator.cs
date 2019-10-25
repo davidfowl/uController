@@ -79,7 +79,7 @@ namespace uController.CodeGeneration
             WriteLine("using Microsoft.AspNetCore.Builder;");
             WriteLine("using Microsoft.Extensions.DependencyInjection;");
             WriteLine("");
-            WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}))]");
+            WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}), typeof({S(_model.HandlerType)}))]");
             WriteLine("");
             WriteLine($"namespace {_model.HandlerType.Namespace}");
             WriteLine("{");

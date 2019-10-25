@@ -7,9 +7,12 @@ namespace Microsoft.AspNetCore.Routing
     {
         public Type RouteProviderType { get; }
 
-        public EndpointRouteProviderAttribute(Type routeProviderType)
+        public Type HandlerType { get; set; }
+
+        public EndpointRouteProviderAttribute(Type routeProviderType, Type handlerType)
         {
             RouteProviderType = routeProviderType;
+            HandlerType = handlerType;
         }
     }
 }

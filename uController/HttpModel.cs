@@ -59,7 +59,7 @@ namespace uController
                     }
                     methodModel.Metadata.Add(metadata);
                 }
-
+                
                 foreach (var parameter in method.GetParameters())
                 {
                     var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
