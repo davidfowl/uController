@@ -90,13 +90,7 @@ namespace uController.CodeGeneration
             var ctors = _model.HandlerType.GetConstructors();
             if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
             {
-                WriteLine($"private readonly {S(typeof(ObjectFactory))} _factory;");
-                WriteLine($"public {className}()");
-                WriteLine("{");
-                Indent();
-                WriteLine($"_factory = {S(typeof(ActivatorUtilities))}.CreateFactory(typeof({S(_model.HandlerType)}), {S(typeof(Type))}.EmptyTypes);");
-                Unindent();
-                WriteLine("}");
+                WriteLine($"private readonly {S(typeof(ObjectFactory))} _factory = {S(typeof(ActivatorUtilities))}.CreateFactory(typeof({S(_model.HandlerType)}), {S(typeof(Type))}.EmptyTypes);");
                 WriteLine("");
             }
 
