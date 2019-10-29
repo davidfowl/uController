@@ -7,6 +7,8 @@
   <ItemGroup>
     <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
+
+    <UpToDateCheckBuilt Include="$(IntermediateOutputPath)uController.$(TargetFileName)" />
   </ItemGroup>
 
   <Target Name="GenerateController" AfterTargets="CoreCompile" Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
