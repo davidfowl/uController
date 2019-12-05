@@ -253,7 +253,7 @@ namespace uController.CodeGeneration
             else
             {
                 WriteLine($"var {sourceName}Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
-                WriteLine($"{S(type)} {sourceName} = default;");
+                WriteLine($"{S(type)} {sourceName};");
 
                 // TODO: Handle cases where TryParse isn't available
                 // type = Unwrap(type) ?? type;
@@ -276,6 +276,13 @@ namespace uController.CodeGeneration
                     WriteLine($"{sourceName} = {sourceName}Temp;");
                     Unindent();
                     WriteLine("}");
+                    WriteLine("else");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{sourceName} = default;");
+                    Unindent();
+                    WriteLine("}");
+
                 }
             }
         }
