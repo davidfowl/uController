@@ -156,41 +156,52 @@ namespace uController.CodeGeneration
             }
 
             // Declare locals
+            var hasFromBody = false;
+            var hasFromForm = false;
             foreach (var parameter in method.Parameters)
             {
+                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
                 if (parameter.ParameterType == T(typeof(HttpContext)))
                 {
-                    WriteLine($"var {parameter.Name} = httpContext;");
+                    WriteLine($"var {parameterName} = httpContext;");
                 }
                 else if (parameter.ParameterType == T(typeof(IFormCollection)))
                 {
-                    WriteLine($"var {parameter.Name} = await httpContext.Request.ReadFormAsync();");
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
                 }
                 else if (parameter.FromRoute != null)
                 {
-                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
                 }
                 else if (parameter.FromQuery != null)
                 {
-                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query");
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query");
                 }
                 else if (parameter.FromHeader != null)
                 {
-                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
                 }
                 else if (parameter.FromServices)
                 {
-                    WriteLine($"var {parameter.Name} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
+                    WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
                 }
                 else if (parameter.FromForm != null)
                 {
-                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
-                    GenerateConvert(parameter.Name, parameter.ParameterType, parameter.FromForm, "formCollection");
+                    if (!hasFromForm)
+                    {
+                        WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                        hasFromForm = true;
+                    }
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
                 }
                 else if (parameter.FromBody)
                 {
-                    WriteLine($"var reader = httpContext.RequestServices.GetRequiredService<{S(typeof(IHttpRequestReader))}>();");
-                    WriteLine($"var {parameter.Name} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
+                    if (!hasFromBody)
+                    {
+                        WriteLine($"var reader = httpContext.RequestServices.GetRequiredService<{S(typeof(IHttpRequestReader))}>();");
+                        hasFromBody = true;
+                    }
+                    WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
                 }
             }
 
@@ -222,11 +233,12 @@ namespace uController.CodeGeneration
             bool first = true;
             foreach (var parameter in method.Parameters)
             {
+                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
                 if (!first)
                 {
                     WriteNoIndent(", ");
                 }
-                WriteNoIndent(parameter.Name);
+                WriteNoIndent(parameterName);
                 first = false;
             }
             WriteLineNoIndent(");");
@@ -252,7 +264,7 @@ namespace uController.CodeGeneration
             }
             else
             {
-                WriteLine($"var {sourceName}Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
+                WriteLine($"var {sourceName}_Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
                 WriteLine($"{S(type)} {sourceName};");
 
                 // TODO: Handle cases where TryParse isn't available
@@ -261,7 +273,7 @@ namespace uController.CodeGeneration
                 if (unwrappedType == null)
                 {
                     // Type isn't nullable
-                    WriteLine($"if ({sourceName}Value == null || !{S(type)}.TryParse({sourceName}Value, out {sourceName}))");
+                    WriteLine($"if ({sourceName}_Value == null || !{S(type)}.TryParse({sourceName}_Value, out {sourceName}))");
                     WriteLine("{");
                     Indent();
                     WriteLine($"{sourceName} = default;");
@@ -270,10 +282,10 @@ namespace uController.CodeGeneration
                 }
                 else
                 {
-                    WriteLine($"if ({sourceName}Value != null && {S(unwrappedType)}.TryParse({sourceName}Value, out var {sourceName}Temp))");
+                    WriteLine($"if ({sourceName}_Value != null && {S(unwrappedType)}.TryParse({sourceName}_Value, out var {sourceName}_Temp))");
                     WriteLine("{");
                     Indent();
-                    WriteLine($"{sourceName} = {sourceName}Temp;");
+                    WriteLine($"{sourceName} = {sourceName}_Temp;");
                     Unindent();
                     WriteLine("}");
                     WriteLine("else");
