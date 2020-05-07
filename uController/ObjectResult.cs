@@ -6,6 +6,8 @@ namespace uController
 {
     public class ObjectResult : Result
     {
+        private static readonly JsonResponseWriter _writer = new JsonResponseWriter();
+
         public object Value { get; }
 
         public ObjectResult(object value)
@@ -15,7 +17,7 @@ namespace uController
 
         public override Task ExecuteAsync(HttpContext httpContext)
         {
-            var responseFormatter = httpContext.RequestServices.GetRequiredService<IHttpResponseWriter>();
+            var responseFormatter = httpContext.RequestServices.GetService<IHttpResponseWriter>() ?? _writer;
 
             return responseFormatter.WriteAsync(httpContext, Value);
         }

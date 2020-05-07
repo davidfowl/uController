@@ -2,43 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
-
-    <UpToDateCheckBuilt Include="$(IntermediateOutputPath)uController.$(TargetFileName)" />
+    <ProjectReference Include="..\uController.SourceGenerator\uController.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
-
-  <Target Name="GenerateController" AfterTargets="CoreCompile" Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
-    <PropertyGroup>
-      <uControllerGenerator>$(ProjectDir)..\uController.CodeGeneration\bin\$(Configuration)\netcoreapp3.1\uController.CodeGeneration.exe</uControllerGenerator>
-      <uControllerOutputPath>$(ProjectDir)\$(IntermediateOutputPath)uController</uControllerOutputPath>
-      <uControllerReferencesPath>$(uControllerOutputPath)\references.txt</uControllerReferencesPath>
-      <uControllerTargetPath>$(ProjectDir)\$(IntermediateOutputPath)uController.$(TargetFileName)</uControllerTargetPath>
-    </PropertyGroup>
-
-    <Delete Files="@(uControllerGeneratedFiles)" />
-    <MakeDir Directories="$(uControllerOutputPath)" />
-    <WriteLinesToFile Overwrite="true" File="$(uControllerReferencesPath)" Lines="@(ReferencePathWithRefAssemblies)" />
-    <Exec Command="$(uControllerGenerator) @(IntermediateAssembly) $(uControllerOutputPath) $(uControllerReferencesPath)" />
-
-    <ItemGroup>
-      <uControllerCompile Include="$(uControllerOutputPath)\*.cs" />
-    </ItemGroup>
-
-    <Message Text="Generated @(uControllerCompile)" Importance="high"></Message>
-    <Csc AdditionalLibPaths="$(AdditionalLibPaths)" AddModules="@(AddModules)" AdditionalFiles="@(AdditionalFiles)" AllowUnsafeBlocks="$(AllowUnsafeBlocks)" ApplicationConfiguration="$(AppConfigForCompiler)" BaseAddress="$(BaseAddress)" CheckForOverflowUnderflow="$(CheckForOverflowUnderflow)" ChecksumAlgorithm="$(ChecksumAlgorithm)" CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)" CodePage="$(CodePage)" DebugType="$(DebugType)" DefineConstants="$(DefineConstants)" DelaySign="$(DelaySign)" DisabledWarnings="$(NoWarn)" EmitDebugInformation="$(DebugSymbols)" EnvironmentVariables="$(CscEnvironment)" ErrorEndLocation="$(ErrorEndLocation)" ErrorLog="$(ErrorLog)" ErrorReport="$(ErrorReport)" Features="$(Features)" FileAlignment="$(FileAlignment)" GenerateFullPaths="$(GenerateFullPaths)" HighEntropyVA="$(HighEntropyVA)" Instrument="$(Instrument)" KeyContainer="$(KeyContainerName)" KeyFile="$(KeyOriginatorFile)" LangVersion="$(LangVersion)" LinkResources="@(LinkResource)" ModuleAssemblyName="$(ModuleAssemblyName)" NoConfig="true" NoLogo="$(NoLogo)" NoStandardLib="$(NoCompilerStandardLib)" NoWin32Manifest="$(NoWin32Manifest)" Nullable="$(Nullable)" Optimize="$(Optimize)" Deterministic="$(Deterministic)" PublicSign="$(PublicSign)" OutputAssembly="$(uControllerTargetPath)" Platform="$(PlatformTarget)" Prefer32Bit="$(Prefer32Bit)" PreferredUILang="$(PreferredUILang)" ProvideCommandLineArgs="$(ProvideCommandLineArgs)" References="@(ReferencePathWithRefAssemblies)" ReportAnalyzer="$(ReportAnalyzer)" Resources="@(CompiledLicenseFile)" ResponseFiles="$(CompilerResponseFile)" RuntimeMetadataVersion="$(RuntimeMetadataVersion)" SharedCompilationId="$(SharedCompilationId)" SkipCompilerExecution="$(SkipCompilerExecution)" Sources="@(uControllerCompile);@(Compile)" SubsystemVersion="$(SubsystemVersion)" TargetType="$(OutputType)" ToolExe="$(CscToolExe)" ToolPath="$(CscToolPath)" TreatWarningsAsErrors="$(TreatWarningsAsErrors)" UseHostCompilerIfAvailable="$(UseHostCompilerIfAvailable)" UseSharedCompilation="$(UseSharedCompilation)" Utf8Output="$(Utf8Output)" VsSessionGuid="$(VsSessionGuid)" WarningLevel="$(WarningLevel)" WarningsAsErrors="$(WarningsAsErrors)" WarningsNotAsErrors="$(WarningsNotAsErrors)" PathMap="$(PathMap)" SourceLink="$(SourceLink)">
-      <Output TaskParameter="CommandLineArgs" ItemName="CscCommandLineArgs" />
-    </Csc>
-
-    <Copy SourceFiles="$(uControllerTargetPath)" DestinationFiles="@(IntermediateAssembly)" OverwriteReadOnlyFiles="true" />
-
-    <ItemGroup>
-        <FileWrites Include="$(uControllerTargetPath)" />
-        <FileWrites Include="@(uControllerCompile)" />
-    </ItemGroup>
-  </Target>
 
 </Project>

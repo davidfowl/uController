@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.AspNetCore.Routing.Patterns;
 
 namespace uController
 {
@@ -42,7 +41,7 @@ namespace uController
                 var methodModel = new MethodModel
                 {
                     MethodInfo = method,
-                    RoutePattern = template == null ? null : RoutePatternFactory.Parse(template)
+                    RoutePattern = template
                 };
 
                 // Add all attributes as metadata
@@ -111,7 +110,7 @@ namespace uController
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public List<object> Metadata { get; } = new List<object>();
-        public RoutePattern RoutePattern { get; set; }
+        public string RoutePattern { get; set; }
     }
 
     public class ParameterModel

@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -27,11 +27,20 @@ namespace uController.CodeGeneration
         // Resolve the type in the current metadata load context
         private Type T(Type type)
         {
-            if (type.Assembly.GetName().Name == "System.Private.CoreLib")
+            var asmName = type.Assembly.GetName().Name;
+            if (asmName == "System.Private.CoreLib" || asmName == "mscorlib" || asmName == "System.Runtime")
             {
                 return _metadataLoadContext.CoreAssembly.GetType(type.FullName);
             }
-            return _metadataLoadContext.LoadFromAssemblyName(type.Assembly.FullName).GetType(type.FullName);
+
+            var typeForwardedFrom = type.GetCustomAttributeData(typeof(TypeForwardedFromAttribute));
+
+            if (typeForwardedFrom == null)
+            {
+                return _metadataLoadContext.LoadFromAssemblyName(type.Assembly.FullName).GetType(type.FullName);
+            }
+
+            return _metadataLoadContext.LoadFromAssemblyName(typeForwardedFrom.GetConstructorArgument<string>(0)).GetType(type.FullName);
         }
 
         // Pretty print the type name
@@ -43,7 +52,7 @@ namespace uController.CodeGeneration
             {
                 // instantiated generic type only
                 Type genericType = type.GetGenericTypeDefinition();
-                if (object.ReferenceEquals(genericType, T(typeof(Nullable<>))))
+                if (genericType.Equals(T(typeof(Nullable<>))))
                 {
                     return type.GetGenericArguments()[0];
                 }
@@ -75,17 +84,22 @@ namespace uController.CodeGeneration
 //------------------------------------------------------------------------------");
             WriteLine("");
             WriteLine("");
-            var className = $"{ _model.HandlerType.Name}_Generated";
+            var className = $"{_model.HandlerType.Name}RouteExtensions";
+            var innerClassName = $"{_model.HandlerType.Name }Routes";
             WriteLine("using Microsoft.AspNetCore.Builder;");
             WriteLine("using Microsoft.Extensions.DependencyInjection;");
-            WriteLine("");
-            WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}), typeof({S(_model.HandlerType)}))]");
             WriteLine("");
             WriteLine($"namespace {_model.HandlerType.Namespace}");
             WriteLine("{");
             Indent();
-            WriteLine($"public class {className} : {S(typeof(IEndpointRouteProvider))}");
+            WriteLine($"public static class {className}");
             WriteLine("{");
+            Indent();
+            GenerateRoutes(innerClassName);
+
+            // Generate the inner class
+            WriteLine($"private class {innerClassName}");
+            WriteLine("{"); // inner class start
             Indent();
             var ctors = _model.HandlerType.GetConstructors();
             if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
@@ -94,28 +108,33 @@ namespace uController.CodeGeneration
                 WriteLine("");
             }
 
+            WriteLine($"private readonly {S(typeof(JsonRequestReader))} _requestReader = new {S(typeof(JsonRequestReader))}();");
+            WriteLine("");
+
             foreach (var method in _model.Methods)
             {
                 Generate(method);
             }
-            GenerateRoutes();
             Unindent();
-            WriteLine("}");
+            WriteLine("}"); //inner class end
             Unindent();
-            WriteLine("}");
+            WriteLine("}"); // outer class end
+            Unindent();
+            WriteLine("}"); // namespace end
 
             return _codeBuilder.ToString();
         }
 
-        private void GenerateRoutes()
+        private void GenerateRoutes(string innerClassName)
         {
             // void IEndpointRouteProvider.MapRoutes(IEndpointRouteBuilder routes)
-            WriteLine($"{S(typeof(void))} {S(typeof(IEndpointRouteProvider))}.MapRoutes({S(typeof(IEndpointRouteBuilder))} routes)");
+            WriteLine($"public static {S(typeof(void))} Map{_model.HandlerType.Name}(this {S(typeof(IEndpointRouteBuilder))} routes)");
             WriteLine("{");
             Indent();
+            WriteLine($"var handler = new {innerClassName}();");
             foreach (var method in _model.Methods)
             {
-                Write($"routes.Map(\"{method.RoutePattern.RawText}\", {method.MethodInfo.Name})");
+                Write($"routes.Map(\"{method.RoutePattern}\", handler.{method.MethodInfo.Name})");
                 bool first = true;
                 foreach (CustomAttributeData metadata in method.Metadata)
                 {
@@ -198,7 +217,7 @@ namespace uController.CodeGeneration
                 {
                     if (!hasFromBody)
                     {
-                        WriteLine($"var reader = httpContext.RequestServices.GetRequiredService<{S(typeof(IHttpRequestReader))}>();");
+                        WriteLine($"var reader = httpContext.RequestServices.GetService<{S(typeof(IHttpRequestReader))}>() ?? _requestReader;");
                         hasFromBody = true;
                     }
                     WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
@@ -249,7 +268,7 @@ namespace uController.CodeGeneration
             }
             else if (unwrappedType != T(typeof(void)))
             {
-                WriteLine($"await new {T(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
+                WriteLine($"await new {S(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
             }
             Unindent();
             WriteLine("}");
