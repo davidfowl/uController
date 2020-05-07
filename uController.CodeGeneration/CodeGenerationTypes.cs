@@ -44,11 +44,7 @@ namespace Microsoft.AspNetCore.Http
 namespace Microsoft.AspNetCore.Routing
 {
     [TypeForwardedFrom("Microsoft.AspNetCore.Routing")]
-    public interface IEndpointRouteProvider { }
-    [TypeForwardedFrom("Microsoft.AspNetCore.Routing")]
     public interface IEndpointRouteBuilder { }
-    [TypeForwardedFrom("uController")]
-    public sealed class EndpointRouteProviderAttribute { }
 }
 
 namespace Microsoft.Extensions.DependencyInjection

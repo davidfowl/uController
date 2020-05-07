@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
 
     <!-- Source Generators FTFW -->

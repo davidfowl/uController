@@ -13,9 +13,9 @@ namespace uController.SourceGenerator
         public void Execute(SourceGeneratorContext context)
         {
             // For debugging
-            //while (!Debugger.IsAttached)
+            //while (!System.Diagnostics.Debugger.IsAttached)
             //{
-            //    Thread.Sleep(1000);
+            //    System.Threading.Thread.Sleep(1000);
             //}
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
@@ -44,9 +44,8 @@ namespace uController.SourceGenerator
                 //var comp = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(sourceText));
                 //var diagnosrics = comp.GetDiagnostics();
 
-                context.AddSource(model.HandlerType.Name + ".RouteProvider", sourceText);
+                context.AddSource(model.HandlerType.Name + "RouteExtensions", sourceText);
             }
-
         }
 
         public void Initialize(InitializationContext context)

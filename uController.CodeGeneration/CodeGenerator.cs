@@ -85,17 +85,22 @@ namespace uController.CodeGeneration
 //------------------------------------------------------------------------------");
             WriteLine("");
             WriteLine("");
-            var className = $"{ _model.HandlerType.Name}_Generated";
+            var className = $"{_model.HandlerType.Name}RouteExtensions";
+            var innerClassName = $"{_model.HandlerType.Name }Routes";
             WriteLine("using Microsoft.AspNetCore.Builder;");
             WriteLine("using Microsoft.Extensions.DependencyInjection;");
-            WriteLine("");
-            WriteLine($"[assembly: {S(typeof(EndpointRouteProviderAttribute))}(typeof({_model.HandlerType.Namespace}.{className}), typeof({S(_model.HandlerType)}))]");
             WriteLine("");
             WriteLine($"namespace {_model.HandlerType.Namespace}");
             WriteLine("{");
             Indent();
-            WriteLine($"public class {className} : {S(typeof(IEndpointRouteProvider))}");
+            WriteLine($"public static class {className}");
             WriteLine("{");
+            Indent();
+            GenerateRoutes(innerClassName);
+
+            // Generate the inner class
+            WriteLine($"private class {innerClassName}");
+            WriteLine("{"); // inner class start
             Indent();
             var ctors = _model.HandlerType.GetConstructors();
             if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
@@ -108,24 +113,26 @@ namespace uController.CodeGeneration
             {
                 Generate(method);
             }
-            GenerateRoutes();
             Unindent();
-            WriteLine("}");
+            WriteLine("}"); //inner class end
             Unindent();
-            WriteLine("}");
+            WriteLine("}"); // outer class end
+            Unindent();
+            WriteLine("}"); // namespace end
 
             return _codeBuilder.ToString();
         }
 
-        private void GenerateRoutes()
+        private void GenerateRoutes(string innerClassName)
         {
             // void IEndpointRouteProvider.MapRoutes(IEndpointRouteBuilder routes)
-            WriteLine($"{S(typeof(void))} {S(typeof(IEndpointRouteProvider))}.MapRoutes({S(typeof(IEndpointRouteBuilder))} routes)");
+            WriteLine($"public static {S(typeof(void))} Map{_model.HandlerType.Name}(this {S(typeof(IEndpointRouteBuilder))} routes)");
             WriteLine("{");
             Indent();
+            WriteLine($"var handler = new {innerClassName}();");
             foreach (var method in _model.Methods)
             {
-                Write($"routes.Map(\"{method.RoutePattern}\", {method.MethodInfo.Name})");
+                Write($"routes.Map(\"{method.RoutePattern}\", handler.{method.MethodInfo.Name})");
                 bool first = true;
                 foreach (CustomAttributeData metadata in method.Metadata)
                 {
