@@ -7,15 +7,12 @@
 
   <ItemGroup>
     <Compile Include="..\uController.Runtime\AwaitableInfo.cs" Link="AwaitableInfo.cs" />
+    <Compile Include="..\uController\HttpModel.cs" Link="HttpModel.cs" />
+    <Compile Include="..\uController\ReflectionExtensions.cs" Link="ReflectionExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Reflection.MetadataLoadContext" Version="4.6.0" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\uController\uController.csproj" />
   </ItemGroup>
 
 </Project>

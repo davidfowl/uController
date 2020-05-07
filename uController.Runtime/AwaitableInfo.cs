@@ -41,7 +41,7 @@ namespace Microsoft.Extensions.Internal
             // Based on Roslyn code: http://source.roslyn.io/#Microsoft.CodeAnalysis.Workspaces/Shared/Extensions/ISymbolExtensions.cs,db4d48ba694b9347
 
             // Awaitable must have method matching "object GetAwaiter()"
-            var getAwaiterMethod = type.GetRuntimeMethods().FirstOrDefault(m =>
+            var getAwaiterMethod = type.GetMethods().FirstOrDefault(m =>
                 m.Name.Equals("GetAwaiter", StringComparison.OrdinalIgnoreCase)
                 && m.GetParameters().Length == 0
                 && m.ReturnType != null);
@@ -54,7 +54,7 @@ namespace Microsoft.Extensions.Internal
             var awaiterType = getAwaiterMethod.ReturnType;
 
             // Awaiter must have property matching "bool IsCompleted { get; }"
-            var isCompletedProperty = awaiterType.GetRuntimeProperties().FirstOrDefault(p =>
+            var isCompletedProperty = awaiterType.GetProperties().FirstOrDefault(p =>
                 p.Name.Equals("IsCompleted", StringComparison.OrdinalIgnoreCase)
                 && p.PropertyType == getType(typeof(bool))
                 && p.GetMethod != null);
@@ -78,7 +78,7 @@ namespace Microsoft.Extensions.Internal
             //    .GetTypeInfo()
             //    .DeclaredMethods
             //    .GetRuntimeInterfaceMap(getType(typeof(INotifyCompletion)));
-            var onCompletedMethod = awaiterType.GetTypeInfo().DeclaredMethods.Single(m =>
+            var onCompletedMethod = awaiterType.GetMethods().Single(m =>
                 m.Name.Equals("OnCompleted", StringComparison.OrdinalIgnoreCase)
                 && m.ReturnType == getType(typeof(void))
                 && m.GetParameters().Length == 1
@@ -93,7 +93,7 @@ namespace Microsoft.Extensions.Internal
                 //var iCriticalNotifyCompletionMap = awaiterType
                 //    .GetTypeInfo()
                 //    .GetRuntimeInterfaceMap(typeof(ICriticalNotifyCompletion));
-                unsafeOnCompletedMethod = awaiterType.GetTypeInfo().DeclaredMethods.Single(m =>
+                unsafeOnCompletedMethod = awaiterType.GetMethods().Single(m =>
                     m.Name.Equals("UnsafeOnCompleted", StringComparison.OrdinalIgnoreCase)
                     && m.ReturnType == getType(typeof(void))
                     && m.GetParameters().Length == 1
@@ -105,7 +105,7 @@ namespace Microsoft.Extensions.Internal
             }
 
             // Awaiter must have method matching "void GetResult" or "T GetResult()"
-            var getResultMethod = awaiterType.GetRuntimeMethods().FirstOrDefault(m =>
+            var getResultMethod = awaiterType.GetMethods().FirstOrDefault(m =>
                 m.Name.Equals("GetResult")
                 && m.GetParameters().Length == 0);
             if (getResultMethod == null)

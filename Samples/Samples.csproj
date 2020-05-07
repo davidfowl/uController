@@ -2,16 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\uController.Runtime\uController.Runtime.csproj" />
     <ProjectReference Include="..\uController\uController.csproj" />
 
-    <UpToDateCheckBuilt Include="$(IntermediateOutputPath)uController.$(TargetFileName)" />
+    <!-- Source Generators FTFW -->
+    <ProjectReference Include="..\uController.SourceGenerator\uController.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+
+    <!--<UpToDateCheckBuilt Include="$(IntermediateOutputPath)uController.$(TargetFileName)" />-->
   </ItemGroup>
 
-  <Target Name="GenerateController" AfterTargets="CoreCompile" Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
+  <!-- Source Generators FTFW -->
+  <!--<Target Name="GenerateController" AfterTargets="CoreCompile" Inputs="@(Compile)" Outputs="$(IntermediateOutputPath)uController.$(TargetFileName)">
     <PropertyGroup>
       <uControllerGenerator>$(ProjectDir)..\uController.CodeGeneration\bin\$(Configuration)\netcoreapp3.1\uController.CodeGeneration.exe</uControllerGenerator>
       <uControllerOutputPath>$(ProjectDir)\$(IntermediateOutputPath)uController</uControllerOutputPath>
@@ -39,6 +44,6 @@
         <FileWrites Include="$(uControllerTargetPath)" />
         <FileWrites Include="@(uControllerCompile)" />
     </ItemGroup>
-  </Target>
+  </Target>-->
 
 </Project>

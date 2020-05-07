@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -27,11 +28,20 @@ namespace uController.CodeGeneration
         // Resolve the type in the current metadata load context
         private Type T(Type type)
         {
-            if (type.Assembly.GetName().Name == "System.Private.CoreLib")
+            var asmName = type.Assembly.GetName().Name;
+            if (asmName == "System.Private.CoreLib" || asmName == "mscorlib" || asmName == "System.Runtime")
             {
                 return _metadataLoadContext.CoreAssembly.GetType(type.FullName);
             }
-            return _metadataLoadContext.LoadFromAssemblyName(type.Assembly.FullName).GetType(type.FullName);
+
+            var typeForwardedFrom = type.GetCustomAttributeData(typeof(TypeForwardedFromAttribute));
+
+            if (typeForwardedFrom == null)
+            {
+                return _metadataLoadContext.LoadFromAssemblyName(type.Assembly.FullName).GetType(type.FullName);
+            }
+
+            return _metadataLoadContext.LoadFromAssemblyName(typeForwardedFrom.GetConstructorArgument<string>(0)).GetType(type.FullName);
         }
 
         // Pretty print the type name
@@ -43,7 +53,7 @@ namespace uController.CodeGeneration
             {
                 // instantiated generic type only
                 Type genericType = type.GetGenericTypeDefinition();
-                if (object.ReferenceEquals(genericType, T(typeof(Nullable<>))))
+                if (genericType.Equals(T(typeof(Nullable<>))))
                 {
                     return type.GetGenericArguments()[0];
                 }
@@ -115,7 +125,7 @@ namespace uController.CodeGeneration
             Indent();
             foreach (var method in _model.Methods)
             {
-                Write($"routes.Map(\"{method.RoutePattern.RawText}\", {method.MethodInfo.Name})");
+                Write($"routes.Map(\"{method.RoutePattern}\", {method.MethodInfo.Name})");
                 bool first = true;
                 foreach (CustomAttributeData metadata in method.Metadata)
                 {
@@ -249,7 +259,7 @@ namespace uController.CodeGeneration
             }
             else if (unwrappedType != T(typeof(void)))
             {
-                WriteLine($"await new {T(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
+                WriteLine($"await new {S(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
             }
             Unindent();
             WriteLine("}");

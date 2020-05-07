@@ -11,24 +11,24 @@ namespace Microsoft.Extensions.Internal
     {
         private const char DefaultNestedTypeDelimiter = '+';
 
-        private static readonly Dictionary<Type, string> _builtInTypeNames = new Dictionary<Type, string>
+        private static readonly Dictionary<string, string> _builtInTypeNames = new Dictionary<string, string>
         {
-            { typeof(void), "void" },
-            { typeof(bool), "bool" },
-            { typeof(byte), "byte" },
-            { typeof(char), "char" },
-            { typeof(decimal), "decimal" },
-            { typeof(double), "double" },
-            { typeof(float), "float" },
-            { typeof(int), "int" },
-            { typeof(long), "long" },
-            { typeof(object), "object" },
-            { typeof(sbyte), "sbyte" },
-            { typeof(short), "short" },
-            { typeof(string), "string" },
-            { typeof(uint), "uint" },
-            { typeof(ulong), "ulong" },
-            { typeof(ushort), "ushort" }
+            { typeof(void).FullName, "void" },
+            { typeof(bool).FullName, "bool" },
+            { typeof(byte).FullName, "byte" },
+            { typeof(char).FullName, "char" },
+            { typeof(decimal).FullName, "decimal" },
+            { typeof(double).FullName, "double" },
+            { typeof(float).FullName, "float" },
+            { typeof(int).FullName, "int" },
+            { typeof(long).FullName, "long" },
+            { typeof(object).FullName, "object" },
+            { typeof(sbyte).FullName, "sbyte" },
+            { typeof(short).FullName, "short" },
+            { typeof(string).FullName, "string" },
+            { typeof(uint).FullName, "uint" },
+            { typeof(ulong).FullName, "ulong" },
+            { typeof(ushort).FullName, "ushort" }
         };
 
         public static string GetTypeDisplayName(object item, bool fullName = true)
@@ -63,7 +63,7 @@ namespace Microsoft.Extensions.Internal
             {
                 ProcessArrayType(builder, type, options);
             }
-            else if (_builtInTypeNames.TryGetValue(type, out var builtInName))
+            else if (_builtInTypeNames.TryGetValue(type.FullName, out var builtInName))
             {
                 builder.Append(builtInName);
             }
