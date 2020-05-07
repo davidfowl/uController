@@ -1,11 +1,10 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using uController;
 
-namespace Samples
+namespace uController
 {
-    internal class JsonResponseWriter : IHttpResponseWriter
+    public class JsonResponseWriter : IHttpResponseWriter
     {
         public Task WriteAsync(HttpContext httpContext, object value)
         {

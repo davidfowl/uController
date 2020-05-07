@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -109,6 +108,9 @@ namespace uController.CodeGeneration
                 WriteLine("");
             }
 
+            WriteLine($"private readonly {S(typeof(JsonRequestReader))} _requestReader = new {S(typeof(JsonRequestReader))}();");
+            WriteLine("");
+
             foreach (var method in _model.Methods)
             {
                 Generate(method);
@@ -215,7 +217,7 @@ namespace uController.CodeGeneration
                 {
                     if (!hasFromBody)
                     {
-                        WriteLine($"var reader = httpContext.RequestServices.GetRequiredService<{S(typeof(IHttpRequestReader))}>();");
+                        WriteLine($"var reader = httpContext.RequestServices.GetService<{S(typeof(IHttpRequestReader))}>() ?? _requestReader;");
                         hasFromBody = true;
                     }
                     WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");

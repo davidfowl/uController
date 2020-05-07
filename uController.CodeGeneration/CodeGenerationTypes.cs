@@ -31,6 +31,10 @@ namespace uController
     public class FromCookieAttribute { }
     [TypeForwardedFrom("uController")]
     public class FromServicesAttribute { }
+    [TypeForwardedFrom("uController")]
+    public class JsonRequestReader { }
+    [TypeForwardedFrom("uController")]
+    public class JsonResponseWriter { }
 }
 
 namespace Microsoft.AspNetCore.Http
