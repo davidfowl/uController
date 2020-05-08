@@ -28,6 +28,8 @@ namespace System.Reflection
 
         public override string Name => _method.Name;
 
+        public override bool IsGenericMethod => _method.IsGenericMethod;
+
         public override Type ReflectedType => throw new NotImplementedException();
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
@@ -52,6 +54,16 @@ namespace System.Reflection
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
             throw new NotSupportedException();
+        }
+
+        public override Type[] GetGenericArguments()
+        {
+            var typeArguments = new List<Type>();
+            foreach (var t in _method.TypeArguments)
+            {
+                typeArguments.Add(t.AsType(_metadataLoadContext));
+            }
+            return typeArguments.ToArray();
         }
 
         public override MethodImplAttributes GetMethodImplementationFlags()

@@ -25,6 +25,18 @@ namespace System.Reflection
 
         public override Type ReflectedType => throw new NotImplementedException();
 
+        public override bool IsGenericMethod => _ctor.IsGenericMethod;
+
+        public override Type[] GetGenericArguments()
+        {
+            var typeArguments = new List<Type>();
+            foreach (var t in _ctor.TypeArguments)
+            {
+                typeArguments.Add(t.AsType(_metadataLoadContext));
+            }
+            return typeArguments.ToArray();
+        }
+
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
             var attributes = new List<CustomAttributeData>();
