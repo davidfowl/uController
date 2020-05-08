@@ -8,7 +8,7 @@ namespace System.Reflection
 {
     internal class TypeWrapper : Type
     {
-        private INamedTypeSymbol _namedTypeSymbol;
+        private readonly INamedTypeSymbol _namedTypeSymbol;
 
         public TypeWrapper(INamedTypeSymbol namedTypeSymbol)
         {
@@ -19,17 +19,15 @@ namespace System.Reflection
 
         public override string AssemblyQualifiedName => throw new NotImplementedException();
 
-        public override Type BaseType => new TypeWrapper(_namedTypeSymbol.BaseType);
+        public override Type BaseType => _namedTypeSymbol.BaseType.AsType();
 
         public override string FullName => Namespace == null ? Name : Namespace + "." + Name;
 
-        public override Guid GUID => throw new NotImplementedException();
+        public override Guid GUID => Guid.Empty;
 
         public override Module Module => throw new NotImplementedException();
 
         public override string Namespace => _namedTypeSymbol.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
-
-        // private static string Ns(INamespaceSymbol s) => s.ContainingNamespace == null ? "" : "." + s.Name + Ns(s.ContainingNamespace);
 
         public override Type UnderlyingSystemType => throw new NotImplementedException();
 
@@ -44,14 +42,14 @@ namespace System.Reflection
             var args = new List<Type>();
             foreach (var item in _namedTypeSymbol.TypeArguments)
             {
-                args.Add(new TypeWrapper((INamedTypeSymbol)item));
+                args.Add(item.AsType());
             }
             return args.ToArray();
         }
 
         public override Type GetGenericTypeDefinition()
         {
-            return new TypeWrapper(_namedTypeSymbol.ConstructedFrom);
+            return _namedTypeSymbol.ConstructedFrom.AsType();
         }
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
@@ -76,17 +74,22 @@ namespace System.Reflection
 
         public override object[] GetCustomAttributes(bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override Type GetElementType()
         {
-            throw new NotImplementedException();
+            if (_namedTypeSymbol is IArrayTypeSymbol array)
+            {
+                return array.ElementType.AsType();
+            }
+
+            return null;
         }
 
         public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
@@ -154,7 +157,12 @@ namespace System.Reflection
 
         public override Type[] GetNestedTypes(BindingFlags bindingAttr)
         {
-            throw new NotImplementedException();
+            var nestedTypes = new List<Type>();
+            foreach (var type in _namedTypeSymbol.GetTypeMembers())
+            {
+                nestedTypes.Add(type.AsType());
+            }
+            return nestedTypes.ToArray();
         }
 
         public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
@@ -172,7 +180,7 @@ namespace System.Reflection
 
         public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override bool IsDefined(Type attributeType, bool inherit)

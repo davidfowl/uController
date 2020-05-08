@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
 using Microsoft.CodeAnalysis;
 
 namespace System.Reflection
@@ -18,9 +19,9 @@ namespace System.Reflection
 
         public override bool CanWrite => _property.SetMethod != null;
 
-        public override Type PropertyType => new TypeWrapper((INamedTypeSymbol)_property.Type);
+        public override Type PropertyType => _property.Type.AsType();
 
-        public override Type DeclaringType => new TypeWrapper(_property.ContainingType);
+        public override Type DeclaringType => _property.ContainingType.AsType();
 
         public override string Name => _property.Name;
 
@@ -33,32 +34,37 @@ namespace System.Reflection
 
         public override object[] GetCustomAttributes(bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override MethodInfo GetGetMethod(bool nonPublic)
         {
-            return _property.GetMethod != null ? new MethodInfoWrapper(_property.GetMethod) : null;
+            return _property.GetMethod.AsMethodInfo();
         }
 
         public override ParameterInfo[] GetIndexParameters()
         {
-            throw new NotImplementedException();
+            var parameters = new List<ParameterInfo>();
+            foreach (var p in _property.Parameters)
+            {
+                parameters.Add(new ParameterWrapper(p));
+            }
+            return parameters.ToArray();
         }
 
         public override MethodInfo GetSetMethod(bool nonPublic)
         {
-            return _property.SetMethod != null ? new MethodInfoWrapper(_property.SetMethod) : null;
+            return _property.SetMethod.AsMethodInfo();
         }
 
         public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override bool IsDefined(Type attributeType, bool inherit)
@@ -68,7 +74,7 @@ namespace System.Reflection
 
         public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

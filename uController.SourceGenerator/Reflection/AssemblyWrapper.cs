@@ -5,7 +5,7 @@ namespace System.Reflection
 {
     internal class AssemblyWrapper : Assembly
     {
-        private IAssemblySymbol _assembly;
+        private readonly IAssemblySymbol _assembly;
 
         public AssemblyWrapper(IAssemblySymbol assembly)
         {
@@ -13,6 +13,11 @@ namespace System.Reflection
         }
 
         public override Type[] GetExportedTypes()
+        {
+            return GetTypes();
+        }
+
+        public override Type[] GetTypes()
         {
             var types = new List<Type>();
             var stack = new Stack<INamespaceSymbol>();
@@ -36,7 +41,7 @@ namespace System.Reflection
 
         public override Type GetType(string name)
         {
-            return new TypeWrapper(_assembly.GetTypeByMetadataName(name));
+            return _assembly.GetTypeByMetadataName(name).AsType();
         }
     }
 }

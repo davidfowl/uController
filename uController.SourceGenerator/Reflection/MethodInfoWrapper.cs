@@ -5,9 +5,9 @@ using Microsoft.CodeAnalysis;
 
 namespace System.Reflection
 {
-    internal partial class MethodInfoWrapper : MethodInfo
+    internal class MethodInfoWrapper : MethodInfo
     {
-        private IMethodSymbol _method;
+        private readonly IMethodSymbol _method;
 
         public MethodInfoWrapper(IMethodSymbol method)
         {
@@ -18,11 +18,11 @@ namespace System.Reflection
 
         public override MethodAttributes Attributes => throw new NotImplementedException();
 
-        public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+        public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
-        public override Type DeclaringType => new TypeWrapper(_method.ContainingType);
+        public override Type DeclaringType => _method.ContainingType.AsType();
 
-        public override Type ReturnType => new TypeWrapper((INamedTypeSymbol)_method.ReturnType);
+        public override Type ReturnType => _method.ReturnType.AsType();
 
         public override string Name => _method.Name;
 
@@ -44,12 +44,12 @@ namespace System.Reflection
 
         public override object[] GetCustomAttributes(bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override MethodImplAttributes GetMethodImplementationFlags()
@@ -69,7 +69,7 @@ namespace System.Reflection
 
         public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override bool IsDefined(Type attributeType, bool inherit)

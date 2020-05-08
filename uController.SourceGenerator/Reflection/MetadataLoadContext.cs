@@ -8,20 +8,18 @@ namespace System.Reflection
 {
     public class MetadataLoadContext
     {
-        private readonly Compilation _compilation;
         private readonly Dictionary<string, IAssemblySymbol> _assemblies = new Dictionary<string, IAssemblySymbol>(StringComparer.OrdinalIgnoreCase);
 
         public MetadataLoadContext(Compilation compilation)
         {
-            _compilation = compilation;
-            var assemblies = _compilation.References
-                                         .OfType<PortableExecutableReference>()
-                                         .ToDictionary(r => AssemblyName.GetAssemblyName(r.FilePath),
-                                                       r => (IAssemblySymbol)_compilation.GetAssemblyOrModuleSymbol(r));
+            var assemblies = compilation.References
+                                        .OfType<PortableExecutableReference>()
+                                        .ToDictionary(r => AssemblyName.GetAssemblyName(r.FilePath),
+                                                      r => (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(r));
 
             foreach (var item in assemblies)
             {
-                // REVIEW: Is the full name important
+                // REVIEW: We need to figure out full framework
                 // _assemblies[item.Key.FullName] = item.Value;
                 _assemblies[item.Key.Name] = item.Value;
             }

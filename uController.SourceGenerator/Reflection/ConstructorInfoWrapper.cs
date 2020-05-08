@@ -6,18 +6,18 @@ namespace System.Reflection
 {
     internal class ConstructorInfoWrapper : ConstructorInfo
     {
-        private IMethodSymbol _ctor;
+        private readonly IMethodSymbol _ctor;
 
         public ConstructorInfoWrapper(IMethodSymbol ctor)
         {
             _ctor = ctor;
         }
 
-        public override Type DeclaringType => new TypeWrapper(_ctor.ContainingType);
+        public override Type DeclaringType => _ctor.ContainingType.AsType();
 
         public override MethodAttributes Attributes => throw new NotImplementedException();
 
-        public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+        public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
         public override string Name => _ctor.Name;
 
@@ -35,12 +35,12 @@ namespace System.Reflection
 
         public override object[] GetCustomAttributes(bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override MethodImplAttributes GetMethodImplementationFlags()
@@ -60,12 +60,12 @@ namespace System.Reflection
 
         public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override bool IsDefined(Type attributeType, bool inherit)

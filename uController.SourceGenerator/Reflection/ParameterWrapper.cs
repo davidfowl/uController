@@ -5,14 +5,14 @@ namespace System.Reflection
 {
     public class ParameterWrapper : ParameterInfo
     {
-        private IParameterSymbol _parameter;
+        private readonly IParameterSymbol _parameter;
 
-        public ParameterWrapper(IParameterSymbol p)
+        public ParameterWrapper(IParameterSymbol parameter)
         {
-            _parameter = p;
+            _parameter = parameter;
         }
 
-        public override Type ParameterType => new TypeWrapper((INamedTypeSymbol)_parameter.Type);
+        public override Type ParameterType => _parameter.Type.AsType();
         public override string Name => _parameter.Name;
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
