@@ -7,9 +7,14 @@ namespace uController
 {
     public class JsonRequestReader : IHttpRequestReader
     {
+        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
         {
-            return JsonSerializer.DeserializeAsync(httpContext.Request.Body, targetType);
+            return JsonSerializer.DeserializeAsync(httpContext.Request.Body, targetType, _serializerOptions);
         }
     }
 }

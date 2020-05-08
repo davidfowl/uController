@@ -6,9 +6,15 @@ namespace uController
 {
     public class JsonResponseWriter : IHttpResponseWriter
     {
+        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         public Task WriteAsync(HttpContext httpContext, object value)
         {
-            return JsonSerializer.SerializeAsync(httpContext.Response.Body, value, value?.GetType());
+            return JsonSerializer.SerializeAsync(httpContext.Response.Body, value, value?.GetType(), _serializerOptions);
         }
     }
 }
