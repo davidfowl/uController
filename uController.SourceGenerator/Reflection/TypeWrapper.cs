@@ -90,12 +90,7 @@ namespace System.Reflection
 
         public override Type GetElementType()
         {
-            if (_typeSymbol is IArrayTypeSymbol array)
-            {
-                return array.ElementType.AsType(_metadataLoadContext);
-            }
-
-            return null;
+            return ArrayTypeSymbol?.ElementType.AsType(_metadataLoadContext);
         }
 
         public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
