@@ -58,3 +58,9 @@ namespace Microsoft.Extensions.DependencyInjection
     [TypeForwardedFrom("Microsoft.Extensions.DependencyInjection.Abstractions")]
     public static class ActivatorUtilities { }
 }
+
+namespace System.Text.Json
+{
+    [TypeForwardedFrom("System.Text.Json")]
+    public struct JsonElement { }
+}

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -13,10 +15,7 @@ namespace uController.SourceGenerator
         public void Execute(SourceGeneratorContext context)
         {
             // For debugging
-            //while (!System.Diagnostics.Debugger.IsAttached)
-            //{
-            //    System.Threading.Thread.Sleep(1000);
-            //}
+            // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
             var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName("uController");
@@ -45,6 +44,12 @@ namespace uController.SourceGenerator
                 //var diagnosrics = comp.GetDiagnostics();
 
                 context.AddSource(model.HandlerType.Name + "RouteExtensions", sourceText);
+
+                //if (gen.FromBodyTypes.Any())
+                //{
+                //    var jsonGenerator = new JsonCodeGenerator(metadataLoadContext, model.HandlerType.Namespace);
+                //    var generatedConverters = jsonGenerator.Generate(gen.FromBodyTypes, out var helperSource);
+                //}
             }
         }
 

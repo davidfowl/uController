@@ -6,13 +6,15 @@ namespace System.Reflection
     public class ParameterWrapper : ParameterInfo
     {
         private readonly IParameterSymbol _parameter;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public ParameterWrapper(IParameterSymbol parameter)
+        public ParameterWrapper(IParameterSymbol parameter, MetadataLoadContext metadataLoadContext)
         {
             _parameter = parameter;
+            _metadataLoadContext = metadataLoadContext;
         }
 
-        public override Type ParameterType => _parameter.Type.AsType();
+        public override Type ParameterType => _parameter.Type.AsType(_metadataLoadContext);
         public override string Name => _parameter.Name;
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
@@ -20,7 +22,7 @@ namespace System.Reflection
             var attributes = new List<CustomAttributeData>();
             foreach (var a in _parameter.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a));
+                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
             }
             return attributes;
         }

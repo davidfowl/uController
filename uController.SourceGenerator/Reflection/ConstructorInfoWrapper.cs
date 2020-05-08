@@ -7,13 +7,15 @@ namespace System.Reflection
     internal class ConstructorInfoWrapper : ConstructorInfo
     {
         private readonly IMethodSymbol _ctor;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public ConstructorInfoWrapper(IMethodSymbol ctor)
+        public ConstructorInfoWrapper(IMethodSymbol ctor, MetadataLoadContext metadataLoadContext)
         {
             _ctor = ctor;
+            _metadataLoadContext = metadataLoadContext;
         }
 
-        public override Type DeclaringType => _ctor.ContainingType.AsType();
+        public override Type DeclaringType => _ctor.ContainingType.AsType(_metadataLoadContext);
 
         public override MethodAttributes Attributes => throw new NotImplementedException();
 
@@ -28,7 +30,7 @@ namespace System.Reflection
             var attributes = new List<CustomAttributeData>();
             foreach (var a in _ctor.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a));
+                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
             }
             return attributes;
         }
@@ -53,7 +55,7 @@ namespace System.Reflection
             var parameters = new List<ParameterInfo>();
             foreach (var p in _ctor.Parameters)
             {
-                parameters.Add(new ParameterWrapper(p));
+                parameters.Add(new ParameterWrapper(p, _metadataLoadContext));
             }
             return parameters.ToArray();
         }

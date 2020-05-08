@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -24,24 +26,7 @@ namespace uController.CodeGeneration
             _metadataLoadContext = metadataLoadContext;
         }
 
-        // Resolve the type in the current metadata load context
-        private Type T(Type type)
-        {
-            var asmName = type.Assembly.GetName().Name;
-            if (asmName == "System.Private.CoreLib" || asmName == "mscorlib" || asmName == "System.Runtime")
-            {
-                return _metadataLoadContext.CoreAssembly.GetType(type.FullName);
-            }
-
-            var typeForwardedFrom = type.GetCustomAttributeData(typeof(TypeForwardedFromAttribute));
-
-            if (typeForwardedFrom == null)
-            {
-                return _metadataLoadContext.LoadFromAssemblyName(type.Assembly.FullName).GetType(type.FullName);
-            }
-
-            return _metadataLoadContext.LoadFromAssemblyName(typeForwardedFrom.GetConstructorArgument<string>(0)).GetType(type.FullName);
-        }
+        public HashSet<Type> FromBodyTypes { get; set; } = new HashSet<Type>();
 
         // Pretty print the type name
         private string S(Type type) => TypeNameHelper.GetTypeDisplayName(type);
@@ -52,7 +37,7 @@ namespace uController.CodeGeneration
             {
                 // instantiated generic type only
                 Type genericType = type.GetGenericTypeDefinition();
-                if (genericType.Equals(T(typeof(Nullable<>))))
+                if (genericType.Equals(typeof(Nullable<>)))
                 {
                     return type.GetGenericArguments()[0];
                 }
@@ -180,11 +165,11 @@ namespace uController.CodeGeneration
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
-                if (parameter.ParameterType == T(typeof(HttpContext)))
+                if (parameter.ParameterType.Equals(typeof(HttpContext)))
                 {
                     WriteLine($"var {parameterName} = httpContext;");
                 }
-                else if (parameter.ParameterType == T(typeof(IFormCollection)))
+                else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
                 {
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
                 }
@@ -220,21 +205,27 @@ namespace uController.CodeGeneration
                         WriteLine($"var reader = httpContext.RequestServices.GetService<{S(typeof(IHttpRequestReader))}>() ?? _requestReader;");
                         hasFromBody = true;
                     }
+
+                    if (!parameter.ParameterType.Equals(typeof(JsonElement)))
+                    {
+                        FromBodyTypes.Add(parameter.ParameterType);
+                    }
+
                     WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
                 }
             }
 
             AwaitableInfo awaitableInfo = default;
             // Populate locals
-            if (method.MethodInfo.ReturnType == T(typeof(void)))
+            if (method.MethodInfo.ReturnType.Equals(typeof(void)))
             {
                 Write("");
             }
             else
             {
-                if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, T, out awaitableInfo))
+                if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out awaitableInfo))
                 {
-                    if (awaitableInfo.ResultType == T(typeof(void)))
+                    if (awaitableInfo.ResultType.Equals(typeof(void)))
                     {
                         Write("await ");
                     }
@@ -262,11 +253,11 @@ namespace uController.CodeGeneration
             }
             WriteLineNoIndent(");");
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
-            if (T(typeof(Result)).IsAssignableFrom(unwrappedType))
+            if (_metadataLoadContext.Resolve<Result>().IsAssignableFrom(unwrappedType))
             {
                 WriteLine("await result.ExecuteAsync(httpContext);");
             }
-            else if (unwrappedType != T(typeof(void)))
+            else if (!unwrappedType.Equals(typeof(void)))
             {
                 WriteLine($"await new {S(typeof(ObjectResult))}(result).ExecuteAsync(httpContext);");
             }
@@ -277,7 +268,7 @@ namespace uController.CodeGeneration
 
         private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)
         {
-            if (type == T(typeof(string)))
+            if (type.Equals(typeof(string)))
             {
                 WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
             }

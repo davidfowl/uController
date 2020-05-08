@@ -7,10 +7,12 @@ namespace System.Reflection
     internal class PropertyWrapper : PropertyInfo
     {
         private readonly IPropertySymbol _property;
+        private MetadataLoadContext _metadataLoadContext;
 
-        public PropertyWrapper(IPropertySymbol property)
+        public PropertyWrapper(IPropertySymbol property, MetadataLoadContext metadataLoadContext)
         {
             _property = property;
+            _metadataLoadContext = metadataLoadContext;
         }
 
         public override PropertyAttributes Attributes => throw new NotImplementedException();
@@ -19,9 +21,9 @@ namespace System.Reflection
 
         public override bool CanWrite => _property.SetMethod != null;
 
-        public override Type PropertyType => _property.Type.AsType();
+        public override Type PropertyType => _property.Type.AsType(_metadataLoadContext);
 
-        public override Type DeclaringType => _property.ContainingType.AsType();
+        public override Type DeclaringType => _property.ContainingType.AsType(_metadataLoadContext);
 
         public override string Name => _property.Name;
 
@@ -44,7 +46,7 @@ namespace System.Reflection
 
         public override MethodInfo GetGetMethod(bool nonPublic)
         {
-            return _property.GetMethod.AsMethodInfo();
+            return _property.GetMethod.AsMethodInfo(_metadataLoadContext);
         }
 
         public override ParameterInfo[] GetIndexParameters()
@@ -52,14 +54,14 @@ namespace System.Reflection
             var parameters = new List<ParameterInfo>();
             foreach (var p in _property.Parameters)
             {
-                parameters.Add(new ParameterWrapper(p));
+                parameters.Add(new ParameterWrapper(p, _metadataLoadContext));
             }
             return parameters.ToArray();
         }
 
         public override MethodInfo GetSetMethod(bool nonPublic)
         {
-            return _property.SetMethod.AsMethodInfo();
+            return _property.SetMethod.AsMethodInfo(_metadataLoadContext);
         }
 
         public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)

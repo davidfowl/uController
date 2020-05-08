@@ -8,10 +8,12 @@ namespace System.Reflection
     internal class MethodInfoWrapper : MethodInfo
     {
         private readonly IMethodSymbol _method;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public MethodInfoWrapper(IMethodSymbol method)
+        public MethodInfoWrapper(IMethodSymbol method, MetadataLoadContext metadataLoadContext)
         {
             _method = method;
+            _metadataLoadContext = metadataLoadContext;
         }
 
         public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
@@ -20,9 +22,9 @@ namespace System.Reflection
 
         public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
-        public override Type DeclaringType => _method.ContainingType.AsType();
+        public override Type DeclaringType => _method.ContainingType.AsType(_metadataLoadContext);
 
-        public override Type ReturnType => _method.ReturnType.AsType();
+        public override Type ReturnType => _method.ReturnType.AsType(_metadataLoadContext);
 
         public override string Name => _method.Name;
 
@@ -32,7 +34,7 @@ namespace System.Reflection
             var attributes = new List<CustomAttributeData>();
             foreach (var a in _method.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a));
+                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
             }
             return attributes;
         }
@@ -62,7 +64,7 @@ namespace System.Reflection
             var parameters = new List<ParameterInfo>();
             foreach (var p in _method.Parameters)
             {
-                parameters.Add(new ParameterWrapper(p));
+                parameters.Add(new ParameterWrapper(p, _metadataLoadContext));
             }
             return parameters.ToArray();
         }

@@ -22,7 +22,7 @@ namespace Samples
         }
 
         [HttpGet("/status/{status}")]
-        public Result StatusCode([FromRoute]int status)
+        public Result StatusCode([FromRoute] int status)
         {
             return Status(status);
         }
@@ -36,13 +36,13 @@ namespace Samples
         }
 
         [HttpGet("/fast/status/{status}")]
-        public ValueTask<Result> FastValueTaskStatusCode([FromServices]ILoggerFactory loggerFactory)
+        public ValueTask<Result> FastValueTaskStatusCode([FromServices] ILoggerFactory loggerFactory)
         {
             return new ValueTask<Result>(Status(201));
         }
 
         [HttpGet("/lag")]
-        public async Task DoAsync(HttpContext context, [FromQuery]string q)
+        public async Task DoAsync(HttpContext context, [FromQuery] string q)
         {
             await Task.Delay(100);
 
@@ -53,7 +53,7 @@ namespace Samples
         public string HelloDavid() => "Hello David!";
 
         [HttpGet("/hey/{name?}")]
-        public async Task<string> GetAsync([FromRoute]string name)
+        public async Task<string> GetAsync([FromRoute] string name)
         {
             await Task.Delay(500);
 
@@ -61,10 +61,10 @@ namespace Samples
         }
 
         [HttpGet("/hello")]
-        public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")]string id, [FromQuery]int? page, [FromQuery]int? pageSize) => "Hello!";
+        public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")] string id, [FromQuery] int? page, [FromQuery] int? pageSize) => "Hello!";
 
         [HttpPost("/")]
-        public Result Post([FromBody]JsonElement obj)
+        public Result Post([FromBody] Person obj)
         {
             return Ok(obj);
         }
@@ -81,5 +81,11 @@ namespace Samples
         {
 
         }
+    }
+
+    public class Person
+    {
+        public int Age { get; set; }
+        public string Name { get; set; }
     }
 }

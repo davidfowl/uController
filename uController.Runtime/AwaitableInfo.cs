@@ -36,7 +36,7 @@ namespace Microsoft.Extensions.Internal
             GetAwaiterMethod = getAwaiterMethod;
         }
 
-        public static bool IsTypeAwaitable(Type type, Func<Type, Type> getType, out AwaitableInfo awaitableInfo)
+        public static bool IsTypeAwaitable(Type type, out AwaitableInfo awaitableInfo)
         {
             // Based on Roslyn code: http://source.roslyn.io/#Microsoft.CodeAnalysis.Workspaces/Shared/Extensions/ISymbolExtensions.cs,db4d48ba694b9347
 
@@ -56,7 +56,7 @@ namespace Microsoft.Extensions.Internal
             // Awaiter must have property matching "bool IsCompleted { get; }"
             var isCompletedProperty = awaiterType.GetProperties().FirstOrDefault(p =>
                 p.Name.Equals("IsCompleted", StringComparison.OrdinalIgnoreCase)
-                && p.PropertyType == getType(typeof(bool))
+                && p.PropertyType.Equals(typeof(bool))
                 && p.GetMethod != null);
             if (isCompletedProperty == null)
             {
@@ -66,7 +66,7 @@ namespace Microsoft.Extensions.Internal
 
             // Awaiter must implement INotifyCompletion
             var awaiterInterfaces = awaiterType.GetInterfaces();
-            var implementsINotifyCompletion = awaiterInterfaces.Any(t => t == getType(typeof(INotifyCompletion)));
+            var implementsINotifyCompletion = awaiterInterfaces.Any(t => t.Equals(typeof(INotifyCompletion)));
             if (!implementsINotifyCompletion)
             {
                 awaitableInfo = default(AwaitableInfo);
@@ -80,12 +80,12 @@ namespace Microsoft.Extensions.Internal
             //    .GetRuntimeInterfaceMap(getType(typeof(INotifyCompletion)));
             var onCompletedMethod = awaiterType.GetMethods().Single(m =>
                 m.Name.Equals("OnCompleted", StringComparison.OrdinalIgnoreCase)
-                && m.ReturnType == getType(typeof(void))
+                && m.ReturnType.Equals(typeof(void))
                 && m.GetParameters().Length == 1
-                && m.GetParameters()[0].ParameterType == getType(typeof(Action)));
+                && m.GetParameters()[0].ParameterType.Equals(typeof(Action)));
 
             // Awaiter optionally implements ICriticalNotifyCompletion
-            var implementsICriticalNotifyCompletion = awaiterInterfaces.Any(t => t == getType(typeof(ICriticalNotifyCompletion)));
+            var implementsICriticalNotifyCompletion = awaiterInterfaces.Any(t => t.Equals(typeof(ICriticalNotifyCompletion)));
             MethodInfo unsafeOnCompletedMethod;
             if (implementsICriticalNotifyCompletion)
             {
@@ -95,9 +95,9 @@ namespace Microsoft.Extensions.Internal
                 //    .GetRuntimeInterfaceMap(typeof(ICriticalNotifyCompletion));
                 unsafeOnCompletedMethod = awaiterType.GetMethods().Single(m =>
                     m.Name.Equals("UnsafeOnCompleted", StringComparison.OrdinalIgnoreCase)
-                    && m.ReturnType == getType(typeof(void))
+                    && m.ReturnType.Equals(typeof(void))
                     && m.GetParameters().Length == 1
-                    && m.GetParameters()[0].ParameterType == getType(typeof(Action)));
+                    && m.GetParameters()[0].ParameterType.Equals(typeof(Action)));
             }
             else
             {

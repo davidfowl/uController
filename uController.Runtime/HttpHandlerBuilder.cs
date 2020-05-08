@@ -188,7 +188,7 @@ namespace uController
 
                     body = Expression.Block(bodyExpressions);
                 }
-                else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, t => t, out var info))
+                else if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out var info))
                 {
                     if (method.MethodInfo.ReturnType == typeof(Task))
                     {

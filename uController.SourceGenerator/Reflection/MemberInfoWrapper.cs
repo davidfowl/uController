@@ -6,13 +6,15 @@ namespace System.Reflection
     internal class MemberInfoWrapper : MemberInfo
     {
         private readonly ISymbol _member;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public MemberInfoWrapper(ISymbol member)
+        public MemberInfoWrapper(ISymbol member, MetadataLoadContext metadataLoadContext)
         {
             _member = member;
+            _metadataLoadContext = metadataLoadContext;
         }
 
-        public override Type DeclaringType => _member.ContainingType.AsType();
+        public override Type DeclaringType => _member.ContainingType.AsType(_metadataLoadContext);
 
         public override MemberTypes MemberType => throw new NotImplementedException();
 
@@ -25,7 +27,7 @@ namespace System.Reflection
             var attributes = new List<CustomAttributeData>();
             foreach (var a in _member.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a));
+                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
             }
             return attributes;
         }

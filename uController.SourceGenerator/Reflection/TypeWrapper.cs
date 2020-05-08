@@ -8,18 +8,20 @@ namespace System.Reflection
 {
     internal class TypeWrapper : Type
     {
-        private readonly INamedTypeSymbol _namedTypeSymbol;
+        private readonly ITypeSymbol _typeSymbol;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public TypeWrapper(INamedTypeSymbol namedTypeSymbol)
+        public TypeWrapper(ITypeSymbol namedTypeSymbol, MetadataLoadContext metadataLoadContext)
         {
-            _namedTypeSymbol = namedTypeSymbol;
+            _typeSymbol = namedTypeSymbol;
+            _metadataLoadContext = metadataLoadContext;
         }
 
-        public override Assembly Assembly => new AssemblyWrapper(_namedTypeSymbol.ContainingAssembly);
+        public override Assembly Assembly => new AssemblyWrapper(_typeSymbol.ContainingAssembly, _metadataLoadContext);
 
         public override string AssemblyQualifiedName => throw new NotImplementedException();
 
-        public override Type BaseType => _namedTypeSymbol.BaseType.AsType();
+        public override Type BaseType => _typeSymbol.BaseType.AsType(_metadataLoadContext);
 
         public override string FullName => Namespace == null ? Name : Namespace + "." + Name;
 
@@ -27,37 +29,41 @@ namespace System.Reflection
 
         public override Module Module => throw new NotImplementedException();
 
-        public override string Namespace => _namedTypeSymbol.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
+        public override string Namespace => _typeSymbol.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
 
-        public override Type UnderlyingSystemType => throw new NotImplementedException();
+        public override Type UnderlyingSystemType => this;
 
-        public override string Name => _namedTypeSymbol.MetadataName;
+        public override string Name => _typeSymbol.MetadataName;
 
-        public override bool IsGenericType => _namedTypeSymbol.IsGenericType;
+        public override bool IsGenericType => NamedTypeSymbol.IsGenericType;
+
+        private INamedTypeSymbol NamedTypeSymbol => _typeSymbol as INamedTypeSymbol;
+
+        private IArrayTypeSymbol ArrayTypeSymbol => _typeSymbol as IArrayTypeSymbol;
 
         public override bool IsGenericTypeDefinition => base.IsGenericTypeDefinition;
 
         public override Type[] GetGenericArguments()
         {
             var args = new List<Type>();
-            foreach (var item in _namedTypeSymbol.TypeArguments)
+            foreach (var item in NamedTypeSymbol.TypeArguments)
             {
-                args.Add(item.AsType());
+                args.Add(item.AsType(_metadataLoadContext));
             }
             return args.ToArray();
         }
 
         public override Type GetGenericTypeDefinition()
         {
-            return _namedTypeSymbol.ConstructedFrom.AsType();
+            return NamedTypeSymbol.ConstructedFrom.AsType(_metadataLoadContext);
         }
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
             var attributes = new List<CustomAttributeData>();
-            foreach (var a in _namedTypeSymbol.GetAttributes())
+            foreach (var a in _typeSymbol.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a));
+                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
             }
             return attributes;
         }
@@ -65,9 +71,9 @@ namespace System.Reflection
         public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
         {
             var ctors = new List<ConstructorInfo>();
-            foreach (var c in _namedTypeSymbol.Constructors)
+            foreach (var c in NamedTypeSymbol.Constructors)
             {
-                ctors.Add(new ConstructorInfoWrapper(c));
+                ctors.Add(new ConstructorInfoWrapper(c, _metadataLoadContext));
             }
             return ctors.ToArray();
         }
@@ -84,9 +90,9 @@ namespace System.Reflection
 
         public override Type GetElementType()
         {
-            if (_namedTypeSymbol is IArrayTypeSymbol array)
+            if (_typeSymbol is IArrayTypeSymbol array)
             {
-                return array.ElementType.AsType();
+                return array.ElementType.AsType(_metadataLoadContext);
             }
 
             return null;
@@ -120,9 +126,9 @@ namespace System.Reflection
         public override Type[] GetInterfaces()
         {
             var interfaces = new List<Type>();
-            foreach (var i in _namedTypeSymbol.Interfaces)
+            foreach (var i in _typeSymbol.Interfaces)
             {
-                interfaces.Add(new TypeWrapper(i));
+                interfaces.Add(i.AsType(_metadataLoadContext));
             }
             return interfaces.ToArray();
         }
@@ -135,15 +141,15 @@ namespace System.Reflection
         public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
         {
             var methods = new List<MethodInfo>();
-            foreach (var m in _namedTypeSymbol.GetMembers())
+            foreach (var m in _typeSymbol.GetMembers())
             {
                 // TODO: Efficiency
-                if (m is IMethodSymbol method && !_namedTypeSymbol.Constructors.Contains(method))
+                if (m is IMethodSymbol method && !NamedTypeSymbol.Constructors.Contains(method))
                 {
                     if ((bindingAttr & BindingFlags.Public) == BindingFlags.Public &&
                         (m.DeclaredAccessibility & Accessibility.Public) == Accessibility.Public)
                     {
-                        methods.Add(new MethodInfoWrapper(method));
+                        methods.Add(method.AsMethodInfo(_metadataLoadContext));
                     }
                 }
             }
@@ -158,9 +164,9 @@ namespace System.Reflection
         public override Type[] GetNestedTypes(BindingFlags bindingAttr)
         {
             var nestedTypes = new List<Type>();
-            foreach (var type in _namedTypeSymbol.GetTypeMembers())
+            foreach (var type in _typeSymbol.GetTypeMembers())
             {
-                nestedTypes.Add(type.AsType());
+                nestedTypes.Add(type.AsType(_metadataLoadContext));
             }
             return nestedTypes.ToArray();
         }
@@ -168,11 +174,11 @@ namespace System.Reflection
         public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
         {
             var properties = new List<PropertyInfo>();
-            foreach (var item in _namedTypeSymbol.GetMembers())
+            foreach (var item in _typeSymbol.GetMembers())
             {
                 if (item is IPropertySymbol property)
                 {
-                    properties.Add(new PropertyWrapper(property));
+                    properties.Add(new PropertyWrapper(property, _metadataLoadContext));
                 }
             }
             return properties.ToArray();
@@ -215,7 +221,7 @@ namespace System.Reflection
 
         protected override bool IsArrayImpl()
         {
-            return _namedTypeSymbol is IArrayTypeSymbol;
+            return ArrayTypeSymbol != null;
         }
 
         protected override bool IsByRefImpl()
@@ -242,22 +248,31 @@ namespace System.Reflection
         {
             if (c is TypeWrapper tr)
             {
-                return tr._namedTypeSymbol.AllInterfaces.Contains(_namedTypeSymbol) || tr._namedTypeSymbol.BaseTypes().Contains(_namedTypeSymbol);
+                return tr._typeSymbol.AllInterfaces.Contains(_typeSymbol) || (tr.NamedTypeSymbol != null && tr.NamedTypeSymbol.BaseTypes().Contains(_typeSymbol));
+            }
+            else if (_metadataLoadContext.Resolve(c) is TypeWrapper trr)
+            {
+                return trr._typeSymbol.AllInterfaces.Contains(_typeSymbol) || (trr.NamedTypeSymbol != null && trr.NamedTypeSymbol.BaseTypes().Contains(_typeSymbol));
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return _namedTypeSymbol.GetHashCode();
+            return _typeSymbol.GetHashCode();
         }
 
         public override bool Equals(object o)
         {
             if (o is TypeWrapper tw)
             {
-                return _namedTypeSymbol.Equals(tw._namedTypeSymbol, SymbolEqualityComparer.Default);
+                return _typeSymbol.Equals(tw._typeSymbol, SymbolEqualityComparer.Default);
             }
+            else if (o is Type t && _metadataLoadContext.Resolve(t) is TypeWrapper tww)
+            {
+                return _typeSymbol.Equals(tww._typeSymbol, SymbolEqualityComparer.Default);
+            }
+
             return base.Equals(o);
         }
 
@@ -265,7 +280,11 @@ namespace System.Reflection
         {
             if (o is TypeWrapper tw)
             {
-                return _namedTypeSymbol.Equals(tw._namedTypeSymbol, SymbolEqualityComparer.Default);
+                return _typeSymbol.Equals(tw._typeSymbol, SymbolEqualityComparer.Default);
+            }
+            else if (_metadataLoadContext.Resolve(o) is TypeWrapper tww)
+            {
+                return _typeSymbol.Equals(tww._typeSymbol, SymbolEqualityComparer.Default);
             }
             return base.Equals(o);
         }

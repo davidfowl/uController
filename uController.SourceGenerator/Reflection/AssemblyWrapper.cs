@@ -5,12 +5,15 @@ namespace System.Reflection
 {
     internal class AssemblyWrapper : Assembly
     {
-        private readonly IAssemblySymbol _assembly;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public AssemblyWrapper(IAssemblySymbol assembly)
+        public AssemblyWrapper(IAssemblySymbol assembly, MetadataLoadContext metadataLoadContext)
         {
-            _assembly = assembly;
+            Symbol = assembly;
+            _metadataLoadContext = metadataLoadContext;
         }
+
+        internal IAssemblySymbol Symbol { get; }
 
         public override Type[] GetExportedTypes()
         {
@@ -21,14 +24,14 @@ namespace System.Reflection
         {
             var types = new List<Type>();
             var stack = new Stack<INamespaceSymbol>();
-            stack.Push(_assembly.GlobalNamespace);
+            stack.Push(Symbol.GlobalNamespace);
             while (stack.Count > 0)
             {
                 var current = stack.Pop();
 
                 foreach (var type in current.GetTypeMembers())
                 {
-                    types.Add(new TypeWrapper(type));
+                    types.Add(type.AsType(_metadataLoadContext));
                 }
 
                 foreach (var ns in current.GetNamespaceMembers())
@@ -41,7 +44,7 @@ namespace System.Reflection
 
         public override Type GetType(string name)
         {
-            return _assembly.GetTypeByMetadataName(name).AsType();
+            return Symbol.GetTypeByMetadataName(name).AsType(_metadataLoadContext);
         }
     }
 }

@@ -10,9 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\uController.CodeGeneration\CodeGenerationTypes.cs" Link="CodeGenerationTypes.cs" />
-    <Compile Include="..\uController.CodeGeneration\CodeGenerator.cs" Link="CodeGenerator.cs" />
-    <Compile Include="..\uController.CodeGeneration\TypeNameHelper.cs" Link="TypeNameHelper.cs" />
+    
     <Compile Include="..\uController.Runtime\AwaitableInfo.cs" Link="AwaitableInfo.cs" />
     <Compile Include="..\uController\HttpModel.cs" Link="HttpModel.cs" />
     <Compile Include="..\uController\ReflectionExtensions.cs" Link="ReflectionExtensions.cs" />
