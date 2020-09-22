@@ -12,7 +12,7 @@ namespace uController.SourceGenerator
     [Generator]
     public class uControllerGenerator : ISourceGenerator
     {
-        public void Execute(SourceGeneratorContext context)
+        public void Execute(GeneratorExecutionContext context)
         {
             // For debugging
             // System.Diagnostics.Debugger.Launch();
@@ -53,7 +53,7 @@ namespace uController.SourceGenerator
             }
         }
 
-        public void Initialize(InitializationContext context)
+        public void Initialize(GeneratorInitializationContext context)
         {
             // No initialization required
         }
