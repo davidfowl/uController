@@ -30,7 +30,7 @@ namespace Samples
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapMyHandler();
+                endpoints.MapHttpHandler<MyHandler>();
             });
         }
     }

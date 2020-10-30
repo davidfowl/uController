@@ -113,7 +113,7 @@ namespace uController.CodeGeneration
         private void GenerateRoutes(string innerClassName)
         {
             // void IEndpointRouteProvider.MapRoutes(IEndpointRouteBuilder routes)
-            WriteLine($"public static {S(typeof(void))} Map{_model.HandlerType.Name}(this {S(typeof(IEndpointRouteBuilder))} routes)");
+            WriteLine($"public static {S(typeof(void))} MapHttpHandler<THttpHandler>(this {S(typeof(IEndpointRouteBuilder))} routes) where THttpHandler : {S(_model.HandlerType)}");
             WriteLine("{");
             Indent();
             WriteLine($"var handler = new {innerClassName}();");
