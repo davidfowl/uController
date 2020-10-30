@@ -16,7 +16,7 @@ namespace Samples
 {
     public static class MyHandlerRouteExtensions
     {
-        public static void MapMyHandler(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes)
+        public static void MapHttpHandler<THttpHandler>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes) where THttpHandler : Samples.MyHandler
         {
             var handler = new MyHandlerRoutes();
             routes.Map("/", handler.Get).WithMetadata(new uController.HttpGetAttribute());
