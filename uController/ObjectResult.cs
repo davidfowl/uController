@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace uController
 {
-    public class ObjectResult : Result
+    public class ObjectResult : IResult
     {
         private static readonly JsonResponseWriter _writer = new JsonResponseWriter();
 
@@ -15,7 +15,7 @@ namespace uController
             Value = value;
         }
 
-        public override Task ExecuteAsync(HttpContext httpContext)
+        public Task ExecuteAsync(HttpContext httpContext)
         {
             var responseFormatter = httpContext.RequestServices.GetService<IHttpResponseWriter>() ?? _writer;
 

@@ -38,6 +38,11 @@ namespace uController
                 var attribute = method.GetCustomAttributeData(httpMethodAttributeType);
                 var template = CombineRoute(routeAttribute?.GetConstructorArgument<string>(0), attribute?.GetConstructorArgument<string>(0) ?? method.GetCustomAttributeData(routeAttributeType)?.GetConstructorArgument<string>(0));
 
+                if (template == null)
+                {
+                    continue;
+                }
+
                 var methodModel = new MethodModel
                 {
                     MethodInfo = method,
@@ -58,7 +63,7 @@ namespace uController
                     }
                     methodModel.Metadata.Add(metadata);
                 }
-                
+
                 foreach (var parameter in method.GetParameters())
                 {
                     var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);

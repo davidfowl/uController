@@ -22,13 +22,13 @@ namespace Samples
         }
 
         [HttpGet("/status/{status}")]
-        public Result StatusCode([FromRoute] int status)
+        public IResult StatusCode([FromRoute] int status)
         {
             return Status(status);
         }
 
         [HttpGet("/slow/status/{status}")]
-        public async Task<Result> SlowTaskStatusCode()
+        public async Task<IResult> SlowTaskStatusCode()
         {
             await Task.Delay(1000);
 
@@ -36,9 +36,9 @@ namespace Samples
         }
 
         [HttpGet("/fast/status/{status}")]
-        public ValueTask<Result> FastValueTaskStatusCode([FromServices] ILoggerFactory loggerFactory)
+        public ValueTask<IResult> FastValueTaskStatusCode([FromServices] ILoggerFactory loggerFactory)
         {
-            return new ValueTask<Result>(Status(201));
+            return new ValueTask<IResult>(Status(201));
         }
 
         [HttpGet("/lag")]
@@ -64,7 +64,7 @@ namespace Samples
         public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")] string id, [FromQuery] int? page, [FromQuery] int? pageSize) => "Hello!";
 
         [HttpPost("/")]
-        public Result Post([FromBody] Person obj)
+        public IResult Post([FromBody] Person obj)
         {
             return Ok(obj);
         }

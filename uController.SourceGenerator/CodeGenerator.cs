@@ -253,7 +253,7 @@ namespace uController.CodeGeneration
             }
             WriteLineNoIndent(");");
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
-            if (_metadataLoadContext.Resolve<Result>().IsAssignableFrom(unwrappedType))
+            if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
             {
                 WriteLine("await result.ExecuteAsync(httpContext);");
             }

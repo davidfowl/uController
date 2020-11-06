@@ -21,7 +21,7 @@ namespace uController
         private static readonly MethodInfo ExecuteValueResultTaskOfTMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(ExecuteValueTaskResult), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
-        private static readonly MethodInfo ResultExecuteAsync = typeof(Result).GetMethod(nameof(Result.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
+        private static readonly MethodInfo ResultExecuteAsync = typeof(IResult).GetMethod(nameof(IResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
 
@@ -199,7 +199,7 @@ namespace uController
                     {
                         var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
 
-                        if (typeof(Result).IsAssignableFrom(typeArg))
+                        if (typeof(IResult).IsAssignableFrom(typeArg))
                         {
                             body = Expression.Call(
                                                ExecuteTaskResultOfTMethodInfo.MakeGenericMethod(typeArg),
@@ -220,7 +220,7 @@ namespace uController
                     {
                         var typeArg = method.MethodInfo.ReturnType.GetGenericArguments()[0];
 
-                        if (typeof(Result).IsAssignableFrom(typeArg))
+                        if (typeof(IResult).IsAssignableFrom(typeArg))
                         {
                             body = Expression.Call(
                                                ExecuteValueResultTaskOfTMethodInfo.MakeGenericMethod(typeArg),
@@ -242,7 +242,7 @@ namespace uController
                         throw new NotSupportedException("Unsupported return type " + method.MethodInfo.ReturnType);
                     }
                 }
-                else if (typeof(Result).IsAssignableFrom(method.MethodInfo.ReturnType))
+                else if (typeof(IResult).IsAssignableFrom(method.MethodInfo.ReturnType))
                 {
                     body = Expression.Call(methodCall, ResultExecuteAsync, httpContextArg);
                 }
@@ -387,7 +387,7 @@ namespace uController
             return ExecuteAwaited(task, httpContext);
         }
 
-        private static Task ExecuteValueTaskResult<T>(ValueTask<T> task, HttpContext httpContext) where T : Result
+        private static Task ExecuteValueTaskResult<T>(ValueTask<T> task, HttpContext httpContext) where T : IResult
         {
             static async Task ExecuteAwaited(ValueTask<T> task, HttpContext httpContext)
             {
@@ -402,7 +402,7 @@ namespace uController
             return ExecuteAwaited(task, httpContext);
         }
 
-        private static async Task ExecuteTaskResult<T>(Task<T> task, HttpContext httpContext) where T : Result
+        private static async Task ExecuteTaskResult<T>(Task<T> task, HttpContext httpContext) where T : IResult
         {
             await (await task).ExecuteAsync(httpContext);
         }

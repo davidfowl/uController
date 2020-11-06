@@ -9,13 +9,8 @@ namespace uController
     // conversion to a RequestDelegate so it can be used any where
     // a RequestDelegate is accepted e.g:
     // app.Run(new ObjectResult(new { A = 1 }));
-    public abstract class Result
+    public interface IResult
     {
-        public abstract Task ExecuteAsync(HttpContext httpContext);
-
-        public static implicit operator RequestDelegate(Result result)
-        {
-            return result.ExecuteAsync;
-        }
+        Task ExecuteAsync(HttpContext httpContext);
     }
 }

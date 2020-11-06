@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace uController
 {
-    public class StatusCodeResult : Result
+    public class StatusCodeResult : IResult
     {
         public int StatusCode { get; }
 
@@ -15,7 +15,7 @@ namespace uController
             StatusCode = statusCode;
         }
 
-        public override Task ExecuteAsync(HttpContext httpContext)
+        public Task ExecuteAsync(HttpContext httpContext)
         {
             httpContext.Response.StatusCode = StatusCode;
             return Task.CompletedTask;

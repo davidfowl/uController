@@ -10,7 +10,7 @@ namespace uController
     [TypeForwardedFrom("uController")]
     public class IHttpRequestReader { }
     [TypeForwardedFrom("uController")]
-    public class Result { }
+    public class IResult { }
     [TypeForwardedFrom("uController")]
     public class ObjectResult { }
     [TypeForwardedFrom("uController")]
