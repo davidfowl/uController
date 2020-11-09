@@ -298,7 +298,7 @@ namespace uController.CodeGeneration
             else if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(void)))
             {
                 // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
-                WriteLine($"return {typeof(Task)}.{nameof(Task.CompletedTask)};");
+                WriteLine($"return {typeof(Task)}.CompletedTask;");
             }
 
             Unindent();
