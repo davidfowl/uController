@@ -232,14 +232,20 @@ namespace uController.CodeGeneration
                 {
                     if (awaitableInfo.ResultType.Equals(typeof(void)))
                     {
-                        Write("await ");
+                        if (hasAwait)
+                        {
+                            Write("await ");
+                        }
+                        else
+                        {
+                            Write("return ");
+                        }
                     }
                     else
                     {
                         Write("var result = await ");
+                        hasAwait = true;
                     }
-
-                    hasAwait = true;
                 }
                 else
                 {
@@ -289,8 +295,9 @@ namespace uController.CodeGeneration
             {
                 AwaitOrReturn($"new {typeof(ObjectResult)}(result).ExecuteAsync(httpContext);");
             }
-            else if (!hasAwait)
+            else if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(void)))
             {
+                // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
                 WriteLine($"return {typeof(Task)}.{nameof(Task.CompletedTask)};");
             }
 
