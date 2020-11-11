@@ -225,6 +225,10 @@ namespace uController.CodeGeneration
                     WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
                     hasAwait = true;
                 }
+                else
+                {
+                    WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                }
             }
 
             AwaitableInfo awaitableInfo = default;
