@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,8 +23,12 @@ namespace uController
         private static readonly MethodInfo GetRequiredServiceMethodInfo = typeof(HttpHandlerBuilder).GetMethod(nameof(GetRequiredService), BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly MethodInfo ObjectResultExecuteAsync = typeof(ObjectResult).GetMethod(nameof(ObjectResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
         private static readonly MethodInfo ResultExecuteAsync = typeof(IResult).GetMethod(nameof(IResult.ExecuteAsync), BindingFlags.Public | BindingFlags.Instance);
+        private static readonly MethodInfo StringResultExecuteAsync = GetMethodInfo<Func<HttpResponse, string, Task>>((response, text) => HttpResponseWritingExtensions.WriteAsync(response, text, default));
+        private static readonly MethodInfo JsonResultExecuteAsync = GetMethodInfo<Func<HttpResponse, object, Task>>((response, value) => HttpResponseJsonExtensions.WriteAsJsonAsync(response, value, default));
 
         private static readonly MemberInfo CompletedTaskMemberInfo = GetMemberInfo<Func<Task>>(() => Task.CompletedTask);
+
+        private static readonly Expression CancellationTokenNoneExpr = Expression.Property(null, typeof(CancellationToken).GetProperty(nameof(CancellationToken.None)));
 
         private static readonly ConstructorInfo ObjectResultCtor = typeof(ObjectResult).GetConstructors()[0];
 
@@ -38,9 +43,6 @@ namespace uController
             var model = HttpModel.FromType(handlerType);
 
             ObjectFactory factory = null;
-
-            // REVIEW: Should this be lazy?
-            var httpRequestReader = routes.ServiceProvider.GetRequiredService<IHttpRequestReader>();
 
             foreach (var method in model.Methods)
             {
@@ -105,6 +107,8 @@ namespace uController
                 var args = new List<Expression>();
 
                 var httpRequestExpr = Expression.Property(httpContextArg, nameof(HttpContext.Request));
+                var httpResponseExpr = Expression.Property(httpContextArg, nameof(HttpContext.Response));
+
                 foreach (var parameter in method.Parameters)
                 {
                     Expression paramterExpression = Expression.Default(parameter.ParameterType);
@@ -246,10 +250,13 @@ namespace uController
                 {
                     body = Expression.Call(methodCall, ResultExecuteAsync, httpContextArg);
                 }
+                else if (method.MethodInfo.ReturnType == typeof(string))
+                {
+                    body = Expression.Call(StringResultExecuteAsync, httpResponseExpr, methodCall, CancellationTokenNoneExpr);
+                }
                 else
                 {
-                    var newObjectResult = Expression.New(ObjectResultCtor, methodCall);
-                    body = Expression.Call(newObjectResult, ObjectResultExecuteAsync, httpContextArg);
+                    body = Expression.Call(JsonResultExecuteAsync, httpResponseExpr, methodCall, CancellationTokenNoneExpr);
                 }
 
                 RequestDelegate requestDelegate = null;
@@ -263,7 +270,7 @@ namespace uController
 
                     requestDelegate = async httpContext =>
                     {
-                        var bodyValue = await httpRequestReader.ReadAsync(httpContext, bodyType);
+                        var bodyValue = await httpContext.Request.ReadFromJsonAsync(bodyType);
 
                         await invoker(httpContext, bodyValue);
                     };
