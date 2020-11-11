@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -112,13 +113,19 @@ namespace uController.CodeGeneration
         private void GenerateRoutes(string innerClassName)
         {
             // void IEndpointRouteProvider.MapHttpHandler<THttpHandler>(IEndpointRouteBuilder routes) where THttpHandler : HandlerType
+            if (_model.Methods.Count == 0)
+            {
+                return;
+            }
+
+            // Make sure overloads work
             WriteLine($"public static {S(typeof(void))} MapHttpHandler<THttpHandler>(this {typeof(IEndpointRouteBuilder)} routes) where THttpHandler : {S(_model.HandlerType)}");
             WriteLine("{");
             Indent();
             WriteLine($"var handler = new {innerClassName}();");
             foreach (var method in _model.Methods)
             {
-                Write($"routes.Map(\"{method.RoutePattern}\", handler.{method.MethodInfo.Name})");
+                Write($"routes.Map(\"{method.RoutePattern}\", handler.{method.UniqueName})");
                 bool first = true;
                 foreach (CustomAttributeData metadata in method.Metadata)
                 {
@@ -146,7 +153,7 @@ namespace uController.CodeGeneration
             WriteLine($"[{typeof(DebuggerStepThroughAttribute)}]");
 
             var methodStartIndex = _codeBuilder.Length + 4 * _indent;
-            WriteLine($"public async {typeof(Task)} {method.MethodInfo.Name}({typeof(HttpContext)} httpContext)");
+            WriteLine($"public async {typeof(Task)} {method.UniqueName}({typeof(HttpContext)} httpContext)");
             WriteLine("{");
             Indent();
             var ctors = _model.HandlerType.GetConstructors();

@@ -32,6 +32,7 @@ namespace uController
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
             var routeAttribute = type.GetCustomAttributeData(routeAttributeType);
+            var methodNames = new Dictionary<string, int>();
 
             foreach (var method in methods)
             {
@@ -49,11 +50,23 @@ namespace uController
                     RoutePattern = template
                 };
 
+                if (!methodNames.TryGetValue(method.Name, out var count))
+                {
+                    methodNames[method.Name] = 1;
+                    methodModel.UniqueName = method.Name;
+                }
+                else
+                {
+                    methodNames[method.Name] = count + 1;
+                    methodModel.UniqueName = $"{method.Name}_{count}";
+                }
+
                 // Add all attributes as metadata
                 //foreach (var metadata in method.GetCustomAttributes(inherit: true))
                 //{
                 //    methodModel.Metadata.Add(metadata);
                 //}
+
                 foreach (var metadata in method.CustomAttributes)
                 {
                     if (metadata.AttributeType.Namespace == "System.Runtime.CompilerServices" ||
@@ -112,6 +125,7 @@ namespace uController
 
     public class MethodModel
     {
+        public string UniqueName { get; set; }
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public List<object> Metadata { get; } = new List<object>();
