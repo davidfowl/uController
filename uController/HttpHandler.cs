@@ -5,11 +5,10 @@ namespace uController
 {
     public abstract partial class HttpHandler
     {
-        public IResult Empty() => new EmptyResult();
-        public IResult BadRequest() => Status(StatusCodes.Status400BadRequest);
-        public IResult NotFound() => Status(StatusCodes.Status404NotFound);
-        public IResult Ok() => Status(StatusCodes.Status200OK);
-        public IResult Ok(object value) => new ObjectResult(value);
-        public IResult Status(int statusCode) => new StatusCodeResult(statusCode);
+        public static IResult BadRequest() => Status(StatusCodes.Status400BadRequest);
+        public static IResult NotFound() => Status(StatusCodes.Status404NotFound);
+        public static IResult Ok() => Status(StatusCodes.Status200OK);
+        public static IResult Ok(object value) => new ObjectResult(value);
+        public static IResult Status(int statusCode) => new StatusCodeResult(statusCode);
     }
 }

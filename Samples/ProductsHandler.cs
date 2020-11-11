@@ -15,9 +15,9 @@ namespace Samples
         }
 
         [HttpGet("{id}")]
-        public IResult Get([FromRoute] int id)
+        public IResult Get([FromRoute] int? id)
         {
-            if (id < 0)
+            if (id is null)
             {
                 return NotFound();
             }
@@ -32,7 +32,7 @@ namespace Samples
         }
 
         [HttpPut("{id}")]
-        public IResult Put([FromRoute] int id, [FromBody] Product product)
+        public IResult Put([FromRoute] int? id, [FromBody] Product product)
         {
             return Ok(product);
         }
