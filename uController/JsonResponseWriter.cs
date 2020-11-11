@@ -14,7 +14,7 @@ namespace uController
 
         public Task WriteAsync(HttpContext httpContext, object value)
         {
-            return JsonSerializer.SerializeAsync(httpContext.Response.Body, value, value?.GetType(), _serializerOptions);
+            return httpContext.Response.WriteAsJsonAsync(value, _serializerOptions);
         }
     }
 }

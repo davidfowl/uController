@@ -14,7 +14,7 @@ namespace uController
 
         public ValueTask<object> ReadAsync(HttpContext httpContext, Type targetType)
         {
-            return JsonSerializer.DeserializeAsync(httpContext.Request.Body, targetType, _serializerOptions);
+            return httpContext.Request.ReadFromJsonAsync(targetType, _serializerOptions);
         }
     }
 }

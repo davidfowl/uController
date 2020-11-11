@@ -72,6 +72,7 @@ namespace uController.CodeGeneration
             var className = $"{_model.HandlerType.Name}RouteExtensions";
             var innerClassName = $"{_model.HandlerType.Name }Routes";
             WriteLine("using Microsoft.AspNetCore.Builder;");
+            WriteLine("using Microsoft.AspNetCore.Http;");
             WriteLine("using Microsoft.Extensions.DependencyInjection;");
             WriteLine("");
             WriteLine($"namespace {_model.HandlerType.Namespace}");
@@ -93,7 +94,6 @@ namespace uController.CodeGeneration
                 WriteLine("");
             }
 
-            WriteLine($"private readonly {typeof(JsonRequestReader)} _requestReader = new {typeof(JsonRequestReader)}();");
             WriteLine("");
 
             foreach (var method in _model.Methods)
@@ -213,7 +213,6 @@ namespace uController.CodeGeneration
                 {
                     if (!hasFromBody)
                     {
-                        WriteLine($"var reader = httpContext.RequestServices.GetService<{typeof(IHttpRequestReader)}>() ?? _requestReader;");
                         hasFromBody = true;
                     }
 
@@ -222,7 +221,7 @@ namespace uController.CodeGeneration
                         FromBodyTypes.Add(parameter.ParameterType);
                     }
 
-                    WriteLine($"var {parameterName} = ({S(parameter.ParameterType)})await reader.ReadAsync(httpContext, typeof({S(parameter.ParameterType)}));");
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
                     hasAwait = true;
                 }
                 else
@@ -296,9 +295,13 @@ namespace uController.CodeGeneration
             {
                 AwaitOrReturn("result.ExecuteAsync(httpContext);");
             }
+            else if (unwrappedType.Equals(typeof(string)))
+            {
+                AwaitOrReturn($"httpContext.Response.WriteAsync(result);");
+            }
             else if (!unwrappedType.Equals(typeof(void)))
             {
-                AwaitOrReturn($"new {typeof(ObjectResult)}(result).ExecuteAsync(httpContext);");
+                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
             }
             else if (!hasAwait)
             {
