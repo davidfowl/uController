@@ -94,8 +94,6 @@ namespace uController.CodeGeneration
                 WriteLine("");
             }
 
-            WriteLine("");
-
             foreach (var method in _model.Methods)
             {
                 Generate(method);
