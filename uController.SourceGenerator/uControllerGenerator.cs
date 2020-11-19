@@ -32,7 +32,7 @@ namespace uController.SourceGenerator
 
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
 
-            foreach (var (memberAccess, handlerType) in receiver.MapHandlerCalls)
+            foreach (var (memberAccess, handlerType) in receiver.MapHandlers)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(memberAccess.Expression.SyntaxTree);
                 var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
@@ -49,6 +49,44 @@ namespace uController.SourceGenerator
                 var model = HttpModel.FromType(type, uControllerAssembly);
                 models.Add(model);
             }
+
+            int number = 0;
+            var sb = new StringBuilder();
+            foreach (var (invocation, arguments, returns) in receiver.MapActions)
+            {
+                var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
+                var types = new Microsoft.CodeAnalysis.TypeInfo[arguments.Length + 1];
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    types[i] = semanticModel.GetTypeInfo(arguments[i]);
+                }
+
+                foreach (var returnSyntax in returns)
+                {
+                    var returnType = semanticModel.GetTypeInfo(returnSyntax);
+                    // Pick first non null type
+                    types[arguments.Length] = returnType;
+                }
+
+                var formattedTypeArgs = string.Join(",", types.Select(t => t.Type.ToDisplayString()));
+
+                var text = @$"public static void MapAction(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<{formattedTypeArgs}> callback)
+{{
+}}
+";
+                sb.Append(text);
+                number++;
+            }
+
+            var mapActionsText = $@"
+namespace Microsoft.AspNetCore.Routing
+{{
+    public static class MapActionsExtensions
+    {{
+        {sb}
+    }}
+}}";
+            context.AddSource($"MapActionsExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
 
             foreach (var model in models)
             {
@@ -79,14 +117,52 @@ namespace uController.SourceGenerator
 
         private class SyntaxReceiver : ISyntaxReceiver
         {
-            public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlerCalls { get; } = new();
+            public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlers { get; } = new();
+
+            public List<(InvocationExpressionSyntax, TypeSyntax[], ExpressionSyntax[])> MapActions { get; } = new();
+
+            public List<LocalFunctionStatementSyntax> LocalFunctions { get; } = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
                 if (syntaxNode is MemberAccessExpressionSyntax
-                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments }, Identifier: { ValueText: "MapHttpHandler" } } } memberAccessExpressionSyntax)
+                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments }, Identifier: { ValueText: "MapHttpHandler" } } } mapHandlerCall)
                 {
-                    MapHandlerCalls.Add((memberAccessExpressionSyntax, arguments[0]));
+                    MapHandlers.Add((mapHandlerCall, arguments[0]));
+                }
+
+                if (syntaxNode is InvocationExpressionSyntax
+                    {
+                        Expression: MemberAccessExpressionSyntax
+                        {
+                            Name: IdentifierNameSyntax
+                            {
+                                Identifier: { ValueText: "MapAction" }
+                            }
+                        },
+                        ArgumentList: { Arguments: { Count: 2 } args }
+                    } mapActionCall && args[1] is { Expression: ParenthesizedLambdaExpressionSyntax lambda })
+                {
+                    var returnSyntaxes = new List<ExpressionSyntax>();
+
+                    if (lambda.Body is LiteralExpressionSyntax lit)
+                    {
+                        returnSyntaxes.Add(lit);
+                    }
+
+                    foreach (var n in lambda.Body.DescendantNodes())
+                    {
+                        if (n is ReturnStatementSyntax r)
+                        {
+                            returnSyntaxes.Add(r.Expression);
+                        }
+                        if (n is ArrowExpressionClauseSyntax arrow)
+                        {
+                            returnSyntaxes.Add(arrow.Expression);
+                        }
+                    }
+
+                    MapActions.Add((mapActionCall, lambda.ParameterList.Parameters.Select(p => p.Type).ToArray(), returnSyntaxes.ToArray()));
                 }
             }
         }
