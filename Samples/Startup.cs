@@ -42,25 +42,4 @@ namespace Samples
             });
         }
     }
-
-    public class ProductsHandlerFactory : Factory<ProductsHandler>
-    {
-        public override ProductsHandler Create()
-        {
-            return new ProductsHandler();
-        }
-    }
-
-    public class MyHandlerFactory : Factory<MyHandler>
-    {
-        public override MyHandler Create()
-        {
-            return new MyHandler();
-        }
-    }
-
-    public abstract class Factory<T> where T : HttpHandler
-    {
-        public abstract T Create();
-    }
 }
