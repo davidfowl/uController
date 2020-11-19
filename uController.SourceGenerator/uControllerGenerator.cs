@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using uController.CodeGeneration;
 
@@ -14,23 +15,29 @@ namespace uController.SourceGenerator
     {
         public void Execute(GeneratorExecutionContext context)
         {
+            if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
+            {
+                // nothing to do yet
+                return;
+            }
+
             // For debugging
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
-            var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName("uController");
-            var handler = uControllerAssembly.GetType(typeof(HttpHandler).FullName);
             var assembly = metadataLoadContext.MainAssembly;
+            var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName("uController");
 
             var models = new List<HttpModel>();
 
-            foreach (var type in assembly.GetExportedTypes())
+            foreach (var handlerType in receiver.HandlerTypes)
             {
-                if (handler.IsAssignableFrom(type))
-                {
-                    var model = HttpModel.FromType(type);
-                    models.Add(model);
-                }
+                var semanticModel = context.Compilation.GetSemanticModel(handlerType.SyntaxTree);
+                var symbol = semanticModel.GetDeclaredSymbol(handlerType);
+
+                var type = assembly.GetType(symbol.ToDisplayString());
+                var model = HttpModel.FromType(type, uControllerAssembly);
+                models.Add(model);
             }
 
             foreach (var model in models)
@@ -55,7 +62,21 @@ namespace uController.SourceGenerator
 
         public void Initialize(GeneratorInitializationContext context)
         {
-            // No initialization required
+            context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
+        }
+
+        private class SyntaxReceiver : ISyntaxReceiver
+        {
+            public List<TypeDeclarationSyntax> HandlerTypes { get; } = new();
+
+            public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
+            {
+                if (syntaxNode is TypeDeclarationSyntax { AttributeLists: { Count: > 0 } } typeDecl &&
+                    typeDecl.AttributeLists.SelectMany(s => s.Attributes).Any(s => s.Name.ToFullString() == "HttpHandler"))
+                {
+                    HandlerTypes.Add(typeDecl);
+                }
+            }
         }
     }
 }

@@ -2,11 +2,13 @@
 using System.Linq;
 using Microsoft.AspNetCore.Routing;
 using uController;
+using static uController.HttpHandler;
 
 namespace Samples
 {
+    [HttpHandler]
     [Route("/products")]
-    public class ProductsHandler : HttpHandler
+    public class ProductsHandler
     {
         [HttpGet]
         public IEnumerable<Product> Get()

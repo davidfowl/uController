@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace uController
 {
-    public abstract partial class HttpHandler
+    public static class HttpHandler
     {
         public static IResult BadRequest() => Status(StatusCodes.Status400BadRequest);
         public static IResult NotFound() => Status(StatusCodes.Status404NotFound);

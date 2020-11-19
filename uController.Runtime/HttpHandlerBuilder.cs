@@ -40,7 +40,7 @@ namespace uController
         // Expression tree impl
         internal static void Build(Type handlerType, IEndpointRouteBuilder routes)
         {
-            var model = HttpModel.FromType(handlerType);
+            var model = HttpModel.FromType(handlerType, typeof(IResult).Assembly);
 
             ObjectFactory factory = null;
 

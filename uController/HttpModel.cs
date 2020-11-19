@@ -15,19 +15,19 @@ namespace uController
 
         public Type HandlerType { get; }
 
-        public static HttpModel FromType(Type type)
+        public static HttpModel FromType(Type type, Assembly uControllerAssembly)
         {
             var model = new HttpModel(type);
 
-            var routeAttributeType = type.BaseType.Assembly.GetType(typeof(RouteAttribute).FullName);
-            var httpMethodAttributeType = type.BaseType.Assembly.GetType(typeof(HttpMethodAttribute).FullName);
-            var fromQueryAttributeType = type.BaseType.Assembly.GetType(typeof(FromQueryAttribute).FullName);
-            var fromHeaderAttributeType = type.BaseType.Assembly.GetType(typeof(FromHeaderAttribute).FullName);
-            var fromFormAttributeType = type.BaseType.Assembly.GetType(typeof(FromFormAttribute).FullName);
-            var fromBodyAttributeType = type.BaseType.Assembly.GetType(typeof(FromBodyAttribute).FullName);
-            var fromRouteAttributeType = type.BaseType.Assembly.GetType(typeof(FromRouteAttribute).FullName);
-            var fromCookieAttributeType = type.BaseType.Assembly.GetType(typeof(FromCookieAttribute).FullName);
-            var fromServicesAttributeType = type.BaseType.Assembly.GetType(typeof(FromServicesAttribute).FullName);
+            var routeAttributeType = uControllerAssembly.GetType(typeof(RouteAttribute).FullName);
+            var httpMethodAttributeType = uControllerAssembly.GetType(typeof(HttpMethodAttribute).FullName);
+            var fromQueryAttributeType = uControllerAssembly.GetType(typeof(FromQueryAttribute).FullName);
+            var fromHeaderAttributeType = uControllerAssembly.GetType(typeof(FromHeaderAttribute).FullName);
+            var fromFormAttributeType = uControllerAssembly.GetType(typeof(FromFormAttribute).FullName);
+            var fromBodyAttributeType = uControllerAssembly.GetType(typeof(FromBodyAttribute).FullName);
+            var fromRouteAttributeType = uControllerAssembly.GetType(typeof(FromRouteAttribute).FullName);
+            var fromCookieAttributeType = uControllerAssembly.GetType(typeof(FromCookieAttribute).FullName);
+            var fromServicesAttributeType = uControllerAssembly.GetType(typeof(FromServicesAttribute).FullName);
 
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 

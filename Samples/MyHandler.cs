@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using uController;
+using static uController.HttpHandler;
 
 namespace Samples
 {
-    public class MyHandler : HttpHandler
+    [HttpHandler]
+    public class MyHandler
     {
         [HttpGet("/")]
         public Task Get(HttpContext context)
