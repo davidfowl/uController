@@ -15,7 +15,7 @@ namespace uController.SourceGenerator
     {
         public void Execute(GeneratorExecutionContext context)
         {
-            if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
+            if (context.SyntaxReceiver is not SyntaxReceiver receiver)
             {
                 // nothing to do yet
                 return;
