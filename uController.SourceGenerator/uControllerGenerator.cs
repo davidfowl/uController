@@ -37,7 +37,7 @@ namespace uController.SourceGenerator
                 var semanticModel = context.Compilation.GetSemanticModel(memberAccess.Expression.SyntaxTree);
                 var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
 
-                if(!SymbolEqualityComparer.Default.Equals(typeInfo.Type, endpointRouteBuilderType))
+                if (!SymbolEqualityComparer.Default.Equals(typeInfo.Type, endpointRouteBuilderType))
                 {
                     continue;
                 }
