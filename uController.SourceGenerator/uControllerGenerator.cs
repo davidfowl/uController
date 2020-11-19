@@ -84,8 +84,7 @@ namespace uController.SourceGenerator
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
                 if (syntaxNode is MemberAccessExpressionSyntax
-                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments } } genericName } memberAccessExpressionSyntax &&
-                    genericName.Identifier.ToFullString() == "MapHttpHandler")
+                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments }, Identifier: { ValueText: "MapHttpHandler" } } } memberAccessExpressionSyntax)
                 {
                     MapHandlerCalls.Add((memberAccessExpressionSyntax, arguments[0]));
                 }
