@@ -54,23 +54,33 @@ namespace uController.SourceGenerator
             var sb = new StringBuilder();
             var formattedTypes = new HashSet<string>();
 
-            foreach (var (invocation, arguments, returns) in receiver.MapActions)
+            foreach (var (invocation, lambda, arguments, returns) in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
-                var types = new Microsoft.CodeAnalysis.TypeInfo[arguments.Length + 1];
+
+                var types = new string[arguments.Length + 1];
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    types[i] = semanticModel.GetTypeInfo(arguments[i]);
+                    types[i] = semanticModel.GetTypeInfo(arguments[i]).Type.ToDisplayString();
                 }
 
-                foreach (var returnSyntax in returns)
+                var si = semanticModel.GetSymbolInfo(lambda);
+
+                if (si.Symbol is IMethodSymbol method)
                 {
-                    var returnType = semanticModel.GetTypeInfo(returnSyntax);
-                    // Pick first non null type
-                    types[arguments.Length] = returnType;
+                    types[arguments.Length] = method.ReturnType.ToDisplayString();
+                }
+                else
+                {
+                    foreach (var returnSyntax in returns)
+                    {
+                        var returnType = semanticModel.GetTypeInfo(returnSyntax);
+                        // Pick first non null type
+                        types[arguments.Length] = returnType.Type.ToDisplayString();
+                    }
                 }
 
-                var formattedTypeArgs = string.Join(",", types.Select(t => t.Type.ToDisplayString()));
+                var formattedTypeArgs = string.Join(",", types);
 
                 if (!formattedTypes.Add(formattedTypeArgs))
                 {
@@ -125,7 +135,7 @@ namespace Microsoft.AspNetCore.Routing
         {
             public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlers { get; } = new();
 
-            public List<(InvocationExpressionSyntax, TypeSyntax[], ExpressionSyntax[])> MapActions { get; } = new();
+            public List<(InvocationExpressionSyntax, LambdaExpressionSyntax, TypeSyntax[], ExpressionSyntax[])> MapActions { get; } = new();
 
             public List<LocalFunctionStatementSyntax> LocalFunctions { get; } = new();
 
@@ -164,7 +174,7 @@ namespace Microsoft.AspNetCore.Routing
                         }
                     }
 
-                    MapActions.Add((mapActionCall, lambda.ParameterList.Parameters.Select(p => p.Type).ToArray(), returnSyntaxes.ToArray()));
+                    MapActions.Add((mapActionCall, lambda, lambda.ParameterList.Parameters.Select(p => p.Type).ToArray(), returnSyntaxes.ToArray()));
                 }
             }
         }
