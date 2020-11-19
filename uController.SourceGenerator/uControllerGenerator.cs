@@ -30,12 +30,22 @@ namespace uController.SourceGenerator
 
             var models = new List<HttpModel>();
 
-            foreach (var handlerType in receiver.HandlerTypes)
-            {
-                var semanticModel = context.Compilation.GetSemanticModel(handlerType.SyntaxTree);
-                var symbol = semanticModel.GetDeclaredSymbol(handlerType);
+            var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
 
-                var type = assembly.GetType(symbol.ToDisplayString());
+            foreach (var (memberAccess, handlerType) in receiver.MapHandlerCalls)
+            {
+                var semanticModel = context.Compilation.GetSemanticModel(memberAccess.Expression.SyntaxTree);
+                var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
+
+                if(!SymbolEqualityComparer.Default.Equals(typeInfo.Type, endpointRouteBuilderType))
+                {
+                    continue;
+                }
+
+                semanticModel = context.Compilation.GetSemanticModel(handlerType.SyntaxTree);
+                typeInfo = semanticModel.GetTypeInfo(handlerType);
+
+                var type = assembly.GetType(typeInfo.Type.ToDisplayString());
                 var model = HttpModel.FromType(type, uControllerAssembly);
                 models.Add(model);
             }
@@ -62,19 +72,22 @@ namespace uController.SourceGenerator
 
         public void Initialize(GeneratorInitializationContext context)
         {
+            // System.Diagnostics.Debugger.Launch();
+
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
         }
 
         private class SyntaxReceiver : ISyntaxReceiver
         {
-            public List<TypeDeclarationSyntax> HandlerTypes { get; } = new();
+            public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlerCalls { get; } = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
-                if (syntaxNode is TypeDeclarationSyntax { AttributeLists: { Count: > 0 } } typeDecl &&
-                    typeDecl.AttributeLists.SelectMany(s => s.Attributes).Any(s => s.Name.ToFullString() == "HttpHandler"))
+                if (syntaxNode is MemberAccessExpressionSyntax
+                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments } } genericName } memberAccessExpressionSyntax &&
+                    genericName.Identifier.ToFullString() == "MapHttpHandler")
                 {
-                    HandlerTypes.Add(typeDecl);
+                    MapHandlerCalls.Add((memberAccessExpressionSyntax, arguments[0]));
                 }
             }
         }

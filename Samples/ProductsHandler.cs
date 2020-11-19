@@ -6,7 +6,6 @@ using static uController.HttpHandler;
 
 namespace Samples
 {
-    [HttpHandler]
     [Route("/products")]
     public class ProductsHandler
     {

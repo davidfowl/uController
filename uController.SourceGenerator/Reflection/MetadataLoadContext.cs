@@ -9,12 +9,13 @@ namespace System.Reflection
 {
     public class MetadataLoadContext
     {
-        private readonly Dictionary<string, IAssemblySymbol> _assemblies = new Dictionary<string, IAssemblySymbol>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, IAssemblySymbol> _assemblies = new(StringComparer.OrdinalIgnoreCase);
         private readonly Compilation _compilation;
 
         public MetadataLoadContext(Compilation compilation)
         {
             _compilation = compilation;
+            
             var assemblies = compilation.References
                                         .OfType<PortableExecutableReference>()
                                         .ToDictionary(r => AssemblyName.GetAssemblyName(r.FilePath),
