@@ -156,10 +156,6 @@ namespace Microsoft.AspNetCore.Routing
                         {
                             returnSyntaxes.Add(r.Expression);
                         }
-                        if (n is ArrowExpressionClauseSyntax arrow)
-                        {
-                            returnSyntaxes.Add(arrow.Expression);
-                        }
                     }
 
                     MapActions.Add((mapActionCall, lambda.ParameterList.Parameters.Select(p => p.Type).ToArray(), returnSyntaxes.ToArray()));
