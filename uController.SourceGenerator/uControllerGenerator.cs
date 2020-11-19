@@ -52,6 +52,8 @@ namespace uController.SourceGenerator
 
             int number = 0;
             var sb = new StringBuilder();
+            var formattedTypes = new HashSet<string>();
+
             foreach (var (invocation, arguments, returns) in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
@@ -70,9 +72,15 @@ namespace uController.SourceGenerator
 
                 var formattedTypeArgs = string.Join(",", types.Select(t => t.Type.ToDisplayString()));
 
+                if (!formattedTypes.Add(formattedTypeArgs))
+                {
+                    continue;
+                }
+
                 var text = @$"public static void MapAction(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<{formattedTypeArgs}> callback)
-{{
-}}
+        {{
+            System.Console.WriteLine(callback.Method.MetadataToken);
+        }}
 ";
                 sb.Append(text);
                 number++;
@@ -110,8 +118,6 @@ namespace Microsoft.AspNetCore.Routing
 
         public void Initialize(GeneratorInitializationContext context)
         {
-            // System.Diagnostics.Debugger.Launch();
-
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
         }
 

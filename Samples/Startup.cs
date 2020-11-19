@@ -41,6 +41,11 @@ namespace Samples
                 //    return Enumerable.Empty<Product>();
                 //});
 
+                //endpoints.MapAction("/api/products/2", () =>
+                //{
+                //    return Enumerable.Empty<Product>();
+                //});
+
                 //endpoints.MapAction("/api/products/{id}", (int? id) =>
                 //{
                 //    if (id is null)
