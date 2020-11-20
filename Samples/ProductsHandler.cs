@@ -23,7 +23,7 @@ namespace Samples
                 return NotFound();
             }
 
-            return Ok(new Product(1, "Cat Food", 10.0));
+            return Ok(new Product(id.Value, "Cat Food", 10.0));
         }
 
         [HttpPost]
