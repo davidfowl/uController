@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using uController;
-using static uController.HttpHandler;
+using static uController.Results;
 
 namespace Samples
 {

@@ -2,7 +2,7 @@
 using System.Linq;
 using Microsoft.AspNetCore.Routing;
 using uController;
-using static uController.HttpHandler;
+using static uController.Results;
 
 namespace Samples
 {
