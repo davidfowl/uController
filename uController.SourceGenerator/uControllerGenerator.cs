@@ -54,31 +54,46 @@ namespace uController.SourceGenerator
             var sb = new StringBuilder();
             var formattedTypes = new HashSet<string>();
 
-            foreach (var (invocation, lambda, arguments, returns) in receiver.MapActions)
+            foreach (var (invocation, argument) in receiver.MapActions)
             {
+                var types = new List<string>();
+                IMethodSymbol method = default;
+
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
-                var types = new string[arguments.Length + 1];
-                for (int i = 0; i < arguments.Length; i++)
+                switch (argument)
                 {
-                    types[i] = semanticModel.GetTypeInfo(arguments[i]).Type.ToDisplayString();
+                    case IdentifierNameSyntax identifierName:
+                        {
+                            var si = semanticModel.GetSymbolInfo(identifierName);
+                            if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                            {
+                                // We need to generate the method
+                                method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                            }
+                        }
+                        break;
+                    case ParenthesizedLambdaExpressionSyntax lambda:
+                        {
+                            var si = semanticModel.GetSymbolInfo(lambda);
+                            method = si.Symbol as IMethodSymbol;
+                        }
+                        break;
+                    default:
+                        continue;
                 }
 
-                var si = semanticModel.GetSymbolInfo(lambda);
+                if (method == null)
+                {
+                    continue;
+                }
 
-                if (si.Symbol is IMethodSymbol method)
+                foreach (var p in method.Parameters)
                 {
-                    types[arguments.Length] = method.ReturnType.ToDisplayString();
+                    types.Add(p.Type.ToDisplayString());
                 }
-                else
-                {
-                    foreach (var returnSyntax in returns)
-                    {
-                        var returnType = semanticModel.GetTypeInfo(returnSyntax);
-                        // Pick first non null type
-                        types[arguments.Length] = returnType.Type.ToDisplayString();
-                    }
-                }
+
+                types.Add(method.ReturnType.ToDisplayString());
 
                 var formattedTypeArgs = string.Join(",", types);
 
@@ -87,9 +102,12 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"public static void MapAction(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<{formattedTypeArgs}> callback)
+                formattedTypeArgs = method.ReturnsVoid ? string.Join(",", types.Take(types.Count - 1)) : formattedTypeArgs;
+                var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
+
+                var text = @$"        public static void MapAction(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {delegateType}<{formattedTypeArgs}> callback)
         {{
-            System.Console.WriteLine(callback.Method.MetadataToken);
+            
         }}
 ";
                 sb.Append(text);
@@ -101,7 +119,7 @@ namespace Microsoft.AspNetCore.Routing
 {{
     public static class MapActionsExtensions
     {{
-        {sb}
+{sb}
     }}
 }}";
             context.AddSource($"MapActionsExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
@@ -135,7 +153,7 @@ namespace Microsoft.AspNetCore.Routing
         {
             public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlers { get; } = new();
 
-            public List<(InvocationExpressionSyntax, LambdaExpressionSyntax, TypeSyntax[], ExpressionSyntax[])> MapActions { get; } = new();
+            public List<(InvocationExpressionSyntax, ExpressionSyntax)> MapActions { get; } = new();
 
             public List<LocalFunctionStatementSyntax> LocalFunctions { get; } = new();
 
@@ -157,24 +175,9 @@ namespace Microsoft.AspNetCore.Routing
                             }
                         },
                         ArgumentList: { Arguments: { Count: 2 } args }
-                    } mapActionCall && args[1] is { Expression: ParenthesizedLambdaExpressionSyntax lambda })
+                    } mapActionCall)
                 {
-                    var returnSyntaxes = new List<ExpressionSyntax>();
-
-                    if (lambda.Body is LiteralExpressionSyntax lit)
-                    {
-                        returnSyntaxes.Add(lit);
-                    }
-
-                    foreach (var n in lambda.Body.DescendantNodes())
-                    {
-                        if (n is ReturnStatementSyntax r)
-                        {
-                            returnSyntaxes.Add(r.Expression);
-                        }
-                    }
-
-                    MapActions.Add((mapActionCall, lambda, lambda.ParameterList.Parameters.Select(p => p.Type).ToArray(), returnSyntaxes.ToArray()));
+                    MapActions.Add((mapActionCall, args[1].Expression));
                 }
             }
         }
