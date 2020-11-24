@@ -155,8 +155,6 @@ namespace Microsoft.AspNetCore.Routing
 
             public List<(InvocationExpressionSyntax, ExpressionSyntax)> MapActions { get; } = new();
 
-            public List<LocalFunctionStatementSyntax> LocalFunctions { get; } = new();
-
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
                 if (syntaxNode is MemberAccessExpressionSyntax
