@@ -158,7 +158,19 @@ namespace Microsoft.AspNetCore.Routing
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
                 if (syntaxNode is MemberAccessExpressionSyntax
-                    { Name: GenericNameSyntax { TypeArgumentList: { Arguments: { Count: 1 } arguments }, Identifier: { ValueText: "MapHttpHandler" } } } mapHandlerCall)
+                    {
+                        Name: GenericNameSyntax
+                        {
+                            TypeArgumentList:
+                            {
+                                Arguments: { Count: 1 } arguments
+                            },
+                            Identifier:
+                            {
+                                ValueText: "MapHttpHandler"
+                            }
+                        }
+                    } mapHandlerCall)
                 {
                     MapHandlers.Add((mapHandlerCall, arguments[0]));
                 }
