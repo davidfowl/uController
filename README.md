@@ -1,4 +1,4 @@
-## uControlelr (pronounced micro (μ) controller)
+## uController (pronounced micro (μ) controller)
 
 [![feedz.io](https://img.shields.io/badge/endpoint.svg?url=https%3A%2F%2Ff.feedz.io%2Fdavidfowl%2Fucontroller%2Fshield%2FuController%2Flatest&label=uController)](https://f.feedz.io/davidfowl/ucontroller/packages/uController/latest/download)
 
