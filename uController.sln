@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "sample\Sample.csproj", "{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "samples\Sample.csproj", "{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uController", "src\uController\uController.csproj", "{57549041-6101-4D98-AA83-E4856CCBCA71}"
 EndProject
