@@ -10,8 +10,9 @@ A declarative micro-framework inspired by ASP.NET Core MVC but using C# source g
 Differences from MVC
 - No discovery of "controllers"
 - No base class required 
-- No model binders and validation or any extensiblity besides `IResult`
-- One type of filter
+- Support for basic and *very* efficient model binding (FromQuery, FromHeader, FromForm, FromBody)
+- No validation or any extensiblity besides `IResult`
+- One type of filter (not wired up yet)
 
 ### Hello World
 
