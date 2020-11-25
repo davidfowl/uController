@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <PackageDescription>The compile time code generator for uController</PackageDescription>
+    <Authors>David Fowler</Authors>
     <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 

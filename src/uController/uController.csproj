@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <PackageDescription>A fast declarative microframework for ASP.NET Core services.</PackageDescription>
+    <Authors>David Fowler</Authors>
   </PropertyGroup>
 
   <ItemGroup>
