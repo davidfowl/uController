@@ -14,6 +14,11 @@ Differences from MVC
 - No validation or any extensiblity besides `IResult`
 - One type of filter (not wired up yet)
 
+There are 2 packages:
+
+- **uController** - The main package that contains the framework primitives and runtime code generation logic.
+- **uController.SourceGenerator** - The source generator that overrides the runtime code generation with compile time logic.
+
 ### Hello World
 
 ```C#
