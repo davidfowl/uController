@@ -73,6 +73,16 @@ namespace System.Reflection
             var ctors = new List<ConstructorInfo>();
             foreach (var c in NamedTypeSymbol.Constructors)
             {
+                if ((bindingAttr & BindingFlags.Static) != BindingFlags.Static && c.IsStatic)
+                {
+                    continue;
+                }
+
+                if ((bindingAttr & BindingFlags.Public) != BindingFlags.Public && c.DeclaredAccessibility != Accessibility.Public)
+                {
+                    continue;
+                }
+
                 ctors.Add(new ConstructorInfoWrapper(c, _metadataLoadContext));
             }
             return ctors.ToArray();
