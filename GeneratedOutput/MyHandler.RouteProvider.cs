@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Samples
 {
-    public static class MyHandlerRouteExtensions
+    internal static class MyHandlerRouteExtensions
     {
         public static void MapHttpHandler<THttpHandler>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes) where THttpHandler : Samples.MyHandler
         {
@@ -35,13 +35,12 @@ namespace Samples
         private class MyHandlerRoutes
         {
             [System.Diagnostics.DebuggerStepThroughAttribute]
-            public async System.Threading.Tasks.Task Get(Microsoft.AspNetCore.Http.HttpContext httpContext)
+            public System.Threading.Tasks.Task Get(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
-                var handler = new Samples.MyHandler();
                 var arg_context = httpContext;
-                await handler.Get(arg_context);
+                return Samples.MyHandler.Get(arg_context);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public System.Threading.Tasks.Task Blah(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -49,7 +48,7 @@ namespace Samples
                 var result = handler.Blah();
                 return httpContext.Response.WriteAsJsonAsync(result);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public System.Threading.Tasks.Task StatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -63,7 +62,7 @@ namespace Samples
                 var result = handler.StatusCode(arg_status);
                 return result.ExecuteAsync(httpContext);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task SlowTaskStatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -71,7 +70,7 @@ namespace Samples
                 var result = await handler.SlowTaskStatusCode();
                 await result.ExecuteAsync(httpContext);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task FastValueTaskStatusCode(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -80,16 +79,16 @@ namespace Samples
                 var result = await handler.FastValueTaskStatusCode(arg_loggerFactory);
                 await result.ExecuteAsync(httpContext);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
-            public async System.Threading.Tasks.Task DoAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
+            public System.Threading.Tasks.Task DoAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
                 var handler = new Samples.MyHandler();
                 var arg_context = httpContext;
                 var arg_q = httpContext.Request.Query["q"].ToString();
-                await handler.DoAsync(arg_context, arg_q);
+                return handler.DoAsync(arg_context, arg_q);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public System.Threading.Tasks.Task HelloDavid(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -97,7 +96,7 @@ namespace Samples
                 var result = handler.HelloDavid();
                 return httpContext.Response.WriteAsync(result);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task GetAsync(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -106,7 +105,7 @@ namespace Samples
                 var result = await handler.GetAsync(arg_name);
                 await httpContext.Response.WriteAsync(result);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task Hello(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -137,7 +136,7 @@ namespace Samples
                 var result = handler.Hello(arg_s, arg_id, arg_page, arg_pageSize);
                 await httpContext.Response.WriteAsync(result);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task Post(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -146,7 +145,7 @@ namespace Samples
                 var result = handler.Post(arg_obj);
                 await result.ExecuteAsync(httpContext);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public async System.Threading.Tasks.Task PostAForm(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -154,7 +153,7 @@ namespace Samples
                 var arg_form = await httpContext.Request.ReadFormAsync();
                 handler.PostAForm(arg_form);
             }
-
+            
             [System.Diagnostics.DebuggerStepThroughAttribute]
             public System.Threading.Tasks.Task Authed(Microsoft.AspNetCore.Http.HttpContext httpContext)
             {
@@ -162,7 +161,7 @@ namespace Samples
                 handler.Authed();
                 return System.Threading.Tasks.Task.CompletedTask;
             }
-
+            
         }
     }
 }
