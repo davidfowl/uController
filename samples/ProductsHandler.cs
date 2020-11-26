@@ -7,7 +7,7 @@ using static uController.Results;
 namespace Samples
 {
     [Route("/products")]
-    public class ProductsHandler
+    class ProductsHandler
     {
         [HttpGet]
         public IEnumerable<Product> Get()

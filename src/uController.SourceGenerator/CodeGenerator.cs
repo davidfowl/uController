@@ -78,7 +78,7 @@ namespace uController.CodeGeneration
             WriteLine($"namespace {_model.HandlerType.Namespace}");
             WriteLine("{");
             Indent();
-            WriteLine($"public static class {className}");
+            WriteLine($"internal static class {className}");
             WriteLine("{");
             Indent();
             GenerateRoutes(innerClassName);
