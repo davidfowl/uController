@@ -52,6 +52,8 @@ public class HelloHandler
 }
 ```
 
+The source generator will build extremely efficient code (what you would have hand written yourself) for invoking your handler methods!
+
 ## Using CI Builds
 
 To use CI builds add the following nuget feed:
