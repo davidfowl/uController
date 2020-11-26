@@ -14,11 +14,21 @@ namespace System.Reflection
         {
             _method = method;
             _metadataLoadContext = metadataLoadContext;
+
+            if (method.IsStatic)
+            {
+                Attributes |= MethodAttributes.Static;
+            }
+
+            if (method.IsAbstract)
+            {
+                Attributes |= MethodAttributes.Abstract;
+            }
         }
 
         public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
 
-        public override MethodAttributes Attributes => throw new NotImplementedException();
+        public override MethodAttributes Attributes { get; }
 
         public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 

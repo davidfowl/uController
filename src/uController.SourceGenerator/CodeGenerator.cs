@@ -155,14 +155,18 @@ namespace uController.CodeGeneration
             WriteLine("{");
             Indent();
             var ctors = _model.HandlerType.GetConstructors();
-            if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
+
+            if (!method.MethodInfo.IsStatic)
             {
-                // Lazy, defer to DI system if
-                WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {typeof(Array)}.Empty<{typeof(object)}>());");
-            }
-            else
-            {
-                WriteLine($"var handler = new {S(_model.HandlerType)}();");
+                if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
+                {
+                    // Lazy, defer to DI system if
+                    WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {typeof(Array)}.Empty<{typeof(object)}>());");
+                }
+                else
+                {
+                    WriteLine($"var handler = new {S(_model.HandlerType)}();");
+                }
             }
 
             // Declare locals
@@ -260,7 +264,7 @@ namespace uController.CodeGeneration
                     Write("var result = ");
                 }
             }
-            WriteNoIndent($"handler.{method.MethodInfo.Name}(");
+            WriteNoIndent($"{(method.MethodInfo.IsStatic ? S(_model.HandlerType) : "handler")}.{method.MethodInfo.Name}(");
             bool first = true;
             foreach (var parameter in method.Parameters)
             {

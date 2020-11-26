@@ -11,7 +11,7 @@ namespace Samples
     public class MyHandler
     {
         [HttpGet("/")]
-        public Task Get(HttpContext context)
+        public static Task Get(HttpContext context)
         {
             return context.Response.WriteAsync("Hello World");
         }
