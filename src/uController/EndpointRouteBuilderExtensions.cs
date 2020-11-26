@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.AspNetCore.Routing;
+﻿using Microsoft.AspNetCore.Routing;
+using uController;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static void MapHttpHandler<THttpHandler>(this IEndpointRouteBuilder builder)
         {
-            throw new NotSupportedException("This implementation is not supposed to run! Did the source generator work?");
+            HttpHandlerBuilder.Build<THttpHandler>(builder);
         }
     }
 }

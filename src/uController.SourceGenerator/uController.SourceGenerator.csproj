@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\uController.Runtime\AwaitableInfo.cs" Link="AwaitableInfo.cs" />
+    <Compile Include="..\uController\AwaitableInfo.cs" Link="AwaitableInfo.cs" />
     <Compile Include="..\uController\HttpModel.cs" Link="HttpModel.cs" />
     <Compile Include="..\uController\ReflectionExtensions.cs" Link="ReflectionExtensions.cs" />
 
