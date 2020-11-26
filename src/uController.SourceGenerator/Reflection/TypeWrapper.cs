@@ -78,11 +78,6 @@ namespace System.Reflection
                     continue;
                 }
 
-                if ((bindingAttr & BindingFlags.Public) != BindingFlags.Public && c.DeclaredAccessibility != Accessibility.Public)
-                {
-                    continue;
-                }
-
                 ctors.Add(new ConstructorInfoWrapper(c, _metadataLoadContext));
             }
             return ctors.ToArray();
