@@ -1,6 +1,7 @@
 ﻿using System;
+using Microsoft.AspNetCore.Routing;
 
-namespace Microsoft.AspNetCore.Routing
+namespace Microsoft.AspNetCore.Builder
 {
     public static class EndpointRouteBuilderExtensions
     {

@@ -1,6 +1,7 @@
-﻿using uController;
+﻿using Microsoft.AspNetCore.Routing;
+using uController;
 
-namespace Microsoft.AspNetCore.Routing
+namespace Microsoft.AspNetCore.Builder
 {
     public static class EndpointRouteBuilderExtensions
     {
