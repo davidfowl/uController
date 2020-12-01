@@ -122,7 +122,10 @@ namespace Microsoft.AspNetCore.Routing
 {sb}
     }}
 }}";
-            context.AddSource($"MapActionsExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
+            if (sb.Length > 0)
+            {
+                context.AddSource($"MapActionsExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
+            }
 
             foreach (var model in models)
             {
