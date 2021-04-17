@@ -62,18 +62,12 @@ namespace Samples
         }
 
         [HttpGet("/hello")]
-        public string Hello([FromForm("foo")] string s, [FromHeader("X-Id")] string id, [FromQuery] int? page, [FromQuery] int? pageSize) => "Hello!";
+        public string Hello([FromHeader("X-Id")] string id, [FromQuery] int? page, [FromQuery] int? pageSize) => "Hello!";
 
         [HttpPost("/")]
         public IResult Post([FromBody] Person obj)
         {
             return Ok(obj);
-        }
-
-        [HttpPost("/post-form")]
-        public void PostAForm(IFormCollection form)
-        {
-
         }
 
         [HttpGet("/auth")]

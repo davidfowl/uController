@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using uController;
 using static uController.Results;
@@ -16,7 +17,7 @@ namespace Samples
         }
 
         [HttpGet("{id}")]
-        public IResult Get([FromRoute] int? id)
+        public IResult Get(int? id)
         {
             if (id is null)
             {
@@ -27,13 +28,13 @@ namespace Samples
         }
 
         [HttpPost]
-        public IResult Post([FromBody] Product product)
+        public IResult Post(Product product)
         {
             return Ok(product);
         }
 
         [HttpPut("{id}")]
-        public IResult Put([FromRoute] int? id, [FromBody] Product product)
+        public IResult Put(int? id, Product product)
         {
             if (id is null)
             {

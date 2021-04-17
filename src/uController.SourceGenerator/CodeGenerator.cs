@@ -172,7 +172,6 @@ namespace uController.CodeGeneration
             // Declare locals
             var hasAwait = false;
             var hasFromBody = false;
-            var hasFromForm = false;
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
@@ -180,11 +179,12 @@ namespace uController.CodeGeneration
                 {
                     WriteLine($"var {parameterName} = httpContext;");
                 }
-                else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
-                {
-                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
-                    hasAwait = true;
-                }
+                // Remove form support for now
+                //else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
+                //{
+                //    WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
+                //    hasAwait = true;
+                //}
                 else if (parameter.FromRoute != null)
                 {
                     GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
@@ -201,16 +201,17 @@ namespace uController.CodeGeneration
                 {
                     WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
                 }
-                else if (parameter.FromForm != null)
-                {
-                    if (!hasFromForm)
-                    {
-                        WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
-                        hasAwait = true;
-                        hasFromForm = true;
-                    }
-                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
-                }
+                // Remove form support for now
+                //else if (parameter.FromForm != null)
+                //{
+                //    if (!hasFromForm)
+                //    {
+                //        WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                //        hasAwait = true;
+                //        hasFromForm = true;
+                //    }
+                //    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
+                //}
                 else if (parameter.FromBody)
                 {
                     if (!hasFromBody)
