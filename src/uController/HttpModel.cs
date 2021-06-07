@@ -97,7 +97,8 @@ namespace uController
                         FromRoute = fromRoute == null ? null : fromRoute?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromCookie = fromCookie == null ? null : fromCookie?.GetConstructorArgument<string>(0),
                         FromBody = fromBody != null,
-                        FromServices = fromService != null
+                        FromServices = fromService != null,
+                        DefaultValue = parameter.DefaultValue
                     });
                 }
 
@@ -143,6 +144,7 @@ namespace uController
         public string FromCookie { get; set; }
         public bool FromBody { get; set; }
         public bool FromServices { get; set; }
+        public object DefaultValue { get; set; }
 
         public bool HasBindingSource => FromBody || FromServices || FromCookie != null ||
             FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;

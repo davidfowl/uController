@@ -82,6 +82,12 @@ namespace Samples
         {
 
         }
+
+        [HttpGet("/default-values")]
+        public string DefaultValues([FromQuery] string test = "test", [FromQuery]int skip = 0)
+        {
+            return $"test = {test}, skip = {skip}";
+        }
     }
 
     public class Person

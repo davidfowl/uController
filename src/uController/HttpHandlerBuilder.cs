@@ -348,10 +348,23 @@ namespace uController
                 expr = Expression.Convert(expr, parameter.ParameterType);
             }
 
+            Expression defaultExpression = null;
+
+            if (parameter.DefaultValue != null && parameter.ParameterType.IsAssignableFrom(parameter.DefaultValue.GetType()))
+            {
+                defaultExpression = Expression.Constant(parameter.DefaultValue);
+            }
+            else
+            {
+                defaultExpression = Expression.Default(parameter.ParameterType);
+            }
+
             // property[key] == null ? default : (ParameterType){Type}.Parse(property[key]);
+            // or if the parameter has a default value
+            // property[key] == null ? {parameter default value} : (ParameterType){Type}.Parse(property[key]);
             expr = Expression.Condition(
                 Expression.Equal(valueArg, Expression.Constant(null)),
-                Expression.Default(parameter.ParameterType),
+                defaultExpression,
                 expr);
 
             return expr;
