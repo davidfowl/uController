@@ -45,8 +45,11 @@ namespace uController.SourceGenerator
                 semanticModel = context.Compilation.GetSemanticModel(handlerType.SyntaxTree);
                 typeInfo = semanticModel.GetTypeInfo(handlerType);
 
-                var type = assembly.GetType(typeInfo.Type.ToDisplayString());
-                var model = HttpModel.FromType(type, uControllerAssembly);
+                var typeName = typeInfo.Type.ToDisplayString();
+                var type = assembly.GetType(typeName);
+                var typeSymbol = context.Compilation.GetTypeByMetadataName(typeName);
+                var model = SourceGeneratorHttpModel.FromType(type, typeSymbol, semanticModel, uControllerAssembly);
+
                 models.Add(model);
             }
 

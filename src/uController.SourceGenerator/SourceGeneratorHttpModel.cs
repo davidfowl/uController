@@ -1,21 +1,19 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace uController
 {
-    public class HttpModel
+    public class SourceGeneratorHttpModel : HttpModel
     {
-        public HttpModel(Type handlerType)
+        public SourceGeneratorHttpModel(Type handlerType)
+            : base(handlerType)
         {
-            HandlerType = handlerType;
         }
 
-        public List<MethodModel> Methods { get; } = new List<MethodModel>();
-
-        public Type HandlerType { get; }
-
-        public static HttpModel FromType(Type type, Assembly uControllerAssembly)
+        public static HttpModel FromType(Type type, INamedTypeSymbol typeSymbol, SemanticModel semanticModel, Assembly uControllerAssembly)
         {
             var model = new HttpModel(type);
 
@@ -39,6 +37,8 @@ namespace uController
                 var attribute = method.GetCustomAttributeData(httpMethodAttributeType);
                 var template = CombineRoute(routeAttribute?.GetConstructorArgument<string>(0), attribute?.GetConstructorArgument<string>(0) ?? method.GetCustomAttributeData(routeAttributeType)?.GetConstructorArgument<string>(0));
 
+                var methodSymbol = GetMethodSymbol(typeSymbol, method, semanticModel);
+
                 if (template == null)
                 {
                     continue;
@@ -61,12 +61,6 @@ namespace uController
                     methodModel.UniqueName = $"{method.Name}_{count}";
                 }
 
-                // Add all attributes as metadata
-                //foreach (var metadata in method.GetCustomAttributes(inherit: true))
-                //{
-                //    methodModel.Metadata.Add(metadata);
-                //}
-
                 foreach (var metadata in method.CustomAttributes)
                 {
                     if (metadata.AttributeType.Namespace == "System.Runtime.CompilerServices" ||
@@ -87,6 +81,8 @@ namespace uController
                     var fromCookie = parameter.GetCustomAttributeData(fromCookieAttributeType);
                     var fromService = parameter.GetCustomAttributeData(fromServicesAttributeType);
 
+                    var parameterSymbol = methodSymbol?.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
+
                     methodModel.Parameters.Add(new ParameterModel
                     {
                         Name = parameter.Name,
@@ -98,7 +94,7 @@ namespace uController
                         FromCookie = fromCookie == null ? null : fromCookie?.GetConstructorArgument<string>(0),
                         FromBody = fromBody != null,
                         FromServices = fromService != null,
-                        DefaultValue = TryGetDefaultValue(parameter)
+                        DefaultValue = parameterSymbol?.HasExplicitDefaultValue ?? false ? parameterSymbol.ExplicitDefaultValue : null
                     });
                 }
 
@@ -107,58 +103,63 @@ namespace uController
 
             return model;
         }
-
-        protected static string CombineRoute(string prefix, string template)
+    
+        private static IMethodSymbol GetMethodSymbol(INamedTypeSymbol typeSymbol, MethodInfo method, SemanticModel semanticModel)
         {
-            if (prefix == null)
+            var methodSymbols = typeSymbol
+                .GetMembers(method.Name)
+                .OfType<IMethodSymbol>();
+
+            foreach (var methodSymbol in methodSymbols)
             {
-                return template;
+                if (DoReturnTypeMatch(methodSymbol, method, semanticModel) && DoParamatersMatch(methodSymbol, method, semanticModel))
+                {
+                    return methodSymbol;
+                }
             }
 
-            if (template == null)
-            {
-                return prefix;
-            }
-
-            return prefix + '/' + template.TrimStart('/');
+            return null;
         }
 
-        protected static object TryGetDefaultValue(ParameterInfo parameter)
+        private static bool DoParamatersMatch(IMethodSymbol methodSymbol, MethodInfo method, SemanticModel semanticModel)
         {
-            try
+            var parameterInfo = method.GetParameters();
+            var parameterSymbols = methodSymbol.Parameters;
+
+            if (parameterInfo.Length == 0 && parameterSymbols.Length ==0)
             {
-                return parameter.DefaultValue;
+                return true;
             }
-            catch (NotImplementedException)
+
+            if (parameterInfo.Length != parameterSymbols.Length)
             {
-                return null;
+                return false;
             }
+
+            var parameterTypes = parameterInfo.Select(p => p.ParameterType).ToArray();
+            var parameterTypeSymbols = parameterSymbols.Select(p => p.Type).ToArray();
+
+            for (var i = 0; i < parameterTypes.Length; i++)
+            {
+                if (!IsSameType(parameterTypes[i], parameterTypeSymbols[i], semanticModel))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
-    }
 
-    public class MethodModel
-    {
-        public string UniqueName { get; set; }
-        public MethodInfo MethodInfo { get; set; }
-        public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
-        public List<object> Metadata { get; } = new List<object>();
-        public string RoutePattern { get; set; }
-    }
+        private static bool DoReturnTypeMatch(IMethodSymbol methodSymbol, MethodInfo method, SemanticModel semanticModel)
+        {
+            return IsSameType(method.ReturnType, methodSymbol.ReturnType, semanticModel);
+        }
 
-    public class ParameterModel
-    {
-        public string Name { get; set; }
-        public Type ParameterType { get; set; }
-        public string FromQuery { get; set; }
-        public string FromHeader { get; set; }
-        public string FromForm { get; set; }
-        public string FromRoute { get; set; }
-        public string FromCookie { get; set; }
-        public bool FromBody { get; set; }
-        public bool FromServices { get; set; }
-        public object DefaultValue { get; set; }
+        private static bool IsSameType(Type type, ITypeSymbol typeSymbol, SemanticModel semanticModel)
+        {
+            var targetType = semanticModel.Compilation.GetTypeByMetadataName(type.FullName);
 
-        public bool HasBindingSource => FromBody || FromServices || FromCookie != null ||
-            FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
+            return SymbolEqualityComparer.Default.Equals(typeSymbol, targetType);
+        }
     }
 }

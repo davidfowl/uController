@@ -187,15 +187,15 @@ namespace uController.CodeGeneration
                 }
                 else if (parameter.FromRoute != null)
                 {
-                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true, defaultValue: parameter.DefaultValue);
                 }
                 else if (parameter.FromQuery != null)
                 {
-                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query");
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query", defaultValue: parameter.DefaultValue);
                 }
                 else if (parameter.FromHeader != null)
                 {
-                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers", defaultValue: parameter.DefaultValue);
                 }
                 else if (parameter.FromServices)
                 {
@@ -209,7 +209,7 @@ namespace uController.CodeGeneration
                         hasAwait = true;
                         hasFromForm = true;
                     }
-                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection", defaultValue: parameter.DefaultValue);
                 }
                 else if (parameter.FromBody)
                 {
@@ -322,11 +322,21 @@ namespace uController.CodeGeneration
             WriteLine("");
         }
 
-        private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)
+        private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false, object defaultValue = null)
         {
+            if (defaultValue != null && !type.IsAssignableFrom(defaultValue.GetType()))
+            {
+                defaultValue = null;
+            }
+
             if (type.Equals(typeof(string)))
             {
                 WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
+
+                if (defaultValue != null)
+                {
+                    WriteLine($"{sourceName} = string.IsNullOrEmpty({sourceName}) ? \"{defaultValue}\" : {sourceName};");
+                }
             }
             else
             {
@@ -342,7 +352,16 @@ namespace uController.CodeGeneration
                     WriteLine($"if ({sourceName}_Value == null || !{S(type)}.TryParse({sourceName}_Value, out {sourceName}))");
                     WriteLine("{");
                     Indent();
-                    WriteLine($"{sourceName} = default;");
+
+                    if (defaultValue == null)
+                    {
+                        WriteLine($"{sourceName} = default;");
+                    }
+                    else
+                    {
+                        WriteLine($"{sourceName} = {defaultValue};");
+                    }
+
                     Unindent();
                     WriteLine("}");
                 }
@@ -357,7 +376,16 @@ namespace uController.CodeGeneration
                     WriteLine("else");
                     WriteLine("{");
                     Indent();
-                    WriteLine($"{sourceName} = default;");
+
+                    if (defaultValue == null)
+                    {
+                        WriteLine($"{sourceName} = default;");
+                    }
+                    else
+                    {
+                        WriteLine($"{sourceName} = {defaultValue};");
+                    }
+
                     Unindent();
                     WriteLine("}");
 
