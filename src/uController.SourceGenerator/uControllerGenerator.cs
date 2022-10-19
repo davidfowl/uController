@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -25,11 +24,8 @@ namespace uController.SourceGenerator
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
-            var assembly = metadataLoadContext.MainAssembly;
 
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
-
-            int number = 0;
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
             var formattedTypes = new HashSet<string>();
@@ -106,7 +102,7 @@ namespace uController.SourceGenerator
 
                 string ResolveRoutePattern(ExpressionSyntax expression)
                 {
-                    string ResovleIdentifier(IdentifierNameSyntax id)
+                    string ResolveIdentifier(IdentifierNameSyntax id)
                     {
                         var symbol = semanticModel.GetSymbolInfo(id).Symbol;
                         if (symbol is null)
@@ -120,7 +116,7 @@ namespace uController.SourceGenerator
 
                             if (syntax is VariableDeclaratorSyntax
                                 {
-                                    Initializer: EqualsValueClauseSyntax
+                                    Initializer:
                                     {
                                         Value: LiteralExpressionSyntax
                                         {
@@ -139,7 +135,7 @@ namespace uController.SourceGenerator
                     return expression switch
                     {
                         LiteralExpressionSyntax literal => literal.Token.ValueText,
-                        IdentifierNameSyntax id => ResovleIdentifier(id),
+                        IdentifierNameSyntax id => ResolveIdentifier(id),
                         _ => null
                     };
                 }
@@ -181,7 +177,7 @@ namespace uController.SourceGenerator
                         FromServices = fromService != null
                     };
 
-                    if (methodModel.RoutePattern is string pattern && pattern.Contains($"{{{parameter.Name}}}"))
+                    if (methodModel.RoutePattern is { } pattern && pattern.Contains($"{{{parameter.Name}}}"))
                     {
                         parameterModel.FromRoute = parameter.Name;
                     }
@@ -196,16 +192,16 @@ namespace uController.SourceGenerator
                 }
 
                 gen.Generate(methodModel);
-                var formattedTypeArgs = string.Join(",", types);
+                var formattedTypeArgs = string.Join(", ", types);
 
-                formattedTypeArgs = method.ReturnsVoid ? string.Join(",", types.Take(types.Count - 1)) : formattedTypeArgs;
+                formattedTypeArgs = method.ReturnsVoid ? string.Join(", ", types.Take(types.Count - 1)) : formattedTypeArgs;
                 var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
                 var fullDelegateType = formattedTypeArgs.Length == 0 ? delegateType : $"{delegateType}<{formattedTypeArgs}>";
 
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
-                FileLinePositionSpan span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
-                int lineNumber = span.StartLinePosition.Line + 1;
+                var span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
+                var lineNumber = span.StartLinePosition.Line + 1;
 
                 var filteredInvocationText = method.ReturnsVoid ?
                     $@"handler({filterArgumentString});
@@ -222,6 +218,10 @@ namespace uController.SourceGenerator
                 {{
                     filteredInvocation = BuildFilterDelegate(ic => 
                     {{
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {{
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }}
                         {filteredInvocationText}
                     }},
                     builder,
@@ -246,7 +246,6 @@ namespace uController.SourceGenerator
 
 ";
                 sb.Append(text);
-                number++;
             }
 
             thunks.AppendLine("        }");

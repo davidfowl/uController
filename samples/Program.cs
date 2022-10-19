@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Sample;
 
 var builder = WebApplication.CreateBuilder();
@@ -16,20 +17,19 @@ app.MapGet("/person", () => new Person("David"));
 
 app.MapGet("/ok", (ClaimsPrincipal c, [FromServices]ISayHello s) => Results.Ok(s.Hello()));
 
-app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) =>
-{
-    return next(context);
-});
+app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
 
-app.MapGet("/someting", object (CancellationToken ct) => new Person("Hello"));
+app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
 IResult NoAccess(int? id) => Results.StatusCode(401); 
 
 app.Map("/private", NoAccess);
 
 app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
+
+app.MapGet("/multiple", ([FromQuery]StringValues queries) => queries.ToArray());
 
 var api = app.MapGroup("/api");
 
@@ -38,7 +38,7 @@ personGroup.MapGet("/", () => new Person("David"));
 
 api.MapProducts();
 
-var s = "/something";
+var s = "/something/{id}";
 
 // This doesn't work yet
 app.MapGet(s, new Wrapper().Hello);
@@ -53,7 +53,7 @@ record Product(string Name, decimal Price);
 
 class Wrapper
 {
-    public string Hello() => "Hello World";
+    public string Hello(int id) => "Hello World";
 
     public void AddRoutes(IEndpointRouteBuilder routes)
     {

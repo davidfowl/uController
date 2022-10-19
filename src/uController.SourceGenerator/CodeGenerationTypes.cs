@@ -16,3 +16,9 @@ namespace Microsoft.AspNetCore.Http
     [TypeForwardedFrom("Microsoft.AspNetCore.Http.Features")]
     public interface IFormCollection { }
 }
+
+namespace Microsoft.Extensions.Primitives
+{
+    [TypeForwardedFrom("Microsoft.Extensions.Primitives")]
+    public struct StringValues { }
+}

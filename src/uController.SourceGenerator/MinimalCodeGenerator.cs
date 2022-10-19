@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Primitives;
 
 namespace uController.CodeGeneration
 {
@@ -70,10 +71,34 @@ namespace uController.CodeGeneration
             var hasAwait = false;
             var hasFromBody = false;
             var hasFromForm = false;
+            if (method.Parameters.Count > 0)
+            {
+                WriteLine("var wasParamCheckFailure = false;");
+            }
+
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
                 EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, parameter, parameterName);
+            }
+
+            if (method.Parameters.Count > 0)
+            {
+                WriteLine("if (wasParamCheckFailure)");
+                WriteLine("{");
+                Indent();
+                WriteLine("httpContext.Response.StatusCode = 400;");
+                if (hasAwait)
+                {
+                    WriteLine("return;");
+                }
+                else
+                {
+                    WriteLine("return Task.CompletedTask;");
+                }
+
+                Unindent();
+                WriteLine("}");
             }
 
             AwaitableInfo awaitableInfo = default;
@@ -108,6 +133,7 @@ namespace uController.CodeGeneration
                     Write("var result = ");
                 }
             }
+
             WriteNoIndent($"handler(");
             bool first = true;
             foreach (var parameter in method.Parameters)
@@ -307,25 +333,37 @@ namespace uController.CodeGeneration
             var hasAwait = false;
             var hasFromBody = false;
             var hasFromForm = false;
+
+            if (method.Parameters.Count > 0)
+            {
+                WriteLine("var wasParamCheckFailure = false;");
+            }
+
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
                 EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, parameter, parameterName);
             }
 
+            if (method.Parameters.Count > 0)
+            {
+                WriteLine("if (wasParamCheckFailure)");
+                WriteLine("{");
+                Indent();
+                WriteLine("httpContext.Response.StatusCode = 400;");
+                Unindent();
+                WriteLine("}");
+            }
+
             Write("var result = await ");
 
             WriteNoIndent($"filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext");
-            bool first = false;
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
-                if (!first)
-                {
-                    WriteNoIndent(", ");
-                }
+
+                WriteNoIndent(", ");
                 WriteNoIndent(parameterName);
-                first = false;
             }
             WriteLineNoIndent("));");
 
@@ -369,6 +407,10 @@ namespace uController.CodeGeneration
             {
                 WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
             }
+            else if (type.Equals(typeof(StringValues)))
+            {
+                WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"];");
+            }
             else
             {
                 WriteLine($"var {sourceName}_Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
@@ -384,6 +426,7 @@ namespace uController.CodeGeneration
                     WriteLine("{");
                     Indent();
                     WriteLine($"{sourceName} = default;");
+                    WriteLine("wasParamCheckFailure = true;");
                     Unindent();
                     WriteLine("}");
                 }

@@ -21,11 +21,10 @@ namespace uController
         public string FromHeader { get; set; }
         public string FromForm { get; set; }
         public string FromRoute { get; set; }
-        public string FromCookie { get; set; }
         public bool FromBody { get; set; }
         public bool FromServices { get; set; }
 
-        public bool HasBindingSource => FromBody || FromServices || FromCookie != null ||
+        public bool HasBindingSource => FromBody || FromServices || 
             FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
 
         public bool Unresovled { get; set; }
