@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using uController.CodeGeneration;
@@ -52,7 +53,7 @@ namespace uController.SourceGenerator
                 {
                     continue;
                 }
-                var routePattern = invocation.ArgumentList.Arguments[1];
+                var routePattern = invocation.ArgumentList.Arguments[0];
 
                 switch (argument)
                 {
@@ -70,6 +71,16 @@ namespace uController.SourceGenerator
                         {
                             var si = semanticModel.GetSymbolInfo(lambda);
                             method = si.Symbol as IMethodSymbol;
+                        }
+                        break;
+                    case MemberAccessExpressionSyntax memberAccessExpression:
+                        {
+                            var si = semanticModel.GetSymbolInfo(memberAccessExpression);
+                            if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                            {
+                                // We need to generate the method
+                                method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                            }
                         }
                         break;
                     default:
@@ -98,7 +109,8 @@ namespace uController.SourceGenerator
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
-                    MethodInfo = new MethodInfoWrapper(method, metadataLoadContext)
+                    MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
+                    RoutePattern = routePattern.Expression is LiteralExpressionSyntax literal ? literal.Token.ValueText : null
                 };
 
                 var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
@@ -136,20 +148,30 @@ namespace uController.SourceGenerator
 
                 formattedTypeArgs = method.ReturnsVoid ? string.Join(",", types.Take(types.Count - 1)) : formattedTypeArgs;
                 var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
+                var fullDelegateType = formattedTypeArgs.Length == 0 ? delegateType : $"{delegateType}<{formattedTypeArgs}>";
 
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
                 FileLinePositionSpan span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
                 int lineNumber = span.StartLinePosition.Line + 1;
+
+                var filteredInvocationText = method.ReturnsVoid ?
+                    $@"handler({filterArgumentString});
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);" :
+                    $@"return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));";
+
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (del, builder) => 
             {{
-                var handler = ({delegateType}<{formattedTypeArgs}>)del;
+                var handler = ({fullDelegateType})del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {{
-                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString})),
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {{
+                        {filteredInvocationText}
+                    }},
                     builder,
                     handler.Method);
                 }}
@@ -165,7 +187,7 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {delegateType}<{formattedTypeArgs}> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}

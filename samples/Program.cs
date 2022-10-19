@@ -26,7 +26,7 @@ app.Map("/private", NoAccess);
 var s = "/something";
 
 // This doesn't work yet
-// app.MapGet(s, new Wrapper().Hello);
+app.MapGet(s, new Wrapper().Hello);
 
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
