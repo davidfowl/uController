@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
+using Sample;
 
 var builder = WebApplication.CreateBuilder();
 
@@ -30,6 +31,13 @@ app.Map("/private", NoAccess);
 
 app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
 
+var api = app.MapGroup("/api");
+
+var personGroup = api.MapGroup("/persons");
+personGroup.MapGet("/", () => new Person("David"));
+
+api.MapProducts();
+
 var s = "/something";
 
 // This doesn't work yet
@@ -41,6 +49,7 @@ wrapper.AddRoutes(app);
 app.Run();
 
 record Person(string Name);
+record Product(string Name, decimal Price);
 
 class Wrapper
 {
