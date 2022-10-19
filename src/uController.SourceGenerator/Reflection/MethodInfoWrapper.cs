@@ -15,6 +15,11 @@ namespace System.Reflection
             _method = method;
             _metadataLoadContext = metadataLoadContext;
 
+            if ((method.DeclaredAccessibility & Accessibility.Public) != 0)
+            {
+                Attributes |= MethodAttributes.Public;
+            }
+
             if (method.IsStatic)
             {
                 Attributes |= MethodAttributes.Static;

@@ -281,10 +281,24 @@ namespace uController.CodeGeneration
             }
             else
             {
-                // TODO: Look for bind async
                 // Error if we can't determine the binding source for this parameter
-                parameter.Unresovled = true;
-                WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                var parameterType = parameter.ParameterType;
+
+                // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
+                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { _metadataLoadContext.Resolve<HttpContext>() }, m => true);
+
+                if (methodInfo is not null)
+                {
+                    WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
+                    hasAwait = true;
+                }
+                else
+                {
+                    // TODO: Look for more bind async variants
+                    parameter.Unresovled = true;
+
+                    WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                }
             }
         }
 
@@ -355,6 +369,7 @@ namespace uController.CodeGeneration
 
         private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)
         {
+            // TODO: Handle specific types (Uri, DateTime etc) with relevant options
             // TODO: Handle arrays
             if (type.Equals(typeof(string)))
             {
@@ -395,6 +410,40 @@ namespace uController.CodeGeneration
 
                 }
             }
+        }
+
+        private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes, Func<MethodInfo, bool> validateReturnType)
+        {
+            bool IsMatch(MethodInfo method) => method is not null && !method.IsAbstract && validateReturnType(method);
+
+            MethodInfo Search(Type t) => t.GetMethods().FirstOrDefault(m => m.Name == name && m.IsPublic && m.IsStatic && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(parameterTypes));
+
+            var methodInfo = Search(type);
+
+            if (IsMatch(methodInfo))
+            {
+                return methodInfo;
+            }
+
+            var candidateInterfaceMethodInfo = default(MethodInfo);
+
+            // Check all interfaces for implementations. Fail if there are duplicates.
+            foreach (var implementedInterface in type.GetInterfaces())
+            {
+                var interfaceMethod = Search(implementedInterface);
+
+                if (IsMatch(interfaceMethod))
+                {
+                    if (candidateInterfaceMethodInfo is not null)
+                    {
+                        return null;
+                    }
+
+                    candidateInterfaceMethodInfo = interfaceMethod;
+                }
+            }
+
+            return candidateInterfaceMethodInfo;
         }
 
         private void WriteLineNoIndent(string value)
