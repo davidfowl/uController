@@ -28,6 +28,8 @@ IResult NoAccess(int? id) => Results.StatusCode(401);
 
 app.Map("/private", NoAccess);
 
+app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
+
 var s = "/something";
 
 // This doesn't work yet

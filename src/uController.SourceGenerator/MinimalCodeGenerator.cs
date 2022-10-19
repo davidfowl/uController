@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -199,6 +200,14 @@ namespace uController.CodeGeneration
             {
                 WriteLine($"var {parameterName} = httpContext;");
             }
+            else if (parameter.ParameterType.Equals(typeof(HttpRequest)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Request;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(HttpResponse)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Response;");
+            }
             else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
             {
                 WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
@@ -212,6 +221,15 @@ namespace uController.CodeGeneration
             {
                 WriteLine($"var {parameterName} = httpContext.RequestAborted;");
             }
+            else if (parameter.ParameterType.Equals(typeof(Stream)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Request.Body;");
+            }
+            // TODO: PipeReader
+            //else if (parameter.ParameterType.Equals(typeof(PipeReader)))
+            //{
+            //    WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
+            //}
             else if (parameter.FromRoute != null)
             {
                 GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
@@ -246,10 +264,19 @@ namespace uController.CodeGeneration
                     hasFromBody = true;
                 }
 
-                FromBodyTypes.Add(parameter.ParameterType);
+                // TODO: PipeReader
+                if (parameter.ParameterType.Equals(typeof(Stream)))
+                {
+                    WriteLine($"var {parameterName} = httpContext.Request.Body;");
+                    FromBodyTypes.Add(parameter.ParameterType);
+                }
+                else
+                {
+                    // TODO: Handle empty body (required parameters);
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                    FromBodyTypes.Add(parameter.ParameterType);
+                }
 
-                // TODO: Handle empty body (required parameters);
-                WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
                 hasAwait = true;
             }
             else
