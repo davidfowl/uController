@@ -146,5 +146,7 @@ namespace uController
 
         public bool HasBindingSource => FromBody || FromServices || FromCookie != null ||
             FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
+
+        public bool Unresovled { get; set; }
     }
 }

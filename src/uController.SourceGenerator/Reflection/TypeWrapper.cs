@@ -23,7 +23,7 @@ namespace System.Reflection
 
         public override Type BaseType => _typeSymbol.BaseType.AsType(_metadataLoadContext);
 
-        public override string FullName => Namespace == null ? Name : Namespace + "." + Name;
+        public override string FullName => Namespace == null || Namespace == "<global namespace>" ? Name : Namespace + "." + Name;
 
         public override Guid GUID => Guid.Empty;
 
