@@ -143,7 +143,7 @@ namespace uController.SourceGenerator
                         FromServices = fromService != null
                     };
 
-                    if (methodModel.RoutePattern is string pattern && pattern.Contains($"{parameter.Name}"))
+                    if (methodModel.RoutePattern is string pattern && pattern.Contains($"{{{parameter.Name}}}"))
                     {
                         parameterModel.FromRoute = parameter.Name;
                     }

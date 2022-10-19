@@ -20,6 +20,8 @@ app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context,
     return next(context);
 });
 
+app.MapPost("/model", (Model m) => m);
+
 app.MapGet("/someting", object (CancellationToken ct) => new Person("Hello"));
 
 IResult NoAccess(int? id) => Results.StatusCode(401); 
@@ -55,4 +57,12 @@ interface ISayHello
 class EnglishHello : ISayHello
 {
     public string Hello() => "Hello";
+}
+
+public class Model
+{
+    public static ValueTask<Model> BindAsync(HttpContext context)
+    {
+        return ValueTask.FromResult(new Model());
+    }
 }
