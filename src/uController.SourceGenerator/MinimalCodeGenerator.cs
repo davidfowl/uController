@@ -56,9 +56,6 @@ namespace uController.CodeGeneration
 
         public void Generate(MethodModel method)
         {
-            // [DebuggerStepThrough]
-            // WriteLine($"[{typeof(DebuggerStepThroughAttribute)}]");
-
             var methodStartIndex = _codeBuilder.Length + 4 * _indent;
             WriteLine($"async {typeof(Task)} {method.UniqueName}({typeof(HttpContext)} httpContext)");
             WriteLine("{");

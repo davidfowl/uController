@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -26,34 +21,14 @@ namespace uController.SourceGenerator
                 return;
             }
 
-            // Debugger.Launch();
+            // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
             var assembly = metadataLoadContext.MainAssembly;
-            var uControllerAssembly = metadataLoadContext.LoadFromAssemblyName("uController");
 
             var models = new List<HttpModel>();
 
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
-
-            // Old codegen
-            //foreach (var (memberAccess, handlerType) in receiver.MapHandlers)
-            //{
-            //    var semanticModel = context.Compilation.GetSemanticModel(memberAccess.Expression.SyntaxTree);
-            //    var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
-
-            //    if (!typeInfo.Type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, endpointRouteBuilderType)))
-            //    {
-            //        continue;
-            //    }
-
-            //    semanticModel = context.Compilation.GetSemanticModel(handlerType.SyntaxTree);
-            //    typeInfo = semanticModel.GetTypeInfo(handlerType);
-
-            //    var type = assembly.GetType(typeInfo.Type.ToDisplayString());
-            //    var model = HttpModel.FromType(type, uControllerAssembly);
-            //    models.Add(model);
-            //}
 
             int number = 0;
             var sb = new StringBuilder();
@@ -111,9 +86,6 @@ namespace uController.SourceGenerator
                 }
 
                 types.Add(method.ReturnType.ToDisplayString());
-
-                //var mi = new MethodInfoWrapper(method, metadataLoadContext);
-                // var parameters = mi.GetParameters();
 
                 var gen = new MinimalCodeGenerator(metadataLoadContext);
 
@@ -218,26 +190,6 @@ namespace Microsoft.AspNetCore.Builder
             {
                 context.AddSource($"MapExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
             }
-
-            // Old source generator
-            //foreach (var model in models)
-            //{
-            //    var gen = new CodeGenerator(model, metadataLoadContext);
-            //    var rawSource = gen.Generate();
-            //    var sourceText = SourceText.From(rawSource, Encoding.UTF8);
-
-            //    // For debugging
-            //    //var comp = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(sourceText));
-            //    //var diagnosrics = comp.GetDiagnostics();
-
-            //    context.AddSource(model.HandlerType.Name + "RouteExtensions", sourceText);
-
-            //    //if (gen.FromBodyTypes.Any())
-            //    //{
-            //    //    var jsonGenerator = new JsonCodeGenerator(metadataLoadContext, model.HandlerType.Namespace);
-            //    //    var generatedConverters = jsonGenerator.Generate(gen.FromBodyTypes, out var helperSource);
-            //    //}
-            //}
         }
 
         public void Initialize(GeneratorInitializationContext context)
@@ -256,30 +208,11 @@ namespace Microsoft.AspNetCore.Builder
                 "MapPatch",
                 "Map",
             };
-            public List<(MemberAccessExpressionSyntax, TypeSyntax)> MapHandlers { get; } = new();
 
             public List<(InvocationExpressionSyntax, ExpressionSyntax, string)> MapActions { get; } = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
-                if (syntaxNode is MemberAccessExpressionSyntax
-                    {
-                        Name: GenericNameSyntax
-                        {
-                            TypeArgumentList:
-                            {
-                                Arguments: { Count: 1 } arguments
-                            },
-                            Identifier:
-                            {
-                                ValueText: "MapHttpHandler"
-                            }
-                        }
-                    } mapHandlerCall)
-                {
-                    MapHandlers.Add((mapHandlerCall, arguments[0]));
-                }
-
                 if (syntaxNode is InvocationExpressionSyntax
                     {
                         Expression: MemberAccessExpressionSyntax

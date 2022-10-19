@@ -10,8 +10,6 @@ namespace uController
     [TypeForwardedFrom("uController")]
     public class IHttpRequestReader { }
     [TypeForwardedFrom("uController")]
-    public class IResult { }
-    [TypeForwardedFrom("uController")]
     public class ObjectResult { }
     [TypeForwardedFrom("uController")]
     public class RouteAttribute { }
@@ -39,6 +37,8 @@ namespace uController
 
 namespace Microsoft.AspNetCore.Http
 {
+    [TypeForwardedFrom("Microsoft.AspNetCore.Http.Abstractions")]
+    public interface IResult { }
     [TypeForwardedFrom("Microsoft.AspNetCore.Http.Abstractions")]
     public class HttpContext { }
     [TypeForwardedFrom("Microsoft.AspNetCore.Http.Features")]
