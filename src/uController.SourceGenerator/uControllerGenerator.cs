@@ -27,8 +27,6 @@ namespace uController.SourceGenerator
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
             var assembly = metadataLoadContext.MainAssembly;
 
-            var models = new List<HttpModel>();
-
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
 
             int number = 0;
