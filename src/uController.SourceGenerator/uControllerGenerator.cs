@@ -47,7 +47,8 @@ namespace uController.SourceGenerator
                 var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
                 var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
 
-                if (!typeInfo.Type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, endpointRouteBuilderType)))
+                if (!SymbolEqualityComparer.Default.Equals(typeInfo.Type, endpointRouteBuilderType) &&
+                    !typeInfo.Type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, endpointRouteBuilderType)))
                 {
                     continue;
                 }
