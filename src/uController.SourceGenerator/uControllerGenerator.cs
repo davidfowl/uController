@@ -104,12 +104,52 @@ namespace uController.SourceGenerator
                     gen.Indent();
                 }
 
+                string ResolveRoutePattern(ExpressionSyntax expression)
+                {
+                    string ResovleIdentifier(IdentifierNameSyntax id)
+                    {
+                        var symbol = semanticModel.GetSymbolInfo(id).Symbol;
+                        if (symbol is null)
+                        {
+                            return null;
+                        }
+
+                        foreach (var decl in symbol.DeclaringSyntaxReferences)
+                        {
+                            var syntax = decl.GetSyntax();
+
+                            if (syntax is VariableDeclaratorSyntax
+                                {
+                                    Initializer: EqualsValueClauseSyntax
+                                    {
+                                        Value: LiteralExpressionSyntax
+                                        {
+                                            Token: { ValueText: var text }
+                                        }
+                                    }
+                                })
+                            {
+                                return text;
+                            }
+                        }
+
+                        return null;
+                    }
+
+                    return expression switch
+                    {
+                        LiteralExpressionSyntax literal => literal.Token.ValueText,
+                        IdentifierNameSyntax id => ResovleIdentifier(id),
+                        _ => null
+                    };
+                }
+
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
                     // TODO: Parse the route pattern here
-                    RoutePattern = routePattern.Expression is LiteralExpressionSyntax literal ? literal.Token.ValueText : null
+                    RoutePattern = ResolveRoutePattern(routePattern.Expression)
                 };
 
                 var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
