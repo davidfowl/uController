@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder();
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World");
-app.MapGet("/hello/{name}", ([FromRoute]string name) => $"Hello {name}");
+app.MapGet("/hello/{name}", (string name) => $"Hello {name}");
 
 app.MapGet("/person", () => new Person("David"));
 
@@ -18,6 +18,8 @@ app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context,
 {
     return next(context);
 });
+
+app.MapGet("/someting", object () => new Person("Hello"));
 
 IResult NoAccess(int? id) => Results.StatusCode(401); 
 

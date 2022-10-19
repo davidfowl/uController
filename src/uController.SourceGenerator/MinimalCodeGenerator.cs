@@ -202,7 +202,6 @@ namespace uController.CodeGeneration
                 WriteLineNoIndent(executeAsync);
             }
 
-            // TODO: Handle object return types
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
             if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
             {
@@ -211,6 +210,29 @@ namespace uController.CodeGeneration
             else if (unwrappedType.Equals(typeof(string)))
             {
                 AwaitOrReturn($"httpContext.Response.WriteAsync(result);");
+            }
+            else if (unwrappedType.Equals(typeof(object)))
+            {
+                WriteLine("if (result is IResult r)");
+                WriteLine("{");
+                Indent();
+                AwaitOrReturn("r.ExecuteAsync(httpContext);");
+                Unindent();
+                WriteLine("}");
+
+                WriteLine("else if (result is string s)");
+                WriteLine("{");
+                Indent();
+                AwaitOrReturn($"httpContext.Response.WriteAsync(s);");
+                Unindent();
+                WriteLine("}");
+
+                WriteLine("else");
+                WriteLine("{");
+                Indent();
+                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
+                Unindent();
+                WriteLine("}");
             }
             else if (!unwrappedType.Equals(typeof(void)))
             {
@@ -317,27 +339,6 @@ namespace uController.CodeGeneration
 
                 WriteLineNoIndent(executeAsync);
             }
-
-            // TODO: Handle object return types
-            /*var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
-            if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
-            {
-                AwaitOrReturn("result.ExecuteAsync(httpContext);");
-            }
-            else if (unwrappedType.Equals(typeof(string)))
-            {
-                AwaitOrReturn($"httpContext.Response.WriteAsync(result);");
-            }
-            else if (!unwrappedType.Equals(typeof(void)))
-            {
-                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
-            }
-            else if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(void)))
-            {
-                // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
-                WriteLine($"return {typeof(Task)}.CompletedTask;");
-            }*/
-
 
             WriteLine("if (result is IResult r)");
             WriteLine("{");

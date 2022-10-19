@@ -110,6 +110,7 @@ namespace uController.SourceGenerator
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
+                    // TODO: Parse the route pattern here
                     RoutePattern = routePattern.Expression is LiteralExpressionSyntax literal ? literal.Token.ValueText : null
                 };
 
@@ -130,7 +131,7 @@ namespace uController.SourceGenerator
                     var fromRoute = parameter.GetCustomAttributeData(fromRouteAttributeType);
                     var fromService = parameter.GetCustomAttributeData(fromServicesAttributeType);
 
-                    methodModel.Parameters.Add(new ParameterModel
+                    var parameterModel = new ParameterModel
                     {
                         Name = parameter.Name,
                         ParameterType = parameter.ParameterType,
@@ -140,7 +141,20 @@ namespace uController.SourceGenerator
                         FromRoute = fromRoute == null ? null : fromRoute?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromBody = fromBody != null,
                         FromServices = fromService != null
-                    });
+                    };
+
+                    if (methodModel.RoutePattern is string pattern && pattern.Contains($"{parameter.Name}"))
+                    {
+                        parameterModel.FromRoute = parameter.Name;
+                    }
+
+                    // Encode semantics here
+                    if (!parameterModel.HasBindingSource)
+                    {
+                        // Assume query string
+                    }
+
+                    methodModel.Parameters.Add(parameterModel);
                 }
 
                 gen.Generate(methodModel);
