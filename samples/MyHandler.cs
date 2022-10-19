@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using uController;
 using static uController.Results;
+using IResult = uController.IResult;
 
 namespace Samples
 {

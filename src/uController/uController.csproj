@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PackageDescription>A fast declarative microframework for ASP.NET Core services.</PackageDescription>
     <Authors>David Fowler</Authors>
   </PropertyGroup>
