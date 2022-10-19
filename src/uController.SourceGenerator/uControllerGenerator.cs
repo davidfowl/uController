@@ -136,14 +136,41 @@ namespace uController.SourceGenerator
                 formattedTypeArgs = method.ReturnsVoid ? string.Join(",", types.Take(types.Count - 1)) : formattedTypeArgs;
                 var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
 
+                var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
+
                 FileLinePositionSpan span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
                 int lineNumber = span.StartLinePosition.Line + 1;
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (del, builder) => 
             {{
                 var handler = ({delegateType}<{formattedTypeArgs}>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+
+                if (builder.FilterFactories.Count > 0)
+                {{
+                    var routeHandlerFilters =  builder.FilterFactories;
+                    filteredInvocation = ic =>
+                    {{
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));
+                    }};
+
+                    var context0 = new EndpointFilterFactoryContext
+                    {{
+                        MethodInfo = handler.Method,
+                        ApplicationServices = builder.ApplicationServices,
+                    }};
+
+                    var initialFilteredInvocation = filteredInvocation;
+
+                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+                    {{
+                        var filterFactory = routeHandlerFilters[i];
+                        filteredInvocation = filterFactory(context0, filteredInvocation);
+                    }}
+                }}
+
 {gen}
-                return RequestHandler;
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }};
 
 ");
@@ -157,13 +184,14 @@ namespace uController.SourceGenerator
         {{
             var factory = map[(filePath, lineNumber)];
             var conventionBuilder = routes.{callName}(pattern, (System.Delegate)handler);
-            conventionBuilder.Add(e =>
+            conventionBuilder.Finally(e =>
             {{
                 e.RequestDelegate = factory(handler, e);
             }});
 
             return conventionBuilder;
         }}
+
 ";
                 sb.Append(text);
                 number++;
@@ -183,7 +211,7 @@ namespace Microsoft.AspNetCore.Builder
     {{
         private static readonly System.Collections.Generic.Dictionary<(string, int), RequestDelegateFactoryFunc> map = new();
 {thunks}
-{sb}
+{sb.ToString().TrimEnd()}
     }}
 }}";
             if (sb.Length > 0)

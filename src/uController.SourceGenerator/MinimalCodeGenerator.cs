@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -56,6 +58,13 @@ namespace uController.CodeGeneration
 
         public void Generate(MethodModel method)
         {
+            GenerateMethod(method);
+            WriteLine("");
+            GenerateFilteredMethod(method);
+        }
+
+        private void GenerateMethod(MethodModel method)
+        {
             var methodStartIndex = _codeBuilder.Length + 4 * _indent;
             WriteLine($"async {typeof(Task)} {method.UniqueName}({typeof(HttpContext)} httpContext)");
             WriteLine("{");
@@ -76,6 +85,10 @@ namespace uController.CodeGeneration
                 {
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
                     hasAwait = true;
+                }
+                else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
+                {
+                    WriteLine($"var {parameterName} = httpContext.User;");
                 }
                 else if (parameter.FromRoute != null)
                 {
@@ -105,16 +118,15 @@ namespace uController.CodeGeneration
                 }
                 else if (parameter.FromBody)
                 {
+                    // TODO: Error handling when there are multiple
                     if (!hasFromBody)
                     {
                         hasFromBody = true;
                     }
 
-                    if (!parameter.ParameterType.Equals(typeof(JsonElement)))
-                    {
-                        FromBodyTypes.Add(parameter.ParameterType);
-                    }
+                    FromBodyTypes.Add(parameter.ParameterType);
 
+                    // TODO: Handle empty body (required parameters);
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
                     hasAwait = true;
                 }
@@ -190,6 +202,7 @@ namespace uController.CodeGeneration
                 WriteLineNoIndent(executeAsync);
             }
 
+            // TODO: Handle object return types
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
             if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
             {
@@ -213,8 +226,147 @@ namespace uController.CodeGeneration
             WriteLine("}");
         }
 
+        private void GenerateFilteredMethod(MethodModel method)
+        {
+            var methodStartIndex = _codeBuilder.Length + 4 * _indent;
+            WriteLine($"async {typeof(Task)} {method.UniqueName}Filtered({typeof(HttpContext)} httpContext)");
+            WriteLine("{");
+            Indent();
+
+            // Declare locals
+            var hasFromBody = false;
+            var hasFromForm = false;
+            foreach (var parameter in method.Parameters)
+            {
+                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
+                if (parameter.ParameterType.Equals(typeof(HttpContext)))
+                {
+                    WriteLine($"var {parameterName} = httpContext;");
+                }
+                else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
+                {
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
+                }
+                else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
+                {
+                    WriteLine($"var {parameterName} = httpContext.User;");
+                }
+                else if (parameter.FromRoute != null)
+                {
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
+                }
+                else if (parameter.FromQuery != null)
+                {
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query");
+                }
+                else if (parameter.FromHeader != null)
+                {
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
+                }
+                else if (parameter.FromServices)
+                {
+                    WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
+                }
+                else if (parameter.FromForm != null)
+                {
+                    if (!hasFromForm)
+                    {
+                        WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                        hasFromForm = true;
+                    }
+                    GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
+                }
+                else if (parameter.FromBody)
+                {
+                    // TODO: Error handling when there are multiple
+                    if (!hasFromBody)
+                    {
+                        hasFromBody = true;
+                    }
+
+                    FromBodyTypes.Add(parameter.ParameterType);
+
+                    // TODO: Handle empty body (required parameters);
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                }
+                else
+                {
+                    WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                }
+            }
+
+            Write("var result = await ");
+
+            WriteNoIndent($"filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext");
+            bool first = false;
+            foreach (var parameter in method.Parameters)
+            {
+                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
+                if (!first)
+                {
+                    WriteNoIndent(", ");
+                }
+                WriteNoIndent(parameterName);
+                first = false;
+            }
+            WriteLineNoIndent("));");
+
+            void AwaitOrReturn(string executeAsync)
+            {
+                Write("await ");
+
+                WriteLineNoIndent(executeAsync);
+            }
+
+            // TODO: Handle object return types
+            /*var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
+            if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
+            {
+                AwaitOrReturn("result.ExecuteAsync(httpContext);");
+            }
+            else if (unwrappedType.Equals(typeof(string)))
+            {
+                AwaitOrReturn($"httpContext.Response.WriteAsync(result);");
+            }
+            else if (!unwrappedType.Equals(typeof(void)))
+            {
+                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
+            }
+            else if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(void)))
+            {
+                // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
+                WriteLine($"return {typeof(Task)}.CompletedTask;");
+            }*/
+
+
+            WriteLine("if (result is IResult r)");
+            WriteLine("{");
+            Indent();
+            AwaitOrReturn("r.ExecuteAsync(httpContext);");
+            Unindent();
+            WriteLine("}");
+
+            WriteLine("else if (result is string s)");
+            WriteLine("{");
+            Indent();
+            AwaitOrReturn($"httpContext.Response.WriteAsync(s);");
+            Unindent();
+            WriteLine("}");
+
+            WriteLine("else");
+            WriteLine("{");
+            Indent();
+            AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
+            Unindent();
+            WriteLine("}");
+
+            Unindent();
+            WriteLine("}");
+        }
+
         private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)
         {
+            // TODO: Handle arrays
             if (type.Equals(typeof(string)))
             {
                 WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
