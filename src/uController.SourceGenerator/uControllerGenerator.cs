@@ -149,25 +149,9 @@ namespace uController.SourceGenerator
 
                 if (builder.FilterFactories.Count > 0)
                 {{
-                    var routeHandlerFilters =  builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {{
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));
-                    }};
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {{
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    }};
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {{
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }}
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString})),
+                    builder,
+                    handler.Method);
                 }}
 
 {gen}
@@ -183,14 +167,7 @@ namespace uController.SourceGenerator
 
                 var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {delegateType}<{formattedTypeArgs}> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.{callName}(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {{
-                e.RequestDelegate = factory(handler, e);
-            }});
-
-            return conventionBuilder;
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}
 
 ";
@@ -213,6 +190,45 @@ namespace Microsoft.AspNetCore.Builder
         private static readonly System.Collections.Generic.Dictionary<(string, int), RequestDelegateFactoryFunc> map = new();
 {thunks}
 {sb.ToString().TrimEnd()}
+
+        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
+            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+            string pattern, 
+            System.Delegate handler, 
+            Func<Microsoft.AspNetCore.Routing.IEndpointRouteBuilder, string, System.Delegate, Microsoft.AspNetCore.Builder.RouteHandlerBuilder> mapper,
+            string filePath,
+            int lineNumber)
+        {{
+            var factory = map[(filePath, lineNumber)];
+            var conventionBuilder = mapper(routes, pattern, handler);
+            conventionBuilder.Finally(e =>
+            {{
+                e.RequestDelegate = factory(handler, e);
+            }});
+
+            return conventionBuilder;
+        }}
+
+        private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
+        {{
+            var routeHandlerFilters =  builder.FilterFactories;
+
+            var context0 = new EndpointFilterFactoryContext
+            {{
+                MethodInfo = mi,
+                ApplicationServices = builder.ApplicationServices,
+            }};
+
+            var initialFilteredInvocation = filteredInvocation;
+
+            for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+            {{
+                var filterFactory = routeHandlerFilters[i];
+                filteredInvocation = filterFactory(context0, filteredInvocation);
+            }}
+
+            return filteredInvocation;
+        }}
     }}
 }}";
             if (sb.Length > 0)

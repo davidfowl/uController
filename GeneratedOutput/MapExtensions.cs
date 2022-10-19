@@ -11,32 +11,16 @@ namespace Microsoft.AspNetCore.Builder
         private static readonly System.Collections.Generic.Dictionary<(string, int), RequestDelegateFactoryFunc> map = new();
         static MapActionsExtensions()
         {
-            map[(@"C:\dev\git\uController\samples\Program.cs", 9)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 10)] = (del, builder) =>
             {
                 var handler = (System.Func<string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler()),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -65,32 +49,16 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 10)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 11)] = (del, builder) =>
             {
                 var handler = (System.Func<string, string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0))),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -121,32 +89,16 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 12)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 13)] = (del, builder) =>
             {
                 var handler = (System.Func<Person>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler()),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -175,44 +127,28 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 15)] = (del, builder) =>
             {
                 var handler = (System.Func<System.Security.Claims.ClaimsPrincipal, Microsoft.AspNetCore.Http.IResult>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Security.Claims.ClaimsPrincipal>(0)));
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Security.Claims.ClaimsPrincipal>(0))),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    System.Security.Claims.ClaimsPrincipal arg_c = default;
+                    var arg_c = httpContext.User;
                     var result = handler(arg_c);
                     return result.ExecuteAsync(httpContext);
                 }
 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    System.Security.Claims.ClaimsPrincipal arg_c = default;
+                    var arg_c = httpContext.User;
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_c));
                     if (result is IResult r)
                     {
@@ -231,32 +167,16 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 17)] = (del, builder) =>
             {
                 var handler = (System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Text.Json.Nodes.JsonNode>(0)));
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Text.Json.Nodes.JsonNode>(0))),
+                    builder,
+                    handler.Method);
                 }
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -287,32 +207,16 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 24)] = (del, builder) =>
             {
                 var handler = (System.Func<int?, Microsoft.AspNetCore.Http.IResult>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int?>(0)));
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int?>(0))),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -343,32 +247,16 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             };
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 43)] = (del, builder) =>
+            map[(@"C:\dev\git\uController\samples\Program.cs", 44)] = (del, builder) =>
             {
                 var handler = (System.Func<string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
 
                 if (builder.FilterFactories.Count > 0)
                 {
-                    var routeHandlerFilters = builder.FilterFactories;
-                    filteredInvocation = ic =>
-                    {
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    };
-
-                    var context0 = new EndpointFilterFactoryContext
-                    {
-                        MethodInfo = handler.Method,
-                        ApplicationServices = builder.ApplicationServices,
-                    };
-
-                    var initialFilteredInvocation = filteredInvocation;
-
-                    for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-                    {
-                        var filterFactory = routeHandlerFilters[i];
-                        filteredInvocation = filterFactory(context0, filteredInvocation);
-                    }
+                    filteredInvocation = BuildFilterDelegate(ic => System.Threading.Tasks.ValueTask.FromResult<object>(handler()),
+                    builder,
+                    handler.Method);
                 }
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -401,56 +289,44 @@ namespace Microsoft.AspNetCore.Builder
 
         internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.MapGet(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {
-                e.RequestDelegate = factory(handler, e);
-            });
-
-            return conventionBuilder;
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
         internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.MapGet(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {
-                e.RequestDelegate = factory(handler, e);
-            });
-
-            return conventionBuilder;
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
         internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Person> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.MapGet(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {
-                e.RequestDelegate = factory(handler, e);
-            });
-
-            return conventionBuilder;
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
         internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<System.Security.Claims.ClaimsPrincipal, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.MapGet(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {
-                e.RequestDelegate = factory(handler, e);
-            });
-
-            return conventionBuilder;
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
         internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+        }
+
+        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int?, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
+        {
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+        }
+
+        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
+            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes,
+            string pattern,
+            System.Delegate handler,
+            Func<Microsoft.AspNetCore.Routing.IEndpointRouteBuilder, string, System.Delegate, Microsoft.AspNetCore.Builder.RouteHandlerBuilder> mapper,
+            string filePath,
+            int lineNumber)
+        {
             var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.MapPost(pattern, (System.Delegate)handler);
+            var conventionBuilder = mapper(routes, pattern, handler);
             conventionBuilder.Finally(e =>
             {
                 e.RequestDelegate = factory(handler, e);
@@ -459,16 +335,25 @@ namespace Microsoft.AspNetCore.Builder
             return conventionBuilder;
         }
 
-        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int?, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
+        private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
         {
-            var factory = map[(filePath, lineNumber)];
-            var conventionBuilder = routes.Map(pattern, (System.Delegate)handler);
-            conventionBuilder.Finally(e =>
-            {
-                e.RequestDelegate = factory(handler, e);
-            });
+            var routeHandlerFilters = builder.FilterFactories;
 
-            return conventionBuilder;
+            var context0 = new EndpointFilterFactoryContext
+            {
+                MethodInfo = mi,
+                ApplicationServices = builder.ApplicationServices,
+            };
+
+            var initialFilteredInvocation = filteredInvocation;
+
+            for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+            {
+                var filterFactory = routeHandlerFilters[i];
+                filteredInvocation = filterFactory(context0, filteredInvocation);
+            }
+
+            return filteredInvocation;
         }
     }
 }
