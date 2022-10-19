@@ -60,20 +60,9 @@ namespace uController.CodeGeneration
             // WriteLine($"[{typeof(DebuggerStepThroughAttribute)}]");
 
             var methodStartIndex = _codeBuilder.Length + 4 * _indent;
-            //var ctors = _model.HandlerType.GetConstructors();
-
-            //if (!method.MethodInfo.IsStatic)
-            //{
-            //    if (ctors.Length > 1 || ctors[0].GetParameters().Length > 0)
-            //    {
-            //        // Lazy, defer to DI system if
-            //        WriteLine($"var handler = ({S(_model.HandlerType)})_factory(httpContext.RequestServices, {typeof(Array)}.Empty<{typeof(object)}>());");
-            //    }
-            //    else
-            //    {
-            //        WriteLine($"var handler = new {S(_model.HandlerType)}();");
-            //    }
-            //}
+            WriteLine($"async {typeof(Task)} {method.UniqueName}({typeof(HttpContext)} httpContext)");
+            WriteLine("{");
+            Indent();
 
             // Declare locals
             var hasAwait = false;
@@ -184,6 +173,12 @@ namespace uController.CodeGeneration
             }
             WriteLineNoIndent(");");
 
+            if (!hasAwait)
+            {
+                // Remove " async " from method signature.
+                _codeBuilder.Remove(methodStartIndex, 6);
+            }
+
             void AwaitOrReturn(string executeAsync)
             {
                 if (hasAwait)
@@ -216,6 +211,9 @@ namespace uController.CodeGeneration
                 // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
                 WriteLine($"return {typeof(Task)}.CompletedTask;");
             }
+
+            Unindent();
+            WriteLine("}");
         }
 
         private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)

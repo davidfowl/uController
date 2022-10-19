@@ -116,11 +116,49 @@ namespace uController.SourceGenerator
                 // var parameters = mi.GetParameters();
 
                 var gen = new MinimalCodeGenerator(metadataLoadContext);
-                gen.Generate(new MethodModel
-                {
-                    MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
-                });
 
+                for (int i = 0; i < 4; i++)
+                {
+                    gen.Indent();
+                }
+
+                var methodModel = new MethodModel
+                {
+                    UniqueName = "RequestHandler",
+                    MethodInfo = new MethodInfoWrapper(method, metadataLoadContext)
+                };
+
+                var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
+                var fromQueryAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
+                var fromRouteAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
+                var fromHeaderAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromHeaderAttribute");
+                var fromFormAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromFormAttribute");
+                var fromBodyAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromBodyAttribute");
+                var fromServicesAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromServicesAttribute");
+
+                foreach (var parameter in methodModel.MethodInfo.GetParameters())
+                {
+                    var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
+                    var fromHeader = parameter.GetCustomAttributeData(fromHeaderAttributeType);
+                    var fromForm = parameter.GetCustomAttributeData(fromFormAttributeType);
+                    var fromBody = parameter.GetCustomAttributeData(fromBodyAttributeType);
+                    var fromRoute = parameter.GetCustomAttributeData(fromRouteAttributeType);
+                    var fromService = parameter.GetCustomAttributeData(fromServicesAttributeType);
+
+                    methodModel.Parameters.Add(new ParameterModel
+                    {
+                        Name = parameter.Name,
+                        ParameterType = parameter.ParameterType,
+                        FromQuery = fromQuery == null ? null : fromQuery?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromHeader = fromHeader == null ? null : fromHeader?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromForm = fromForm == null ? null : fromForm?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromRoute = fromRoute == null ? null : fromRoute?.GetConstructorArgument<string>(0) ?? parameter.Name,
+                        FromBody = fromBody != null,
+                        FromServices = fromService != null
+                    });
+                }
+
+                gen.Generate(methodModel);
                 var formattedTypeArgs = string.Join(",", types);
 
                 formattedTypeArgs = method.ReturnsVoid ? string.Join(",", types.Take(types.Count - 1)) : formattedTypeArgs;
@@ -131,11 +169,9 @@ namespace uController.SourceGenerator
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (del, builder) => 
             {{
-                return httpContext =>
-                {{
-                    var handler = ({delegateType}<{formattedTypeArgs}>)del;
-                    {gen}
-                }};
+                var handler = ({delegateType}<{formattedTypeArgs}>)del;
+{gen}
+                return RequestHandler;
             }};
 
 ");
@@ -145,7 +181,7 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"        public static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {delegateType}<{formattedTypeArgs}> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {delegateType}<{formattedTypeArgs}> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             var factory = map[(filePath, lineNumber)];
             var conventionBuilder = routes.{callName}(pattern, (System.Delegate)handler);
