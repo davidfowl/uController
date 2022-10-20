@@ -46,8 +46,7 @@ app.MapGet(s, new Wrapper().Hello);
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
 
-
-var d = (int x) => "Hello World";
+var d = wrapper.Hello;
 
 app.MapGet("/del", d);
 

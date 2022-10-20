@@ -96,7 +96,7 @@ namespace uController.SourceGenerator
                                     return si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
                                 }
 
-                                return null;
+                                return si.Symbol as IMethodSymbol;
                             }
                         default:
                             return null;
@@ -406,7 +406,7 @@ namespace Microsoft.AspNetCore.Builder
 
     class Diagnostics
     {
-        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to infer delegate type from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterSourceUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
