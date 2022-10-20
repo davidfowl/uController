@@ -72,18 +72,20 @@ namespace uController.CodeGeneration
             var hasAwait = false;
             var hasFromBody = false;
             var hasFromForm = false;
-            if (method.Parameters.Count > 0)
-            {
-                WriteLine("var wasParamCheckFailure = false;");
-            }
+            var generatedParamCheck = false;
+
+            var paramFailureStartIndex = _codeBuilder.Length + 4 * _indent;
+            var paramCheckExpression = "var wasParamCheckFailure = false;";
+
+            WriteLine(paramCheckExpression);
 
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
-                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, parameter, parameterName);
+                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
             }
 
-            if (method.Parameters.Count > 0)
+            if (generatedParamCheck)
             {
                 WriteLine("if (wasParamCheckFailure)");
                 WriteLine("{");
@@ -100,6 +102,10 @@ namespace uController.CodeGeneration
 
                 Unindent();
                 WriteLine("}");
+            }
+            else
+            {
+                _codeBuilder.Remove(paramFailureStartIndex, paramCheckExpression.Length);
             }
 
             AwaitableInfo awaitableInfo = default;
@@ -215,125 +221,6 @@ namespace uController.CodeGeneration
             WriteLine("}");
         }
 
-        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasFromForm, ParameterModel parameter, string parameterName)
-        {
-            if (parameter.ParameterType.Equals(typeof(HttpContext)))
-            {
-                WriteLine($"var {parameterName} = httpContext;");
-            }
-            else if (parameter.ParameterType.Equals(typeof(HttpRequest)))
-            {
-                WriteLine($"var {parameterName} = httpContext.Request;");
-            }
-            else if (parameter.ParameterType.Equals(typeof(HttpResponse)))
-            {
-                WriteLine($"var {parameterName} = httpContext.Response;");
-            }
-            else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
-            {
-                WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
-                hasAwait = true;
-            }
-            else if (parameter.ParameterType.Equals(_metadataLoadContext.LoadFromAssemblyName("System.Security.Claims").GetType("System.Security.Claims.ClaimsPrincipal")))
-            {
-                WriteLine($"var {parameterName} = httpContext.User;");
-            }
-            else if (parameter.ParameterType.Equals(typeof(CancellationToken)))
-            {
-                WriteLine($"var {parameterName} = httpContext.RequestAborted;");
-            }
-            else if (parameter.ParameterType.Equals(typeof(Stream)))
-            {
-                WriteLine($"var {parameterName} = httpContext.Request.Body;");
-            }
-            // TODO: PipeReader
-            //else if (parameter.ParameterType.Equals(typeof(PipeReader)))
-            //{
-            //    WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
-            //}
-            else if (parameter.FromRoute != null)
-            {
-                GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", nullable: true);
-            }
-            else if (parameter.FromQuery != null)
-            {
-                GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query");
-            }
-            else if (parameter.FromHeader != null)
-            {
-                GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers");
-            }
-            else if (parameter.FromServices)
-            {
-                WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
-            }
-            else if (parameter.FromForm != null)
-            {
-                if (!hasFromForm)
-                {
-                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
-                    hasAwait = true;
-                    hasFromForm = true;
-                }
-                GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection");
-            }
-            else if (parameter.FromBody)
-            {
-                // TODO: Error handling when there are multiple
-                if (!hasFromBody)
-                {
-                    hasFromBody = true;
-                }
-
-                // TODO: PipeReader
-                if (parameter.ParameterType.Equals(typeof(Stream)))
-                {
-                    WriteLine($"var {parameterName} = httpContext.Request.Body;");
-                    FromBodyTypes.Add(parameter.ParameterType);
-                }
-                else
-                {
-                    // TODO: Handle empty body (required parameters);
-                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
-                    FromBodyTypes.Add(parameter.ParameterType);
-                }
-
-                hasAwait = true;
-            }
-            else
-            {
-                // Error if we can't determine the binding source for this parameter
-                var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
-
-                // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
-                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { _metadataLoadContext.Resolve<HttpContext>() }, m => true);
-
-                if (methodInfo is not null)
-                {
-                    WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
-                    hasAwait = true;
-
-                    // TODO: Look for more bind async variants
-                }
-                else
-                {
-                    // Debugger.Launch();
-                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), typeof(IFormatProvider), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
-
-                    if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
-                    {
-                        // Fallback to query string
-                        GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query");
-                    }
-                    else
-                    {
-                        parameter.Unresovled = true;
-                        WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
-                    }
-                }
-            }
-        }
-
         private void GenerateFilteredMethod(MethodModel method)
         {
             var methodStartIndex = _codeBuilder.Length + 4 * _indent;
@@ -345,19 +232,20 @@ namespace uController.CodeGeneration
             var hasAwait = false;
             var hasFromBody = false;
             var hasFromForm = false;
+            var generatedParamCheck = false;
 
-            if (method.Parameters.Count > 0)
-            {
-                WriteLine("var wasParamCheckFailure = false;");
-            }
+            var paramFailureStartIndex = _codeBuilder.Length + 4 * _indent;
+            var paramCheckExpression = "var wasParamCheckFailure = false;";
+
+            WriteLine(paramCheckExpression);
 
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = "arg_" + parameter.Name.Replace("_", "__");
-                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, parameter, parameterName);
+                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
             }
 
-            if (method.Parameters.Count > 0)
+            if (generatedParamCheck)
             {
                 WriteLine("if (wasParamCheckFailure)");
                 WriteLine("{");
@@ -365,6 +253,10 @@ namespace uController.CodeGeneration
                 WriteLine("httpContext.Response.StatusCode = 400;");
                 Unindent();
                 WriteLine("}");
+            }
+            else
+            {
+                _codeBuilder.Remove(paramFailureStartIndex, paramCheckExpression.Length);
             }
 
             Write("var result = await ");
@@ -411,7 +303,142 @@ namespace uController.CodeGeneration
             WriteLine("}");
         }
 
-        private void GenerateConvert(string sourceName, Type type, string key, string sourceExpression, bool nullable = false)
+        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasFromForm, ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
+        {
+            if (parameter.ParameterType.Equals(typeof(HttpContext)))
+            {
+                WriteLine($"var {parameterName} = httpContext;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(HttpRequest)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Request;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(HttpResponse)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Response;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
+            {
+                WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
+                hasAwait = true;
+            }
+            else if (parameter.ParameterType.Equals(_metadataLoadContext.LoadFromAssemblyName("System.Security.Claims").GetType("System.Security.Claims.ClaimsPrincipal")))
+            {
+                WriteLine($"var {parameterName} = httpContext.User;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(CancellationToken)))
+            {
+                WriteLine($"var {parameterName} = httpContext.RequestAborted;");
+            }
+            else if (parameter.ParameterType.Equals(typeof(Stream)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Request.Body;");
+            }
+            // TODO: PipeReader
+            //else if (parameter.ParameterType.Equals(typeof(PipeReader)))
+            //{
+            //    WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
+            //}
+            else if (parameter.FromRoute != null)
+            {
+                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck, nullable: true))
+                {
+                    parameter.Unresovled = true;
+                }
+            }
+            else if (parameter.FromQuery != null)
+            {
+                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
+                {
+                    parameter.Unresovled = true;
+                }
+            }
+            else if (parameter.FromHeader != null)
+            {
+                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
+                {
+                    parameter.Unresovled = true;
+                }
+            }
+            else if (parameter.FromServices)
+            {
+                WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
+            }
+            else if (parameter.FromForm != null)
+            {
+                if (!hasFromForm)
+                {
+                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    hasAwait = true;
+                    hasFromForm = true;
+                }
+
+                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection", ref generatedParamCheck))
+                {
+                    parameter.Unresovled = true;
+                }
+            }
+            else if (parameter.FromBody)
+            {
+                // TODO: Error handling when there are multiple
+                if (!hasFromBody)
+                {
+                    hasFromBody = true;
+                }
+
+                // TODO: PipeReader
+                if (parameter.ParameterType.Equals(typeof(Stream)))
+                {
+                    WriteLine($"var {parameterName} = httpContext.Request.Body;");
+                    FromBodyTypes.Add(parameter.ParameterType);
+                }
+                else
+                {
+                    // TODO: Handle empty body (required parameters);
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                    FromBodyTypes.Add(parameter.ParameterType);
+                }
+
+                hasAwait = true;
+            }
+            else
+            {
+                // Error if we can't determine the binding source for this parameter
+                var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
+
+                // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
+                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { _metadataLoadContext.Resolve<HttpContext>() }, m => true);
+
+                if (methodInfo is not null)
+                {
+                    WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
+                    hasAwait = true;
+
+                    // TODO: Look for more bind async variants
+                }
+                else
+                {
+                    // Look for more try parse overloads too
+                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+
+                    if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
+                    {
+                        // Fallback to query string
+                        if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query", ref generatedParamCheck))
+                        {
+                            parameter.Unresovled = true;
+                        }
+                    }
+                    else
+                    {
+                        parameter.Unresovled = true;
+                        WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                    }
+                }
+            }
+        }
+
+        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false)
         {
             // TODO: Handle specific types (Uri, DateTime etc) with relevant options
             // TODO: Handle arrays
@@ -425,14 +452,23 @@ namespace uController.CodeGeneration
             }
             else
             {
+                var unwrappedType = Unwrap(type) ?? type;
+
+                // TODO: Support more overloads
+                var methodInfo = GetStaticMethodFromHierarchy(unwrappedType, "TryParse", new[] { typeof(string), unwrappedType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+
+                if (methodInfo is null)
+                {
+                    WriteLine($"{S(type)} {sourceName} = default;");
+                    return false;
+                }
+
                 WriteLine($"var {sourceName}_Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
                 WriteLine($"{S(type)} {sourceName};");
 
-                // TODO: Handle cases where TryParse isn't available
-                // type = Unwrap(type) ?? type;
-                var unwrappedType = Unwrap(type);
                 if (unwrappedType == null)
                 {
+                    generatedParamCheck = true;
                     // Type isn't nullable
                     WriteLine($"if ({sourceName}_Value == null || !{S(type)}.TryParse({sourceName}_Value, out {sourceName}))");
                     WriteLine("{");
@@ -459,6 +495,7 @@ namespace uController.CodeGeneration
 
                 }
             }
+            return true;
         }
 
         private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes, Func<MethodInfo, bool> validateReturnType)

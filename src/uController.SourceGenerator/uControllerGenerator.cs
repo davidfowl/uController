@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -231,7 +232,14 @@ namespace uController.SourceGenerator
                     if (p.Unresovled)
                     {
                         var loc = p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLocation();
-                        context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveParameter, loc, p.Name));
+                        if (p.HasBindingSource)
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveTryParseForType, loc, p.ParameterType.FullName));
+                        }
+                        else
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveParameter, loc, p.Name));
+                        }
                     }
                 }
 
@@ -400,8 +408,10 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to infer delegate type from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterTypeUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterSourceUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL003", "RoutePatternUnknown", "Unable to detect route pattern source, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MINIMAL003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern source, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
     }
 }

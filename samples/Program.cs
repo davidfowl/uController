@@ -15,7 +15,7 @@ app.MapGet("/hello/{name}", (string name) => $"Hello {name}");
 
 app.MapGet("/person", () => new Person("David"));
 
-app.MapGet("/ok", (ClaimsPrincipal c, [FromServices]ISayHello s) => Results.Ok(s.Hello()));
+app.MapGet("/ok", (ClaimsPrincipal c, [FromServices] ISayHello s) => Results.Ok(s.Hello()));
 
 app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
@@ -24,7 +24,7 @@ app.MapPost("/model2", (Model m) => { });
 
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
-IResult NoAccess(int? id) => Results.StatusCode(401); 
+IResult NoAccess(int? id) => Results.StatusCode(401);
 
 app.Map("/private", NoAccess);
 
