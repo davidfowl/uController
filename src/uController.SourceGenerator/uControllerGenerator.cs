@@ -289,12 +289,12 @@ namespace uController.SourceGenerator
 
 ");
 
-                if (!formattedTypes.Add(openGenericType))
+                if (!formattedTypes.Add(fullDelegateType))
                 {
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}{formattedOpenGenericArgs}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {openGenericType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}

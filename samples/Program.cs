@@ -1,8 +1,8 @@
-﻿using System.Security.Claims;
-using System.Text.Json.Nodes;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Sample;
+using System.Security.Claims;
+using System.Text.Json.Nodes;
 
 var builder = WebApplication.CreateBuilder();
 
@@ -52,7 +52,11 @@ app.MapGet("/del", d);
 
 string Local() => "Hello Local";
 
-app.MapGet("/local", Local);
+var path = "/foo";
+
+var f = () => "hello";
+
+app.MapGet(path, f);
 
 app.Run();
 
