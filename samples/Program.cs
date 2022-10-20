@@ -52,9 +52,9 @@ app.MapGet("/del", d);
 
 string Local() => "Hello Local";
 
-var path = "/foo";
+var path = "/foo/{s}";
 
-var f = () => "hello";
+var f = (string s) => "hello";
 
 app.MapGet(path, f);
 
