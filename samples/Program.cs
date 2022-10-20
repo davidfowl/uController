@@ -46,6 +46,7 @@ app.MapGet(s, new Wrapper().Hello);
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
 
+
 // This does not work yet
 //var d = () => "Hello World";
 

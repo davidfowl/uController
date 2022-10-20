@@ -157,6 +157,8 @@ namespace uController.SourceGenerator
                 var fromBodyAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromBodyAttribute");
                 var fromServicesAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromServicesAttribute");
 
+                var hasAmbiguousParameterWithoutRoute = false;
+
                 foreach (var parameter in methodModel.MethodInfo.GetParameters())
                 {
                     var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
@@ -179,18 +181,24 @@ namespace uController.SourceGenerator
                         FromServices = fromService != null
                     };
 
-                    if (methodModel.RoutePattern is { } pattern && pattern.Contains($"{{{parameter.Name}}}"))
+                    if (methodModel.RoutePattern is { } pattern)
                     {
-                        parameterModel.FromRoute = parameter.Name;
+                        if (pattern.Contains($"{{{parameter.Name}}}"))
+                        {
+                            parameterModel.FromRoute = parameter.Name;
+                        }
                     }
-
-                    // Encode semantics here
-                    if (!parameterModel.HasBindingSource)
+                    else if (!parameterModel.HasBindingSource)
                     {
-                        // Assume query string
+                        hasAmbiguousParameterWithoutRoute = true;
                     }
 
                     methodModel.Parameters.Add(parameterModel);
+                }
+
+                if (hasAmbiguousParameterWithoutRoute)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveRoutePattern, routePattern.GetLocation()));
                 }
 
                 gen.Generate(methodModel);
@@ -211,7 +219,8 @@ namespace uController.SourceGenerator
                 var fullDelegateType = formattedTypeArgs.Length == 0 ? delegateType : $"{delegateType}<{formattedTypeArgs}>";
 
                 var formattedOpenGenericArgs = string.Join(", ", (method.ReturnsVoid ? types.Take(types.Count - 1) : types).Select((t, i) => $"T{i}"));
-                var openGenericType = $"{delegateType}<{formattedOpenGenericArgs}>";
+                formattedOpenGenericArgs = formattedOpenGenericArgs.Length == 0 ? formattedOpenGenericArgs : $"<{formattedOpenGenericArgs}>";
+                var openGenericType = formattedOpenGenericArgs.Length == 0 ? delegateType : $"{delegateType}{formattedOpenGenericArgs}";
 
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
@@ -254,7 +263,7 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}<{formattedOpenGenericArgs}>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {openGenericType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}{formattedOpenGenericArgs}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {openGenericType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}
@@ -369,5 +378,7 @@ namespace Microsoft.AspNetCore.Builder
         public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to infer delegate type from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterTypeUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL003", "RoutePatternUnknown", "Unable to detect route pattern source, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
     }
 }
