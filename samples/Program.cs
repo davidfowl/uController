@@ -48,9 +48,13 @@ wrapper.AddRoutes(app);
 
 
 // This does not work yet
-//var d = () => "Hello World";
+var d = ([FromQuery]int x) => "Hello World";
 
-//app.MapGet("/del", d);
+app.MapGet("/del", d);
+
+string Local() => "Hello Local";
+
+app.MapGet("/local", Local);
 
 app.Run();
 

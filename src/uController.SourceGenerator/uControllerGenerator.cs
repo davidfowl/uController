@@ -36,7 +36,6 @@ namespace uController.SourceGenerator
             foreach (var (invocation, argument, callName) in receiver.MapActions)
             {
                 var types = new List<string>();
-                IMethodSymbol method = default;
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
                 var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
@@ -49,37 +48,61 @@ namespace uController.SourceGenerator
                 }
                 var routePattern = invocation.ArgumentList.Arguments[0];
 
-                switch (argument)
+                static IMethodSymbol ResolveMethod(SemanticModel semanticModel, ExpressionSyntax expression)
                 {
-                    case IdentifierNameSyntax identifierName:
-                        {
-                            var si = semanticModel.GetSymbolInfo(identifierName);
-                            if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                    switch (expression)
+                    {
+                        case IdentifierNameSyntax identifierName:
                             {
-                                // We need to generate the method
-                                method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                IMethodSymbol method = null;
+
+                                var si = semanticModel.GetSymbolInfo(identifierName);
+                                if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                                {
+                                    // We need to generate the method
+                                    method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                }
+
+                                if (method is null)
+                                {
+                                    var syn = si.Symbol.DeclaringSyntaxReferences[0].GetSyntax();
+
+                                    if (syn is VariableDeclaratorSyntax
+                                        {
+                                            Initializer:
+                                            {
+                                                Value: var expr
+                                            }
+                                        })
+                                    {
+                                        method = ResolveMethod(semanticModel, expr);
+                                    }
+                                }
+
+                                return method;
                             }
-                        }
-                        break;
-                    case ParenthesizedLambdaExpressionSyntax lambda:
-                        {
-                            var si = semanticModel.GetSymbolInfo(lambda);
-                            method = si.Symbol as IMethodSymbol;
-                        }
-                        break;
-                    case MemberAccessExpressionSyntax memberAccessExpression:
-                        {
-                            var si = semanticModel.GetSymbolInfo(memberAccessExpression);
-                            if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                        case ParenthesizedLambdaExpressionSyntax lambda:
                             {
-                                // We need to generate the method
-                                method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                var si = semanticModel.GetSymbolInfo(lambda);
+                                return si.Symbol as IMethodSymbol;
                             }
-                        }
-                        break;
-                    default:
-                        continue;
+                        case MemberAccessExpressionSyntax memberAccessExpression:
+                            {
+                                var si = semanticModel.GetSymbolInfo(memberAccessExpression);
+                                if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
+                                {
+                                    // We need to generate the method
+                                    return si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                }
+
+                                return null;
+                            }
+                        default:
+                            return null;
+                    }
                 }
+
+                var method = ResolveMethod(semanticModel, argument);
 
                 if (method == null)
                 {
