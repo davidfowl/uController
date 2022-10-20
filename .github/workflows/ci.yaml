@@ -14,9 +14,7 @@ jobs:
         setAllVars: true
     
     - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v1.7.2
-      with:
-        dotnet-version: 6.0.100
+      uses: actions/setup-dotnet@v1
      
     - name: dotnet build
       run: dotnet build uController.sln -c Release    
