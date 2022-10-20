@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -302,7 +303,7 @@ namespace uController.CodeGeneration
             else
             {
                 // Error if we can't determine the binding source for this parameter
-                var parameterType = parameter.ParameterType;
+                var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
 
                 // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
                 var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { _metadataLoadContext.Resolve<HttpContext>() }, m => true);
@@ -311,13 +312,24 @@ namespace uController.CodeGeneration
                 {
                     WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
                     hasAwait = true;
+
+                    // TODO: Look for more bind async variants
                 }
                 else
                 {
-                    // TODO: Look for more bind async variants
-                    parameter.Unresovled = true;
+                    // Debugger.Launch();
+                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), typeof(IFormatProvider), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
-                    WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                    if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
+                    {
+                        // Fallback to query string
+                        GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query");
+                    }
+                    else
+                    {
+                        parameter.Unresovled = true;
+                        WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                    }
                 }
             }
         }

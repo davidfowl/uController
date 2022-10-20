@@ -24,13 +24,13 @@ app.MapPost("/model2", (Model m) => { });
 
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
-IResult NoAccess([FromQuery]int? id) => Results.StatusCode(401); 
+IResult NoAccess(int? id) => Results.StatusCode(401); 
 
 app.Map("/private", NoAccess);
 
 app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
 
-app.MapGet("/multiple", ([FromQuery]StringValues queries) => queries.ToArray());
+app.MapGet("/multiple", (StringValues queries) => queries.ToArray());
 
 var api = app.MapGroup("/api");
 
@@ -47,8 +47,7 @@ var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
 
 
-// This does not work yet
-var d = ([FromQuery]int x) => "Hello World";
+var d = (int x) => "Hello World";
 
 app.MapGet("/del", d);
 
@@ -63,7 +62,7 @@ record Product(string Name, decimal Price);
 
 class Wrapper
 {
-    public string Hello([FromQuery]int id) => "Hello World";
+    public string Hello(int id) => "Hello World";
 
     public void AddRoutes(IEndpointRouteBuilder routes)
     {

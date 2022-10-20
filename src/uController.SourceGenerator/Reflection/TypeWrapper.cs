@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
 
 namespace System.Reflection
@@ -10,11 +11,13 @@ namespace System.Reflection
     {
         private readonly ITypeSymbol _typeSymbol;
         private readonly MetadataLoadContext _metadataLoadContext;
+        private readonly bool _isByRef;
 
-        public TypeWrapper(ITypeSymbol namedTypeSymbol, MetadataLoadContext metadataLoadContext)
+        public TypeWrapper(ITypeSymbol namedTypeSymbol, MetadataLoadContext metadataLoadContext, bool isByRef = false)
         {
             _typeSymbol = namedTypeSymbol;
             _metadataLoadContext = metadataLoadContext;
+            _isByRef = isByRef;
         }
 
         public override Assembly Assembly => new AssemblyWrapper(_typeSymbol.ContainingAssembly, _metadataLoadContext);
@@ -81,6 +84,11 @@ namespace System.Reflection
                 ctors.Add(new ConstructorInfoWrapper(c, _metadataLoadContext));
             }
             return ctors.ToArray();
+        }
+
+        public override Type MakeByRefType()
+        {
+            return new TypeWrapper(_typeSymbol, _metadataLoadContext, isByRef: true);
         }
 
         public override object[] GetCustomAttributes(bool inherit)
@@ -224,10 +232,7 @@ namespace System.Reflection
             return ArrayTypeSymbol != null;
         }
 
-        protected override bool IsByRefImpl()
-        {
-            throw new NotImplementedException();
-        }
+        protected override bool IsByRefImpl() => _isByRef;
 
         protected override bool IsCOMObjectImpl()
         {
