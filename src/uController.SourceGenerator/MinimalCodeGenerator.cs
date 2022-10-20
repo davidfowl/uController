@@ -233,7 +233,7 @@ namespace uController.CodeGeneration
                 WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
                 hasAwait = true;
             }
-            else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
+            else if (parameter.ParameterType.Equals(_metadataLoadContext.LoadFromAssemblyName("System.Security.Claims").GetType("System.Security.Claims.ClaimsPrincipal")))
             {
                 WriteLine($"var {parameterName} = httpContext.User;");
             }

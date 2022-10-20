@@ -20,11 +20,11 @@ app.MapGet("/ok", (ClaimsPrincipal c, [FromServices]ISayHello s) => Results.Ok(s
 app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
-app.MapPost("/model2", (Model m) => {  });
+app.MapPost("/model2", (Model m) => { });
 
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
-IResult NoAccess(int? id) => Results.StatusCode(401); 
+IResult NoAccess([FromQuery]int? id) => Results.StatusCode(401); 
 
 app.Map("/private", NoAccess);
 
@@ -41,11 +41,15 @@ api.MapProducts();
 
 var s = "/something/{id}";
 
-// This doesn't work yet
 app.MapGet(s, new Wrapper().Hello);
 
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
+
+// This does not work yet
+//var d = () => "Hello World";
+
+//app.MapGet("/del", d);
 
 app.Run();
 
@@ -54,7 +58,7 @@ record Product(string Name, decimal Price);
 
 class Wrapper
 {
-    public string Hello(int id) => "Hello World";
+    public string Hello([FromQuery]int id) => "Hello World";
 
     public void AddRoutes(IEndpointRouteBuilder routes)
     {

@@ -83,6 +83,7 @@ namespace uController.SourceGenerator
 
                 if (method == null)
                 {
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnknownDelegateType, argument.GetLocation(), argument.ToFullString()));
                     continue;
                 }
 
@@ -167,6 +168,7 @@ namespace uController.SourceGenerator
 
                     var parameterModel = new ParameterModel
                     {
+                        ParameterSymbol = (parameter as ParameterWrapper).ParameterSymbol,
                         Name = parameter.Name,
                         ParameterType = parameter.ParameterType,
                         FromQuery = fromQuery == null ? null : fromQuery?.GetConstructorArgument<string>(0) ?? parameter.Name,
@@ -192,6 +194,16 @@ namespace uController.SourceGenerator
                 }
 
                 gen.Generate(methodModel);
+
+                foreach (var p in methodModel.Parameters)
+                {
+                    if (p.Unresovled)
+                    {
+                        var loc = p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLocation();
+                        context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveParameter, loc, p.Name));
+                    }
+                }
+
                 var formattedTypeArgs = string.Join(", ", types);
 
                 formattedTypeArgs = method.ReturnsVoid ? string.Join(", ", types.Take(types.Count - 1)) : formattedTypeArgs;
@@ -350,5 +362,12 @@ namespace Microsoft.AspNetCore.Builder
                 }
             }
         }
+    }
+
+    class Diagnostics
+    {
+        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to infer delegate type from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterTypeUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }
 }

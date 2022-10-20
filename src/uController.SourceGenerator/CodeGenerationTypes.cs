@@ -22,3 +22,9 @@ namespace Microsoft.Extensions.Primitives
     [TypeForwardedFrom("Microsoft.Extensions.Primitives")]
     public struct StringValues { }
 }
+
+namespace System.Security.Claims
+{
+    [TypeForwardedFrom("System.Security.Claims")]
+    public class ClaimsPrincipal { }
+}

@@ -14,6 +14,8 @@ namespace System.Reflection
             _metadataLoadContext = metadataLoadContext;
         }
 
+        public IParameterSymbol ParameterSymbol => _parameter;
+
         public override Type ParameterType => _parameter.Type.AsType(_metadataLoadContext);
         public override string Name => _parameter.Name;
 

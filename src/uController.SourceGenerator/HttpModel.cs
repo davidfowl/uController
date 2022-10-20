@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.CodeAnalysis;
 
 namespace uController
 {
@@ -15,6 +16,7 @@ namespace uController
 
     public class ParameterModel
     {
+        public IParameterSymbol ParameterSymbol { get; set; }
         public string Name { get; set; }
         public Type ParameterType { get; set; }
         public string FromQuery { get; set; }
