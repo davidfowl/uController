@@ -198,6 +198,9 @@ namespace uController.SourceGenerator
                 var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
                 var fullDelegateType = formattedTypeArgs.Length == 0 ? delegateType : $"{delegateType}<{formattedTypeArgs}>";
 
+                var formattedOpenGenericArgs = string.Join(", ", (method.ReturnsVoid ? types.Take(types.Count - 1) : types).Select((t, i) => $"T{i}"));
+                var openGenericType = $"{delegateType}<{formattedOpenGenericArgs}>";
+
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
                 var span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
@@ -234,12 +237,12 @@ namespace uController.SourceGenerator
 
 ");
 
-                if (!formattedTypes.Add(formattedTypeArgs))
+                if (!formattedTypes.Add(openGenericType))
                 {
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}<{formattedOpenGenericArgs}>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {openGenericType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}

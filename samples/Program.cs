@@ -20,6 +20,7 @@ app.MapGet("/ok", (ClaimsPrincipal c, [FromServices]ISayHello s) => Results.Ok(s
 app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
+app.MapPost("/model2", (Model m) => {  });
 
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
