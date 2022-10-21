@@ -24,6 +24,10 @@ namespace uController.SourceGenerator
                 return;
             }
 
+            if (Environment.GetEnvironmentVariable("UCONTROLLER_DEBUG") == "1")
+            {
+                System.Diagnostics.Debugger.Launch();
+            }
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
