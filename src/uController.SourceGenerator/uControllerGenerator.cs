@@ -552,14 +552,14 @@ namespace Microsoft.AspNetCore.Builder
 
     class Diagnostics
     {
-        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MIN001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\"", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterSourceUnknown", "Unable to resolve \"{0}\", consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MIN002", "ParameterSourceUnknown", "Unable to resolve \"{0}\", consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MINIMAL003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MIN003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MIN004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MINIMAL005", "RoutePatternUnknown", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MIN005", "MultipleParametersFromBody", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }
 }
