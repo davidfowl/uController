@@ -187,26 +187,7 @@ namespace uController.CodeGeneration
             }
             else if (unwrappedType.Equals(typeof(object)))
             {
-                WriteLine("if (result is IResult r)");
-                WriteLine("{");
-                Indent();
-                AwaitOrReturn("r.ExecuteAsync(httpContext);");
-                Unindent();
-                WriteLine("}");
-
-                WriteLine("else if (result is string s)");
-                WriteLine("{");
-                Indent();
-                AwaitOrReturn($"httpContext.Response.WriteAsync(s);");
-                Unindent();
-                WriteLine("}");
-
-                WriteLine("else");
-                WriteLine("{");
-                Indent();
-                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
-                Unindent();
-                WriteLine("}");
+                AwaitOrReturn("ExecuteObjectResult(result, httpContext);");
             }
             else if (!unwrappedType.Equals(typeof(void)))
             {
@@ -280,26 +261,7 @@ namespace uController.CodeGeneration
                 WriteLineNoIndent(executeAsync);
             }
 
-            WriteLine("if (result is IResult r)");
-            WriteLine("{");
-            Indent();
-            AwaitOrReturn("r.ExecuteAsync(httpContext);");
-            Unindent();
-            WriteLine("}");
-
-            WriteLine("else if (result is string s)");
-            WriteLine("{");
-            Indent();
-            AwaitOrReturn($"httpContext.Response.WriteAsync(s);");
-            Unindent();
-            WriteLine("}");
-
-            WriteLine("else");
-            WriteLine("{");
-            Indent();
-            AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
-            Unindent();
-            WriteLine("}");
+            AwaitOrReturn("ExecuteObjectResult(result, httpContext);");
 
             Unindent();
             WriteLine("}");

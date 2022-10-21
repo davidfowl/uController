@@ -406,6 +406,22 @@ namespace Microsoft.AspNetCore.Builder
         {{
             T.PopulateMetadata(method, builder);
         }}
+
+        private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
+        {{
+            if (obj is IResult r)
+            {{
+                return r.ExecuteAsync(httpContext);
+            }}
+            else if (obj is string s)
+            {{
+                return httpContext.Response.WriteAsync(s);
+            }}
+            else
+            {{
+                return httpContext.Response.WriteAsJsonAsync(obj);
+            }}
+        }}
     }}
 }}";
             if (sb.Length > 0)
