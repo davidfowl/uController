@@ -105,7 +105,8 @@ namespace uController.CodeGeneration
             }
             else
             {
-                _codeBuilder.Remove(paramFailureStartIndex, paramCheckExpression.Length);
+                var currentIndent = 4 * _indent;
+                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
             AwaitableInfo awaitableInfo = default;
@@ -256,7 +257,8 @@ namespace uController.CodeGeneration
             }
             else
             {
-                _codeBuilder.Remove(paramFailureStartIndex, paramCheckExpression.Length);
+                var currentIndent = 4 * _indent;
+                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
             Write("var result = await ");
