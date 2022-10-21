@@ -2,20 +2,21 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using uController.SourceGenerator;
 
 namespace uController
 {
-    public class MethodModel
+    class MethodModel
     {
         public string UniqueName { get; set; }
         public MethodInfo MethodInfo { get; set; }
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public List<object> Metadata { get; } = new List<object>();
-        public string RoutePattern { get; set; }
+        public RoutePattern RoutePattern { get; set; }
         public bool DisableInferBodyFromParameters { get; set; }
     }
 
-    public class ParameterModel
+    class ParameterModel
     {
         public MethodModel Method { get; set; }
         public IParameterSymbol ParameterSymbol { get; set; }

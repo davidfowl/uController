@@ -39,7 +39,7 @@ personGroup.MapGet("/", () => new Person("David"));
 
 api.MapProducts();
 
-var s = "/something/{id}";
+var s = "/something/{id:int}";
 
 app.MapGet(s, new Wrapper().Hello);
 

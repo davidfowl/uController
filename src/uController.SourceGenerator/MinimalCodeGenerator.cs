@@ -14,7 +14,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace uController.CodeGeneration
 {
-    public class MinimalCodeGenerator
+    class MinimalCodeGenerator
     {
         private readonly StringBuilder _codeBuilder = new();
         private readonly MetadataLoadContext _metadataLoadContext;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -175,8 +176,7 @@ namespace uController.SourceGenerator
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
-                    // TODO: Parse the route pattern here
-                    RoutePattern = ResolveRoutePattern(routePattern.Expression),
+                    RoutePattern = RoutePattern.Parse(ResolveRoutePattern(routePattern.Expression)),
                     DisableInferBodyFromParameters = ShouldDisableInferredBodyForMethod(callName)
                 };
 
@@ -215,7 +215,7 @@ namespace uController.SourceGenerator
 
                     if (methodModel.RoutePattern is { } pattern)
                     {
-                        if (pattern.Contains($"{{{parameter.Name}}}"))
+                        if (pattern.HasParameter(parameter.Name))
                         {
                             parameterModel.FromRoute = parameter.Name;
                         }
@@ -415,6 +415,66 @@ namespace Microsoft.AspNetCore.Builder
                     MapActions.Add((mapActionCall, args[1].Expression, method));
                 }
             }
+        }
+    }
+
+    class RoutePattern
+    {
+        private static readonly RoutePattern _empty = new(null, Array.Empty<string>());
+
+        public string Pattern { get; }
+
+        private string[] _parameterNames;
+
+        public RoutePattern(string pattern, string[] parameterNames)
+        {
+            Pattern = pattern;
+            _parameterNames = parameterNames;
+        }
+
+        public bool HasParameter(string name) => _parameterNames.Contains(name);
+
+        private static readonly char[] Slash = new[] { '/' };
+
+        public static RoutePattern Parse(string pattern)
+        {
+            if (pattern is null)
+            {
+                return null;
+            }
+
+            var segments = pattern.Split(Slash, StringSplitOptions.RemoveEmptyEntries);
+
+            List<string> parameters = null;
+            foreach (var s in segments)
+            {
+                // Ignore complex segments and escaping
+
+                var start = s.IndexOf('{');
+                if (start != -1)
+                {
+                    var end = s.IndexOf('}', start + 1);
+
+                    if (end == -1)
+                    {
+                        continue;
+                    }
+
+                    var p = s.Substring(start + 1, end - start - 1);
+                    var constraintToken = p.IndexOf(':');
+
+                    if (constraintToken != -1)
+                    {
+                        // Remove the constraint
+                        p = p.Substring(0, constraintToken);
+                    }
+
+                    parameters ??= new();
+                    parameters.Add(p);
+                }
+            }
+
+            return new RoutePattern(pattern, parameters?.ToArray() ?? Array.Empty<string>());
         }
     }
 
