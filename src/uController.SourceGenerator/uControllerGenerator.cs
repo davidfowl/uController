@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,6 +30,11 @@ namespace uController.SourceGenerator
             {
                 System.Diagnostics.Debugger.Launch();
             }
+
+            //while (!Debugger.IsAttached)
+            //{
+            //    Thread.Sleep(1000);
+            //}
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
@@ -241,8 +248,18 @@ namespace uController.SourceGenerator
 
                 if (gen.FromBodyTypes.Count > 1)
                 {
+                    var mainLocation = (method.DeclaringSyntaxReferences[0].GetSyntax() switch
+                    {
+                        MethodDeclarationSyntax methodDeclarationSyntax => methodDeclarationSyntax.Identifier.GetLocation(),
+                        var expr => expr.GetLocation()
+                    });
+
                     var otherLocations = gen.FromBodyTypes.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
-                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, invocation.GetLocation(), otherLocations));
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, mainLocation, otherLocations));
+                    foreach (var p in gen.FromBodyTypes)
+                    {
+                        p.Unresovled = true;
+                    }
                 }
 
                 foreach (var p in methodModel.Parameters)
@@ -293,7 +310,7 @@ namespace uController.SourceGenerator
                 {
                     // Don't add metadata
                 }
-                else if (metadataLoadContext.Resolve<IEndpointMetadataProvider>().IsAssignableFrom(returnType))
+                else if (metadataLoadContext.Resolve<IEndpointMetadataProvider>() is { } t && t.IsAssignableFrom(returnType))
                 {
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.
@@ -347,7 +364,7 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}
@@ -470,6 +487,7 @@ namespace Microsoft.AspNetCore.Builder
                 "MapDelete",
                 "MapPatch",
                 "Map",
+                "MapFallback", // This doesn't work yet because it doesn't have a path
             };
 
             public List<(InvocationExpressionSyntax, ExpressionSyntax, string)> MapActions { get; } = new();

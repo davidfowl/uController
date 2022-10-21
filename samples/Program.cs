@@ -17,7 +17,7 @@ app.MapGet("/person", () => new Person("David"));
 
 app.MapGet("/ok", (ClaimsPrincipal c, [FromServices] ISayHello hellosvc) => Results.Ok(hellosvc.Hello()));
 
-app.MapPost("/", (JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
+app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
 app.MapPost("/model2", (Model m) => { });

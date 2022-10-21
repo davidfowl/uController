@@ -370,40 +370,50 @@ namespace uController.CodeGeneration
                 // Error if we can't determine the binding source for this parameter
                 var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
 
+                var httpContextType = _metadataLoadContext.Resolve<HttpContext>();
                 // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
-                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { _metadataLoadContext.Resolve<HttpContext>() }, m => true);
+                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { httpContextType }, m => true);
 
                 if (methodInfo is not null)
                 {
                     WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
                     hasAwait = true;
 
-                    // TODO: Look for more bind async variants
                 }
                 else
                 {
-                    // Look for more try parse overloads too
-                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
 
-                    if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
+                    if (methodInfo is not null)
                     {
-                        // Fallback to query string
-                        if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query", ref generatedParamCheck))
-                        {
-                            parameter.Unresovled = true;
-                        }
-                    }
-                    else if (!parameter.Method.DisableInferBodyFromParameters)
-                    {
-                        // Assume body here
-                        WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
-                        FromBodyTypes.Add(parameter);
-                        hasAwait = true;
+                        WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext, null);");
                     }
                     else
                     {
-                        parameter.Unresovled = true;
-                        WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                        // Look for more try parse overloads too
+                        methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+
+                        if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
+                        {
+                            // Fallback to query string
+                            if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query", ref generatedParamCheck))
+                            {
+                                parameter.Unresovled = true;
+                            }
+                        }
+                        // This makes it hard to detect errors
+                        //else if (!parameter.Method.DisableInferBodyFromParameters)
+                        //{
+                        //    // Assume body here
+                        //    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                        //    FromBodyTypes.Add(parameter);
+                        //    hasAwait = true;
+                        //}
+                        else
+                        {
+                            parameter.Unresovled = true;
+                            WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                        }
                     }
                 }
             }
