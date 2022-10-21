@@ -13,963 +13,1072 @@ using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.Builder
 {
+    delegate void MetadataPopulator(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
     delegate Microsoft.AspNetCore.Http.RequestDelegate RequestDelegateFactoryFunc(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
 
     public static class MapActionsExtensions
     {
-        private static readonly System.Collections.Generic.Dictionary<(string, int), RequestDelegateFactoryFunc> map = new();
+        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new();
         static MapActionsExtensions()
         {
-            map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 8)] = (del, builder) =>
-            {
-                var handler = (System.Func<Product[]>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = handler();
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 9)] = (del, builder) =>
-            {
-                var handler = (System.Func<int, Product[]>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = handler(arg_id);
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 13)] = (del, builder) =>
-            {
-                var handler = (System.Func<string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = handler();
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (del, builder) =>
-            {
-                var handler = (System.Func<string, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
-                    var result = handler(arg_name);
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (del, builder) =>
-            {
-                var handler = (System.Func<Person>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = handler();
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 18)] = (del, builder) =>
-            {
-                var handler = (System.Func<System.Security.Claims.ClaimsPrincipal, ISayHello, Microsoft.AspNetCore.Http.IResult>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Security.Claims.ClaimsPrincipal>(0), ic.GetArgument<ISayHello>(1)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_c = httpContext.User;
-                    var arg_s = httpContext.RequestServices.GetRequiredService<ISayHello>();
-                    var result = handler(arg_c, arg_s);
-                    return result.ExecuteAsync(httpContext);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_c = httpContext.User;
-                    var arg_s = httpContext.RequestServices.GetRequiredService<ISayHello>();
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_c, arg_s));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 20)] = (del, builder) =>
-            {
-                var handler = (System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Text.Json.Nodes.JsonNode>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
-                    var result = handler(arg_node);
-                    await httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_node));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 22)] = (del, builder) =>
-            {
-                var handler = (System.Func<Model, Model>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Model>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_m = await Model.BindAsync(httpContext);
-                    var result = handler(arg_m);
-                    await httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_m = await Model.BindAsync(httpContext);
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (del, builder) =>
-            {
-                var handler = (System.Action<Model>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        handler(ic.GetArgument<Model>(0));
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_m = await Model.BindAsync(httpContext);
-                    handler(arg_m);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_m = await Model.BindAsync(httpContext);
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 25)] = (del, builder) =>
-            {
-                var handler = (System.Func<System.Threading.CancellationToken, object>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Threading.CancellationToken>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_ct = httpContext.RequestAborted;
-                    var result = handler(arg_ct);
-                    if (result is IResult r)
-                    {
-                        return r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        return httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        return httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_ct = httpContext.RequestAborted;
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_ct));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 29)] = (del, builder) =>
-            {
-                var handler = (System.Func<int?, Microsoft.AspNetCore.Http.IResult>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int?>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    System.Nullable<int> arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = handler(arg_id);
-                    return result.ExecuteAsync(httpContext);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    System.Nullable<int> arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 31)] = (del, builder) =>
-            {
-                var handler = (System.Func<Microsoft.AspNetCore.Http.HttpRequest, Microsoft.AspNetCore.Http.HttpResponse, System.Threading.Tasks.Task>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Microsoft.AspNetCore.Http.HttpRequest>(0), ic.GetArgument<Microsoft.AspNetCore.Http.HttpResponse>(1)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_req = httpContext.Request;
-                    var arg_resp = httpContext.Response;
-                    return handler(arg_req, arg_resp);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_req = httpContext.Request;
-                    var arg_resp = httpContext.Response;
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_req, arg_resp));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 33)] = (del, builder) =>
-            {
-                var handler = (System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Microsoft.Extensions.Primitives.StringValues>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_queries = httpContext.Request.Query["queries"];
-                    var result = handler(arg_queries);
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_queries = httpContext.Request.Query["queries"];
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_queries));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 38)] = (del, builder) =>
-            {
-                var handler = (System.Func<Person>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = handler();
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 44)] = (del, builder) =>
-            {
-                var handler = (System.Func<int, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = handler(arg_id);
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 51)] = (del, builder) =>
-            {
-                var handler = (System.Func<int, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = handler(arg_id);
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 57)] = (del, builder) =>
-            {
-                var handler = (System.Func<string, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_s = httpContext.Request.RouteValues["s"]?.ToString();
-                    var result = handler(arg_s);
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_s = httpContext.Request.RouteValues["s"]?.ToString();
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_s));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
-
-            map[(@"C:\dev\git\uController\samples\Program.cs", 72)] = (del, builder) =>
-            {
-                var handler = (System.Func<int, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic =>
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = handler(arg_id);
-                    return httpContext.Response.WriteAsync(result);
-                }
-
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_id_Value = httpContext.Request.Query["id"].ToString();
-                    int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
-                    {
-                        arg_id = default;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
-                    if (result is IResult r)
-                    {
-                        await r.ExecuteAsync(httpContext);
-                    }
-                    else if (result is string s)
-                    {
-                        await httpContext.Response.WriteAsync(s);
-                    }
-                    else
-                    {
-                        await httpContext.Response.WriteAsJsonAsync(result);
-                    }
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            };
+            map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 10)] = (
+           (del, builder) =>
+           {
+               PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>>(del.Method, builder);
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = handler();
+                   return result.ExecuteAsync(httpContext);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 11)] = (
+           (del, builder) =>
+           {
+               PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>(del.Method, builder);
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<int, Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = handler(arg_id);
+                   return result.ExecuteAsync(httpContext);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 13)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = handler();
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<string, string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
+                   var result = handler(arg_name);
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Person>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = handler();
+                   return httpContext.Response.WriteAsJsonAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 18)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<System.Security.Claims.ClaimsPrincipal, ISayHello, Microsoft.AspNetCore.Http.IResult>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Security.Claims.ClaimsPrincipal>(0), ic.GetArgument<ISayHello>(1)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_c = httpContext.User;
+                   var arg_hellosvc = httpContext.RequestServices.GetRequiredService<ISayHello>();
+                   var result = handler(arg_c, arg_hellosvc);
+                   return result.ExecuteAsync(httpContext);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_c = httpContext.User;
+                   var arg_hellosvc = httpContext.RequestServices.GetRequiredService<ISayHello>();
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_c, arg_hellosvc));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 20)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Text.Json.Nodes.JsonNode>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
+                   var result = handler(arg_node);
+                   await httpContext.Response.WriteAsJsonAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_node));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 22)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Model, Model>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Model>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_m = await Model.BindAsync(httpContext);
+                   var result = handler(arg_m);
+                   await httpContext.Response.WriteAsJsonAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_m = await Model.BindAsync(httpContext);
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Action<Model>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       handler(ic.GetArgument<Model>(0));
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_m = await Model.BindAsync(httpContext);
+                   handler(arg_m);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_m = await Model.BindAsync(httpContext);
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 25)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<System.Threading.CancellationToken, object>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<System.Threading.CancellationToken>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_ct = httpContext.RequestAborted;
+                   var result = handler(arg_ct);
+                   if (result is IResult r)
+                   {
+                       return r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       return httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       return httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_ct = httpContext.RequestAborted;
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_ct));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 29)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<int?, Microsoft.AspNetCore.Http.IResult>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int?>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   System.Nullable<int> arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = handler(arg_id);
+                   return result.ExecuteAsync(httpContext);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   System.Nullable<int> arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 31)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Microsoft.AspNetCore.Http.HttpRequest, Microsoft.AspNetCore.Http.HttpResponse, System.Threading.Tasks.Task>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Microsoft.AspNetCore.Http.HttpRequest>(0), ic.GetArgument<Microsoft.AspNetCore.Http.HttpResponse>(1)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_req = httpContext.Request;
+                   var arg_resp = httpContext.Response;
+                   return handler(arg_req, arg_resp);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_req = httpContext.Request;
+                   var arg_resp = httpContext.Response;
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_req, arg_resp));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 33)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Microsoft.Extensions.Primitives.StringValues>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_queries = httpContext.Request.Query["queries"];
+                   var result = handler(arg_queries);
+                   return httpContext.Response.WriteAsJsonAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_queries = httpContext.Request.Query["queries"];
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_queries));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 38)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<Person>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = handler();
+                   return httpContext.Response.WriteAsJsonAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 44)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<int, string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = handler(arg_id);
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 51)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<int, string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = handler(arg_id);
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 57)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<string, string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_s = httpContext.Request.RouteValues["s"]?.ToString();
+                   var result = handler(arg_s);
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_s = httpContext.Request.RouteValues["s"]?.ToString();
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_s));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 72)] = (
+           (del, builder) =>
+           {
+
+           },
+           (del, builder) =>
+           {
+               var handler = (System.Func<int, string>)del;
+               EndpointFilterDelegate filteredInvocation = null;
+
+               if (builder.FilterFactories.Count > 0)
+               {
+                   filteredInvocation = BuildFilterDelegate(ic =>
+                   {
+                       if (ic.HttpContext.Response.StatusCode == 400)
+                       {
+                           return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                       }
+                       return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                   },
+                   builder,
+                   handler.Method);
+               }
+
+               System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = handler(arg_id);
+                   return httpContext.Response.WriteAsync(result);
+               }
+
+               async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+               {
+                   var arg_id_Value = httpContext.Request.Query["id"].ToString();
+                   int arg_id;
+                   if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
+                   {
+                       arg_id = arg_id_Temp;
+                   }
+                   else
+                   {
+                       arg_id = default;
+                   }
+                   var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                   if (result is IResult r)
+                   {
+                       await r.ExecuteAsync(httpContext);
+                   }
+                   else if (result is string s)
+                   {
+                       await httpContext.Response.WriteAsync(s);
+                   }
+                   else
+                   {
+                       await httpContext.Response.WriteAsJsonAsync(result);
+                   }
+               }
+
+               return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+           }
+            );
 
         }
 
-        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Product[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
+        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
             return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int, Product[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
+        internal static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int, Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
             return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
@@ -1042,8 +1151,14 @@ namespace Microsoft.AspNetCore.Builder
             string filePath,
             int lineNumber)
         {
-            var factory = map[(filePath, lineNumber)];
+            var (populate, factory) = map[(filePath, lineNumber)];
             var conventionBuilder = mapper(routes, pattern, handler);
+
+            conventionBuilder.Add(e =>
+            {
+                populate(handler, e);
+            });
+
             conventionBuilder.Finally(e =>
             {
                 e.RequestDelegate = factory(handler, e);
@@ -1071,6 +1186,11 @@ namespace Microsoft.AspNetCore.Builder
             }
 
             return filteredInvocation;
+        }
+
+        private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
+        {
+            T.PopulateMetadata(method, builder);
         }
     }
 }
