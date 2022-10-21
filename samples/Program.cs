@@ -39,7 +39,7 @@ personGroup.MapGet("/", () => new Person("David"));
 
 api.MapProducts();
 
-var s = "/something/{id:int}";
+var s = Wrapper.RoutePattern;
 
 app.MapGet(s, new Wrapper().Hello);
 
@@ -63,6 +63,8 @@ record Product(string Name, decimal Price);
 
 class Wrapper
 {
+    public static string RoutePattern = "/foo/{s}";
+
     public string Hello(int id) => "Hello World";
 
     public void AddRoutes(IEndpointRouteBuilder routes)

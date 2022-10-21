@@ -144,14 +144,11 @@ namespace uController.SourceGenerator
                                 {
                                     Initializer:
                                     {
-                                        Value: LiteralExpressionSyntax
-                                        {
-                                            Token: { ValueText: var text }
-                                        }
+                                        Value: var value
                                     }
                                 })
                             {
-                                return text;
+                                return ResolveRoutePattern(value);
                             }
                         }
 
@@ -162,6 +159,7 @@ namespace uController.SourceGenerator
                     {
                         LiteralExpressionSyntax literal => literal.Token.ValueText,
                         IdentifierNameSyntax id => ResolveIdentifier(id),
+                        MemberAccessExpressionSyntax member => ResolveRoutePattern(member.Name),
                         _ => null
                     };
                 }
@@ -420,7 +418,7 @@ namespace Microsoft.AspNetCore.Builder
 
     class RoutePattern
     {
-        private static readonly RoutePattern _empty = new(null, Array.Empty<string>());
+        private static readonly char[] Slash = new[] { '/' };
 
         public string Pattern { get; }
 
@@ -434,7 +432,7 @@ namespace Microsoft.AspNetCore.Builder
 
         public bool HasParameter(string name) => _parameterNames.Contains(name);
 
-        private static readonly char[] Slash = new[] { '/' };
+        public override string ToString() => Pattern;
 
         public static RoutePattern Parse(string pattern)
         {
