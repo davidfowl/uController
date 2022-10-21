@@ -412,6 +412,6 @@ namespace Microsoft.AspNetCore.Builder
 
         public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MINIMAL003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern source, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
     }
 }
