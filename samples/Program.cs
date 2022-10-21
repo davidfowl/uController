@@ -15,7 +15,7 @@ app.MapGet("/hello/{name}", (string name) => $"Hello {name}");
 
 app.MapGet("/person", () => new Person("David"));
 
-app.MapGet("/ok", (ClaimsPrincipal c, [FromServices] ISayHello s) => Results.Ok(s.Hello()));
+app.MapGet("/ok", (ClaimsPrincipal c, [FromServices] ISayHello hellosvc) => Results.Ok(hellosvc.Hello()));
 
 app.MapPost("/", (JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 

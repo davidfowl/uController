@@ -280,17 +280,22 @@ namespace uController.SourceGenerator
                 var staticInterfaceMetadataCall = "";
                 if (method.ReturnType.AllInterfaces.Contains(endpointMetadataProviderType, SymbolEqualityComparer.Default))
                 {
-                    // TODO: We need to call this method from generated code at the right time, it's being called later
-                    // than other metadata can use it here
-                    staticInterfaceMetadataCall = $@"
-                PopulateMetadata<{method.ReturnType}>(handler.Method, builder);"; 
+                    // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
+                    // we can avoid that reflection here.
+                    
+                    staticInterfaceMetadataCall = $@"PopulateMetadata<{method.ReturnType}>(del.Method, builder);"; 
                 }
 
                 // Generate code here for this thunk
-                thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (del, builder) => 
+                thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
+           (del, builder) => 
+            {{
+                {staticInterfaceMetadataCall}
+            }}, 
+           (del, builder) => 
             {{
                 var handler = ({fullDelegateType})del;
-                EndpointFilterDelegate filteredInvocation = null;{staticInterfaceMetadataCall}
+                EndpointFilterDelegate filteredInvocation = null;
                 
                 if (builder.FilterFactories.Count > 0)
                 {{
@@ -308,7 +313,7 @@ namespace uController.SourceGenerator
 
 {gen}
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            }};
+            }});
 
 ");
 
@@ -343,11 +348,12 @@ using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.Builder
 {{
+    delegate void MetadataPopulator(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
     delegate Microsoft.AspNetCore.Http.RequestDelegate RequestDelegateFactoryFunc(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
 
     public static class MapActionsExtensions
     {{
-        private static readonly System.Collections.Generic.Dictionary<(string, int), RequestDelegateFactoryFunc> map = new();
+        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new();
 {thunks}
 {sb.ToString().TrimEnd()}
 
@@ -359,8 +365,14 @@ namespace Microsoft.AspNetCore.Builder
             string filePath,
             int lineNumber)
         {{
-            var factory = map[(filePath, lineNumber)];
+            var (populate, factory) = map[(filePath, lineNumber)];
             var conventionBuilder = mapper(routes, pattern, handler);
+
+            conventionBuilder.Add(e =>
+            {{
+                populate(handler, e);
+            }});
+
             conventionBuilder.Finally(e =>
             {{
                 e.RequestDelegate = factory(handler, e);
