@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -165,12 +165,19 @@ namespace uController.SourceGenerator
                     };
                 }
 
+                static bool ShouldDisableInferredBodyForMethod(string method) =>
+                    // GET, DELETE, HEAD, CONNECT, TRACE, and OPTIONS normally do not contain bodies
+                    method.Equals("MapGet", StringComparison.Ordinal) ||
+                    method.Equals("MapDelete", StringComparison.Ordinal) ||
+                    method.Equals("MapConnect", StringComparison.Ordinal);
+
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
                     // TODO: Parse the route pattern here
-                    RoutePattern = ResolveRoutePattern(routePattern.Expression)
+                    RoutePattern = ResolveRoutePattern(routePattern.Expression),
+                    DisableInferBodyFromParameters = ShouldDisableInferredBodyForMethod(callName)
                 };
 
                 var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
@@ -194,6 +201,7 @@ namespace uController.SourceGenerator
 
                     var parameterModel = new ParameterModel
                     {
+                        Method = methodModel,
                         ParameterSymbol = (parameter as ParameterWrapper).ParameterSymbol,
                         Name = parameter.Name,
                         ParameterType = parameter.ParameterType,
@@ -226,6 +234,12 @@ namespace uController.SourceGenerator
                 }
 
                 gen.Generate(methodModel);
+
+                if (gen.FromBodyTypes.Count > 1)
+                {
+                    var otherLocations = gen.FromBodyTypes.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, invocation.GetLocation(), otherLocations));
+                }
 
                 foreach (var p in methodModel.Parameters)
                 {
@@ -408,10 +422,12 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MINIMAL001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\"", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterSourceUnknown", "Unable to detect parameter source for \"{0}\", consider adding [FromXX] attributes", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MINIMAL002", "ParameterSourceUnknown", "Unable to resolve \"{0}\", consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MINIMAL003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MINIMAL005", "RoutePatternUnknown", "Detecting multiple parameters that attempt to read from the body, to disambigute consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }
 }

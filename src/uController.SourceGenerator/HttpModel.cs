@@ -12,10 +12,12 @@ namespace uController
         public List<ParameterModel> Parameters { get; } = new List<ParameterModel>();
         public List<object> Metadata { get; } = new List<object>();
         public string RoutePattern { get; set; }
+        public bool DisableInferBodyFromParameters { get; set; }
     }
 
     public class ParameterModel
     {
+        public MethodModel Method { get; set; }
         public IParameterSymbol ParameterSymbol { get; set; }
         public string Name { get; set; }
         public Type ParameterType { get; set; }

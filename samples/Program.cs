@@ -17,7 +17,7 @@ app.MapGet("/person", () => new Person("David"));
 
 app.MapGet("/ok", (ClaimsPrincipal c, [FromServices] ISayHello s) => Results.Ok(s.Hello()));
 
-app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
+app.MapPost("/", (JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
 app.MapPost("/model2", (Model m) => { });
@@ -49,8 +49,6 @@ wrapper.AddRoutes(app);
 var d = wrapper.Hello;
 
 app.MapGet("/del", d);
-
-string Local() => "Hello Local";
 
 var path = "/foo/{s}";
 

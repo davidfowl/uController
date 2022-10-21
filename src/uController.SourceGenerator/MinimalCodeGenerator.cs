@@ -25,7 +25,7 @@ namespace uController.CodeGeneration
             _metadataLoadContext = metadataLoadContext;
         }
 
-        public HashSet<Type> FromBodyTypes { get; set; } = new HashSet<Type>();
+        public HashSet<ParameterModel> FromBodyTypes { get; set; } = new HashSet<ParameterModel>();
 
         // Pretty print the type name
         private string S(Type type) => TypeNameHelper.GetTypeDisplayName(type);
@@ -392,13 +392,13 @@ namespace uController.CodeGeneration
                 if (parameter.ParameterType.Equals(typeof(Stream)))
                 {
                     WriteLine($"var {parameterName} = httpContext.Request.Body;");
-                    FromBodyTypes.Add(parameter.ParameterType);
+                    FromBodyTypes.Add(parameter);
                 }
                 else
                 {
                     // TODO: Handle empty body (required parameters);
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
-                    FromBodyTypes.Add(parameter.ParameterType);
+                    FromBodyTypes.Add(parameter);
                 }
 
                 hasAwait = true;
@@ -430,6 +430,13 @@ namespace uController.CodeGeneration
                         {
                             parameter.Unresovled = true;
                         }
+                    }
+                    else if (!parameter.Method.DisableInferBodyFromParameters)
+                    {
+                        // Assume body here
+                        WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                        FromBodyTypes.Add(parameter);
+                        hasAwait = true;
                     }
                     else
                     {
