@@ -539,6 +539,6 @@ namespace Microsoft.AspNetCore.Builder
 
         public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MINIMAL004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "5000", DiagnosticSeverity.Warning, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MINIMAL005", "RoutePatternUnknown", "Detecting multiple parameters that attempt to read from the body, to disambigute consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MINIMAL005", "RoutePatternUnknown", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "5000", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }
 }
