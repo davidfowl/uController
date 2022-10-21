@@ -387,6 +387,7 @@ namespace uController.CodeGeneration
                     if (methodInfo is not null)
                     {
                         WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext, null);");
+                        hasAwait = true;
                     }
                     else
                     {

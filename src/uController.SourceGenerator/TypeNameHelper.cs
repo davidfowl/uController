@@ -120,7 +120,7 @@ namespace Microsoft.Extensions.Internal
                     ProcessGenericType(builder, type.DeclaringType, genericArguments, offset, options);
                     builder.Append(options.NestedTypeDelimiter);
                 }
-                else if (!string.IsNullOrEmpty(type.Namespace))
+                else if (!string.IsNullOrEmpty(type.Namespace) && type.Namespace != "<global namespace>")
                 {
                     builder.Append(type.Namespace);
                     builder.Append('.');
