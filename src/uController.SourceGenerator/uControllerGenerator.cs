@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Extensions.Internal;
 using uController.CodeGeneration;
 
 namespace uController.SourceGenerator
@@ -277,20 +277,40 @@ namespace uController.SourceGenerator
                         return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);" :
                     $@"return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));";
 
-                var staticInterfaceMetadataCall = "";
-                if (method.ReturnType.AllInterfaces.Contains(endpointMetadataProviderType, SymbolEqualityComparer.Default))
+                var populateMetadata = new StringBuilder();
+                Type returnType = methodModel.MethodInfo.ReturnType;
+
+                if (AwaitableInfo.IsTypeAwaitable(returnType, out var awaitableInfo))
+                {
+                    returnType = awaitableInfo.ResultType;
+                }
+
+                if (returnType.Equals(typeof(void)))
+                {
+                    // Don't add metadata
+                }
+                else if (metadataLoadContext.Resolve<IEndpointMetadataProvider>().IsAssignableFrom(returnType))
                 {
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.
-                    
-                    staticInterfaceMetadataCall = $@"PopulateMetadata<{method.ReturnType}>(del.Method, builder);"; 
+
+                    // Static abstract call
+                    populateMetadata.AppendLine($@"PopulateMetadata<{returnType}>(del.Method, builder);");
+                }
+                else if (returnType.Equals(typeof(string)))
+                {
+                    // Add string plaintext
+                }
+                else
+                {
+                    // Add JSON
                 }
 
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
-                {staticInterfaceMetadataCall}
+                {populateMetadata.ToString().TrimEnd()}
             }}, 
            (del, builder) => 
             {{

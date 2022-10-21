@@ -249,6 +249,11 @@ namespace System.Reflection
             throw new NotImplementedException();
         }
 
+        public override string ToString()
+        {
+            return _typeSymbol.ToString();
+        }
+
         public override bool IsAssignableFrom(Type c)
         {
             if (c is TypeWrapper tr)

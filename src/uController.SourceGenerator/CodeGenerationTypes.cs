@@ -17,6 +17,13 @@ namespace Microsoft.AspNetCore.Http
     public interface IFormCollection { }
 }
 
+namespace Microsoft.AspNetCore.Http.Metadata
+{
+    [TypeForwardedFrom("Microsoft.AspNetCore.Http.Abstractions")]
+
+    public interface IEndpointMetadataProvider { }
+}
+
 namespace Microsoft.Extensions.Primitives
 {
     [TypeForwardedFrom("Microsoft.Extensions.Primitives")]
