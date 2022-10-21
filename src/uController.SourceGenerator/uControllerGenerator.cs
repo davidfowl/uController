@@ -294,8 +294,9 @@ namespace uController.SourceGenerator
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.
 
+                    // TODO: Enable this when we stop calling RDF
                     // Static abstract call
-                    populateMetadata.AppendLine($@"PopulateMetadata<{returnType}>(del.Method, builder);");
+                    // populateMetadata.AppendLine($@"PopulateMetadata<{returnType}>(del.Method, builder);");
                 }
                 else if (returnType.Equals(typeof(string)))
                 {
