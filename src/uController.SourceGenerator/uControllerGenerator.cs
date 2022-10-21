@@ -385,6 +385,7 @@ namespace uController.SourceGenerator
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+#if NET7_0_OR_GREATER
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -465,7 +466,9 @@ namespace Microsoft.AspNetCore.Builder
             }}
         }}
     }}
-}}";
+}}
+#endif
+";
             if (sb.Length > 0)
             {
                 context.AddSource($"MapExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
