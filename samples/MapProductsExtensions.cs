@@ -1,4 +1,6 @@
-﻿namespace Sample;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace Sample;
 
 public static class MapProductsExtensions
 {
@@ -6,7 +8,11 @@ public static class MapProductsExtensions
     {
         var group = routes.MapGroup("products");
         group.MapGet("/", () => new[] { new Product("Milk", 10) });
-        group.MapGet("/{id}", (int id) => new[] { new Product("Milk", 10) });
+        group.MapGet("/{id}", Results<Ok<Product>, NotFound> (int id) => id switch
+        {
+            0 => TypedResults.Ok(new Product("Milk", 10)),
+            _ => TypedResults.NotFound(),
+        });
 
         return group;
     }

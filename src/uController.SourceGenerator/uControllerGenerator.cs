@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -27,6 +28,7 @@ namespace uController.SourceGenerator
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
 
+            var endpointMetadataProviderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider");
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
@@ -275,12 +277,21 @@ namespace uController.SourceGenerator
                         return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);" :
                     $@"return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));";
 
+                var staticInterfaceMetadataCall = "";
+                if (method.ReturnType.AllInterfaces.Contains(endpointMetadataProviderType, SymbolEqualityComparer.Default))
+                {
+                    // TODO: We need to call this method from generated code at the right time, it's being called later
+                    // than other metadata can use it here
+                    staticInterfaceMetadataCall = $@"
+                PopulateMetadata<{method.ReturnType}>(handler.Method, builder);"; 
+                }
+
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (del, builder) => 
             {{
                 var handler = ({fullDelegateType})del;
-                EndpointFilterDelegate filteredInvocation = null;
-
+                EndpointFilterDelegate filteredInvocation = null;{staticInterfaceMetadataCall}
+                
                 if (builder.FilterFactories.Count > 0)
                 {{
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -377,6 +388,11 @@ namespace Microsoft.AspNetCore.Builder
             }}
 
             return filteredInvocation;
+        }}
+
+        private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
+        {{
+            T.PopulateMetadata(method, builder);
         }}
     }}
 }}";
