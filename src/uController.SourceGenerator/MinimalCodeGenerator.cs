@@ -445,7 +445,7 @@ namespace uController.CodeGeneration
                 WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
                 WriteLine($"{S(type)} {sourceName};");
 
-                if (unwrappedType == null)
+                if (Unwrap(type) == null)
                 {
                     generatedParamCheck = true;
                     // Type isn't nullable
