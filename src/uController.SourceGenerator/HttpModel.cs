@@ -21,6 +21,7 @@ namespace uController
         public MethodModel Method { get; set; }
         public IParameterSymbol ParameterSymbol { get; set; }
         public string Name { get; set; }
+        public string GeneratedName { get; set; }
         public Type ParameterType { get; set; }
         public string FromQuery { get; set; }
         public string FromHeader { get; set; }
@@ -33,5 +34,8 @@ namespace uController
             FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
 
         public bool Unresovled { get; set; }
+
+        public bool QueryOrRoute { get; set; }
+        public bool BodyOrService { get; set; }
     }
 }

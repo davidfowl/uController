@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -215,6 +213,7 @@ namespace uController.SourceGenerator
                         Method = methodModel,
                         ParameterSymbol = (parameter as ParameterWrapper).ParameterSymbol,
                         Name = parameter.Name,
+                        GeneratedName = "arg_" + parameter.Name.Replace("_", "__"),
                         ParameterType = parameter.ParameterType,
                         FromQuery = fromQuery == null ? null : fromQuery?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromHeader = fromHeader == null ? null : fromHeader?.GetConstructorArgument<string>(0) ?? parameter.Name,
@@ -262,6 +261,11 @@ namespace uController.SourceGenerator
                     }
                 }
 
+                var preReq = new StringBuilder();
+                var runtimeChecks = new StringBuilder();
+                var generatedRoutePatternVars = false;
+                var generatedBodyOrService = false;
+
                 foreach (var p in methodModel.Parameters)
                 {
                     if (p.Unresovled)
@@ -275,6 +279,28 @@ namespace uController.SourceGenerator
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveParameter, loc, p.Name));
                         }
+                    }
+
+                    if (p.QueryOrRoute)
+                    {
+                        if (!generatedRoutePatternVars)
+                        {
+                            generatedRoutePatternVars = true;
+                            preReq.AppendLine("                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;");
+                        }
+
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, string, string> {p.GeneratedName}RouteOrQueryResolver = routePattern?.GetParameter(""{p.Name}"") is null ? ResolveByQuery : ResolveByRoute;");
+                    }
+
+                    if (p.BodyOrService)
+                    {
+                        if (!generatedBodyOrService)
+                        {
+                            generatedBodyOrService = true;
+                            preReq.AppendLine("                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
+                        }
+
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType})) ?? false) ? ResolveService<{p.ParameterSymbol}> : ResolveBody<{p.ParameterType}>;");
                     }
                 }
 
@@ -338,7 +364,7 @@ namespace uController.SourceGenerator
             {{
                 var handler = ({fullDelegateType})del;
                 EndpointFilterDelegate filteredInvocation = null;
-                
+{preReq}{runtimeChecks.ToString().TrimEnd()}
                 if (builder.FilterFactories.Count > 0)
                 {{
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -465,6 +491,11 @@ namespace Microsoft.AspNetCore.Builder
                 return httpContext.Response.WriteAsJsonAsync(obj);
             }}
         }}
+
+        private static string ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+        private static string ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+        private static ValueTask<T> ResolveService<T>(HttpContext context) => new ValueTask<T>(context.RequestServices.GetRequiredService<T>());
+        private static ValueTask<T> ResolveBody<T>(HttpContext context) => context.Request.ReadFromJsonAsync<T>();
     }}
 }}
 #endif
@@ -583,7 +614,7 @@ namespace Microsoft.AspNetCore.Builder
 
         public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MIN003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MIN004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MIN004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "Usage", DiagnosticSeverity.Info, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MIN005", "MultipleParametersFromBody", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }

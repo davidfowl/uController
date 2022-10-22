@@ -223,7 +223,7 @@ namespace uController.CodeGeneration
 
             foreach (var parameter in method.Parameters)
             {
-                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
+                var parameterName = parameter.GeneratedName;
                 EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
             }
 
@@ -344,7 +344,6 @@ namespace uController.CodeGeneration
             }
             else if (parameter.FromBody)
             {
-                // TODO: Error handling when there are multiple
                 if (!hasFromBody)
                 {
                     hasFromBody = true;
@@ -396,41 +395,39 @@ namespace uController.CodeGeneration
 
                         if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
                         {
-                            // Fallback to query string
-                            if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, "httpContext.Request.Query", ref generatedParamCheck))
+                            parameter.QueryOrRoute = true;
+
+                            // Fallback to resolver
+                            if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true))
                             {
                                 parameter.Unresovled = true;
                             }
                         }
-                        // This makes it hard to detect errors
-                        //else if (!parameter.Method.DisableInferBodyFromParameters)
-                        //{
-                        //    // Assume body here
-                        //    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
-                        //    FromBodyTypes.Add(parameter);
-                        //    hasAwait = true;
-                        //}
                         else
                         {
-                            parameter.Unresovled = true;
-                            WriteLine($"{S(parameter.ParameterType)} {parameterName} = default;");
+                            parameter.BodyOrService = true;
+                            WriteLine($"var {parameterName} = await {parameterName}ServiceOrBodyResolver(httpContext);");
+                            hasAwait = true;
                         }
                     }
                 }
             }
         }
 
-        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false)
+        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false)
         {
+            // REVIEW: Knowing this needs the http context is sorta hacky
+            var getter = methodCall ? $@"{sourceExpression}(httpContext, ""{key}"")" : $@"{sourceExpression}[""{key}""]";
+
             // TODO: Handle specific types (Uri, DateTime etc) with relevant options
             // TODO: Handle arrays
             if (type.Equals(typeof(string)))
             {
-                WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
+                WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
             }
             else if (type.Equals(typeof(StringValues)))
             {
-                WriteLine($"var {sourceName} = {sourceExpression}[\"{key}\"];");
+                WriteLine($"var {sourceName} = {getter};");
             }
             else
             {
@@ -445,7 +442,7 @@ namespace uController.CodeGeneration
                     return false;
                 }
 
-                WriteLine($"var {sourceName}_Value = {sourceExpression}[\"{key}\"]" + (nullable ? "?.ToString();" : ".ToString();"));
+                WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
                 WriteLine($"{S(type)} {sourceName};");
 
                 if (unwrappedType == null)
