@@ -29,6 +29,7 @@ namespace uController
         public string FromRoute { get; set; }
         public bool FromBody { get; set; }
         public bool FromServices { get; set; }
+        public int Index { get; set; }
 
         public bool HasBindingSource => FromBody || FromServices || 
             FromForm != null || FromQuery != null || FromHeader != null || FromRoute != null;
@@ -37,5 +38,6 @@ namespace uController
 
         public bool QueryOrRoute { get; set; }
         public bool BodyOrService { get; set; }
+        public bool RequiresParameterInfo { get; set; }
     }
 }

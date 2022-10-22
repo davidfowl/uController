@@ -198,7 +198,7 @@ namespace uController.SourceGenerator
                 var fromServicesAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromServicesAttribute");
 
                 var hasAmbiguousParameterWithoutRoute = false;
-
+                var parameterIndex = 0;
                 foreach (var parameter in methodModel.MethodInfo.GetParameters())
                 {
                     var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
@@ -220,7 +220,8 @@ namespace uController.SourceGenerator
                         FromForm = fromForm == null ? null : fromForm?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromRoute = fromRoute == null ? null : fromRoute?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromBody = fromBody != null,
-                        FromServices = fromService != null
+                        FromServices = fromService != null,
+                        Index = parameterIndex
                     };
 
                     if (methodModel.RoutePattern is { } pattern)
@@ -236,6 +237,7 @@ namespace uController.SourceGenerator
                     }
 
                     methodModel.Parameters.Add(parameterModel);
+                    parameterIndex++;
                 }
 
                 if (hasAmbiguousParameterWithoutRoute)
@@ -265,6 +267,7 @@ namespace uController.SourceGenerator
                 var runtimeChecks = new StringBuilder();
                 var generatedRoutePatternVars = false;
                 var generatedBodyOrService = false;
+                var generatedParameterInfos = false;
 
                 foreach (var p in methodModel.Parameters)
                 {
@@ -301,6 +304,15 @@ namespace uController.SourceGenerator
                         }
 
                         runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType})) ?? false) ? ResolveService<{p.ParameterSymbol}> : ResolveBody<{p.ParameterType}>;");
+                    }
+
+                    if (p.RequiresParameterInfo)
+                    {
+                        if (!generatedParameterInfos)
+                        {
+                            generatedParameterInfos = true;
+                            preReq.AppendLine("                var parameterInfos = del.Method.GetParameters();");
+                        }
                     }
                 }
 

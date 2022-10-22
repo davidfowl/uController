@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Sample;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
 
@@ -86,7 +87,7 @@ class EnglishHello : ISayHello
 
 public class Model
 {
-    public static ValueTask<Model> BindAsync(HttpContext context)
+    public static ValueTask<Model> BindAsync(HttpContext context, ParameterInfo pi)
     {
         return ValueTask.FromResult(new Model());
     }

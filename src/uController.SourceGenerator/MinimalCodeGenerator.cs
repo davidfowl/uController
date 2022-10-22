@@ -376,9 +376,9 @@ namespace uController.CodeGeneration
                     }
                     else
                     {
-                        // TODO: Pass parameterInfo
+                        parameter.RequiresParameterInfo = true;
 
-                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext, null);");
+                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext, parameterInfos[{parameter.Index}]);");
                     }
 
                     hasAwait = true;
