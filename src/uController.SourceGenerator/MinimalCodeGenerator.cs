@@ -81,8 +81,41 @@ namespace uController.CodeGeneration
 
             foreach (var parameter in method.Parameters)
             {
-                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
+                var parameterName = parameter.GeneratedName;
                 EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
+            }
+
+            var resultExpression = "";
+            AwaitableInfo awaitableInfo = default;
+            if (method.MethodInfo.ReturnType.Equals(typeof(void)))
+            {
+                Write("");
+            }
+            else
+            {
+                if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out awaitableInfo))
+                {
+                    if (awaitableInfo.ResultType.Equals(typeof(void)))
+                    {
+                        if (hasAwait)
+                        {
+                            resultExpression = "await ";
+                        }
+                        else
+                        {
+                            resultExpression = "return ";
+                        }
+                    }
+                    else
+                    {
+                        resultExpression = "var result = await ";
+                        hasAwait = true;
+                    }
+                }
+                else
+                {
+                    resultExpression = "var result = ";
+                }
             }
 
             if (generatedParamCheck)
@@ -109,38 +142,7 @@ namespace uController.CodeGeneration
                 _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
-            AwaitableInfo awaitableInfo = default;
-            // Populate locals
-            if (method.MethodInfo.ReturnType.Equals(typeof(void)))
-            {
-                Write("");
-            }
-            else
-            {
-                if (AwaitableInfo.IsTypeAwaitable(method.MethodInfo.ReturnType, out awaitableInfo))
-                {
-                    if (awaitableInfo.ResultType.Equals(typeof(void)))
-                    {
-                        if (hasAwait)
-                        {
-                            Write("await ");
-                        }
-                        else
-                        {
-                            Write("return ");
-                        }
-                    }
-                    else
-                    {
-                        Write("var result = await ");
-                        hasAwait = true;
-                    }
-                }
-                else
-                {
-                    Write("var result = ");
-                }
-            }
+            Write(resultExpression);
 
             WriteNoIndent($"handler(");
             bool first = true;
@@ -247,10 +249,8 @@ namespace uController.CodeGeneration
             WriteNoIndent($"filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext");
             foreach (var parameter in method.Parameters)
             {
-                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
-
                 WriteNoIndent(", ");
-                WriteNoIndent(parameterName);
+                WriteNoIndent(parameter.GeneratedName);
             }
             WriteLineNoIndent("));");
 
