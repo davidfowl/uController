@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -357,7 +355,8 @@ namespace uController.CodeGeneration
                 }
                 else
                 {
-                    // TODO: Handle empty body (required parameters);
+                    // TODO: Handle empty body (required parameters)
+
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
                     FromBodyTypes.Add(parameter);
                 }
@@ -369,49 +368,42 @@ namespace uController.CodeGeneration
                 // Error if we can't determine the binding source for this parameter
                 var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
 
-                var httpContextType = _metadataLoadContext.Resolve<HttpContext>();
-                // There should only be one BindAsync method with these parameters since C# does not allow overloading on return type.
-                var methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { httpContextType }, m => true);
-
-                if (methodInfo is not null)
+                if (HasBindAsync(parameterType, out var bindAsyncMethod, out var parameterCount))
                 {
-                    WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext);");
-                    hasAwait = true;
-
-                }
-                else
-                {
-                    methodInfo = GetStaticMethodFromHierarchy(parameterType, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
-
-                    if (methodInfo is not null)
+                    if (parameterCount == 1)
                     {
-                        WriteLine($"var {parameterName} = await {S(methodInfo.DeclaringType)}.BindAsync(httpContext, null);");
-                        hasAwait = true;
+                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext);");
                     }
                     else
                     {
-                        if (HasTryParseMethod(parameterType, out _) || 
-                            parameterType.Equals(typeof(string)) || 
-                            parameterType.Equals(typeof(StringValues)) || 
-                            parameterType.Equals(typeof(string[])) ||
-                            parameterType.IsArray && 
-                            HasTryParseMethod(parameterType.GetElementType(), out _))
-                        {
-                            parameter.QueryOrRoute = true;
+                        // TODO: Pass parameterInfo
 
-                            // Fallback to resolver
-                            if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true))
-                            {
-                                parameter.Unresovled = true;
-                            }
-                        }
-                        else
-                        {
-                            parameter.BodyOrService = true;
-                            WriteLine($"var {parameterName} = await {parameterName}ServiceOrBodyResolver(httpContext);");
-                            hasAwait = true;
-                        }
+                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext, null);");
                     }
+
+                    hasAwait = true;
+                }
+                else if (HasTryParseMethod(parameterType, out var tryParseMethod) ||
+                         parameterType.Equals(typeof(string)) ||
+                         parameterType.Equals(typeof(StringValues)) ||
+                         parameterType.Equals(typeof(string[])) ||
+                         parameterType.IsArray &&
+                         HasTryParseMethod(parameterType.GetElementType(), out tryParseMethod))
+                {
+                    parameter.QueryOrRoute = true;
+
+                    // Fallback to resolver
+                    if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod))
+                    {
+                        parameter.Unresovled = true;
+                    }
+                }
+                else
+                {
+                    parameter.BodyOrService = true;
+                    hasAwait = true;
+
+                    WriteLine($"var {parameterName} = await {parameterName}ServiceOrBodyResolver(httpContext);");
                 }
             }
         }
@@ -419,16 +411,32 @@ namespace uController.CodeGeneration
         private bool HasTryParseMethod(Type t, out MethodInfo mi)
         {
             mi = GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+
+            // TODO: Add IFormatProvider overload
+
             return mi != null;
         }
 
-        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false)
+        private bool HasBindAsync(Type t, out MethodInfo mi, out int parameterCount)
         {
-            // REVIEW: Knowing this needs the http context is sorta hacky
+            var httpContextType = _metadataLoadContext.Resolve<HttpContext>();
+
+            // TODO: Validate return type
+
+            mi = GetStaticMethodFromHierarchy(t, "BindAsync", new[] { httpContextType }, m => true);
+
+            mi ??= GetStaticMethodFromHierarchy(t, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
+
+            parameterCount = mi?.GetParameters().Length ?? 0;
+
+            return mi != null;
+        }
+
+        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null)
+        {
             var getter = methodCall ? $@"{sourceExpression}(httpContext, ""{key}"")" : $@"{sourceExpression}[""{key}""]";
 
             // TODO: Handle specific types (Uri, DateTime etc) with relevant options
-            // TODO: Handle arrays
             if (type.Equals(typeof(string)))
             {
                 WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
@@ -445,48 +453,75 @@ namespace uController.CodeGeneration
             {
                 var unwrappedType = Unwrap(type) ?? type;
 
-                // TODO: Support more overloads
-                var methodInfo = GetStaticMethodFromHierarchy(unwrappedType, "TryParse", new[] { typeof(string), unwrappedType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
-
-                if (methodInfo is null)
+                if (tryParseMethod is null)
                 {
-                    WriteLine($"{S(type)} {sourceName} = default;");
-                    return false;
+                    if (!HasTryParseMethod(unwrappedType, out tryParseMethod))
+                    {
+                        WriteLine($"{S(type)} {sourceName} = default;");
+                        return false;
+                    }
                 }
 
-                WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
-                WriteLine($"{S(type)} {sourceName};");
-
-                if (Unwrap(type) == null)
+                if (type.IsArray)
                 {
-                    generatedParamCheck = true;
-                    // Type isn't nullable
-                    WriteLine($"if ({sourceName}_Value == null || !{S(type)}.TryParse({sourceName}_Value, out {sourceName}))");
+                    var elementType = type.GetElementType();
+                    WriteLine($"var {sourceName}_Value = {getter}.ToArray();");
+                    WriteLine($"{elementType}[] {sourceName} = default;");
+                    WriteLine($"for (var i = 0; i < {sourceName}.Length; i++)");
                     WriteLine("{");
                     Indent();
-                    WriteLine($"{sourceName} = default;");
-                    WriteLine("wasParamCheckFailure = true;");
+                    WriteLine($"{sourceName} ??= new {elementType}[{sourceName}_Value.Length];");
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value[i]", $"{sourceName}[i]", elementType, ref generatedParamCheck);
                     Unindent();
                     WriteLine("}");
+
+                    // TODO: Nullability
+                    WriteLine($"{sourceName} ??= System.Array.Empty<{elementType}>();");
                 }
                 else
                 {
-                    WriteLine($"if ({sourceName}_Value != null && {S(unwrappedType)}.TryParse({sourceName}_Value, out var {sourceName}_Temp))");
-                    WriteLine("{");
-                    Indent();
-                    WriteLine($"{sourceName} = {sourceName}_Temp;");
-                    Unindent();
-                    WriteLine("}");
-                    WriteLine("else");
-                    WriteLine("{");
-                    Indent();
-                    WriteLine($"{sourceName} = default;");
-                    Unindent();
-                    WriteLine("}");
+                    WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
+                    WriteLine($"{S(type)} {sourceName};");
 
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, ref generatedParamCheck);
                 }
             }
             return true;
+        }
+
+        private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type, ref bool generatedParamCheck)
+        {
+            // TODO: Support different TryParse overloads
+
+            var unwrappedType = Unwrap(type) ?? type;
+
+            if (Unwrap(type) == null)
+            {
+                generatedParamCheck = true;
+                // Type isn't nullable
+                WriteLine($"if ({sourceName} == null || !{S(type)}.TryParse({sourceName}, out {outputName}))");
+                WriteLine("{");
+                Indent();
+                WriteLine($"{outputName} = default;");
+                WriteLine("wasParamCheckFailure = true;");
+                Unindent();
+                WriteLine("}");
+            }
+            else
+            {
+                WriteLine($"if ({sourceName} != null && {S(unwrappedType)}.TryParse({sourceName}, out var {outputName}_Temp))");
+                WriteLine("{");
+                Indent();
+                WriteLine($"{outputName} = {outputName}_Temp;");
+                Unindent();
+                WriteLine("}");
+                WriteLine("else");
+                WriteLine("{");
+                Indent();
+                WriteLine($"{outputName} = default;");
+                Unindent();
+                WriteLine("}");
+            }
         }
 
         private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes, Func<MethodInfo, bool> validateReturnType)
