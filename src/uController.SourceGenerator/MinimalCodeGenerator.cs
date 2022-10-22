@@ -28,7 +28,7 @@ namespace uController.CodeGeneration
         public HashSet<ParameterModel> FromBodyTypes { get; set; } = new HashSet<ParameterModel>();
 
         // Pretty print the type name
-        private string S(Type type) => TypeNameHelper.GetTypeDisplayName(type);
+        private string S(Type type) => type.ToString();
 
         private Type Unwrap(Type type)
         {
@@ -390,10 +390,12 @@ namespace uController.CodeGeneration
                     }
                     else
                     {
-                        // Look for more try parse overloads too
-                        methodInfo = GetStaticMethodFromHierarchy(parameterType, "TryParse", new[] { typeof(string), parameterType.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
-
-                        if (methodInfo is not null || parameterType.Equals(typeof(string)) || parameterType.Equals(typeof(StringValues)))
+                        if (HasTryParseMethod(parameterType, out _) || 
+                            parameterType.Equals(typeof(string)) || 
+                            parameterType.Equals(typeof(StringValues)) || 
+                            parameterType.Equals(typeof(string[])) ||
+                            parameterType.IsArray && 
+                            HasTryParseMethod(parameterType.GetElementType(), out _))
                         {
                             parameter.QueryOrRoute = true;
 
@@ -414,6 +416,12 @@ namespace uController.CodeGeneration
             }
         }
 
+        private bool HasTryParseMethod(Type t, out MethodInfo mi)
+        {
+            mi = GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            return mi != null;
+        }
+
         private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false)
         {
             // REVIEW: Knowing this needs the http context is sorta hacky
@@ -428,6 +436,10 @@ namespace uController.CodeGeneration
             else if (type.Equals(typeof(StringValues)))
             {
                 WriteLine($"var {sourceName} = {getter};");
+            }
+            else if (type.Equals(typeof(string[])))
+            {
+                WriteLine($"var {sourceName} = {getter}.ToArray();");
             }
             else
             {

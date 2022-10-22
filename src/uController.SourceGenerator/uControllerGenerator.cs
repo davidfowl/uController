@@ -29,9 +29,9 @@ namespace uController.SourceGenerator
                 System.Diagnostics.Debugger.Launch();
             }
 
-            //while (!Debugger.IsAttached)
+            //while (!System.Diagnostics.Debugger.IsAttached)
             //{
-            //    Thread.Sleep(1000);
+            //    System.Threading.Thread.Sleep(1000);
             //}
             // System.Diagnostics.Debugger.Launch();
 
@@ -289,7 +289,7 @@ namespace uController.SourceGenerator
                             preReq.AppendLine("                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;");
                         }
 
-                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, string, string> {p.GeneratedName}RouteOrQueryResolver = routePattern?.GetParameter(""{p.Name}"") is null ? ResolveByQuery : ResolveByRoute;");
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> {p.GeneratedName}RouteOrQueryResolver = routePattern?.GetParameter(""{p.Name}"") is null ? ResolveByQuery : ResolveByRoute;");
                     }
 
                     if (p.BodyOrService)
@@ -492,8 +492,8 @@ namespace Microsoft.AspNetCore.Builder
             }}
         }}
 
-        private static string ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
-        private static string ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+        private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+        private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
         private static ValueTask<T> ResolveService<T>(HttpContext context) => new ValueTask<T>(context.RequestServices.GetRequiredService<T>());
         private static ValueTask<T> ResolveBody<T>(HttpContext context) => context.Request.ReadFromJsonAsync<T>();
     }}

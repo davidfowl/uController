@@ -38,7 +38,7 @@ namespace System.Reflection
 
         public override string Name => _typeSymbol.MetadataName;
 
-        public override bool IsGenericType => NamedTypeSymbol.IsGenericType;
+        public override bool IsGenericType => NamedTypeSymbol?.IsGenericType ?? false;
 
         private INamedTypeSymbol NamedTypeSymbol => _typeSymbol as INamedTypeSymbol;
 
@@ -46,8 +46,15 @@ namespace System.Reflection
 
         public override bool IsGenericTypeDefinition => base.IsGenericTypeDefinition;
 
+        public override int GetArrayRank()
+        {
+            return ArrayTypeSymbol.Rank;
+        }
+
         public override Type[] GetGenericArguments()
         {
+            if (NamedTypeSymbol is null) return Array.Empty<Type>();
+
             var args = new List<Type>();
             foreach (var item in NamedTypeSymbol.TypeArguments)
             {
@@ -58,7 +65,7 @@ namespace System.Reflection
 
         public override Type GetGenericTypeDefinition()
         {
-            return NamedTypeSymbol.ConstructedFrom.AsType(_metadataLoadContext);
+            return NamedTypeSymbol?.ConstructedFrom.AsType(_metadataLoadContext) ?? throw new NotSupportedException();
         }
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
@@ -224,12 +231,12 @@ namespace System.Reflection
 
         protected override bool HasElementTypeImpl()
         {
-            throw new NotImplementedException();
+            return ArrayTypeSymbol is not null;
         }
 
         protected override bool IsArrayImpl()
         {
-            return ArrayTypeSymbol != null;
+            return ArrayTypeSymbol is not null;
         }
 
         protected override bool IsByRefImpl() => _isByRef;

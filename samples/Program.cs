@@ -31,6 +31,8 @@ app.Map("/private", NoAccess);
 app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
 
 app.MapGet("/multiple", (StringValues queries) => queries.ToArray());
+app.MapGet("/multiple2", (string[] queries) => queries);
+app.MapGet("/multiple3", (int[] queries) => queries);
 
 var api = app.MapGroup("/api");
 

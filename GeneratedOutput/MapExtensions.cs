@@ -87,15 +87,18 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return;
                     }
                     var result = await handler(arg_id);
                     await result.ExecuteAsync(httpContext);
@@ -103,15 +106,17 @@ namespace Microsoft.AspNetCore.Builder
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
                     }
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
                     await ExecuteObjectResult(result, httpContext);
@@ -394,7 +399,7 @@ namespace Microsoft.AspNetCore.Builder
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
                     var arg_m = await Model.BindAsync(httpContext);
-                    handler(arg_m);
+                                        handler(arg_m);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -458,7 +463,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<int?, Microsoft.AspNetCore.Http.IResult>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, string> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -476,7 +481,7 @@ namespace Microsoft.AspNetCore.Builder
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
-                    System.Nullable<int> arg_id;
+                    int? arg_id;
                     if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
                     {
                         arg_id = arg_id_Temp;
@@ -492,7 +497,7 @@ namespace Microsoft.AspNetCore.Builder
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
-                    System.Nullable<int> arg_id;
+                    int? arg_id;
                     if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
                     {
                         arg_id = arg_id_Temp;
@@ -560,7 +565,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, string> arg_queriesRouteOrQueryResolver = routePattern?.GetParameter("queries") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_queriesRouteOrQueryResolver = routePattern?.GetParameter("queries") is null ? ResolveByQuery : ResolveByRoute;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -592,7 +597,91 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 38)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 34)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<string[], string[]>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_queriesRouteOrQueryResolver = routePattern?.GetParameter("queries") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string[]>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_queries = arg_queriesRouteOrQueryResolver(httpContext, "queries").ToArray();
+                    var result = handler(arg_queries);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_queries = arg_queriesRouteOrQueryResolver(httpContext, "queries").ToArray();
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_queries));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 35)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int[], int[]>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_queriesRouteOrQueryResolver = routePattern?.GetParameter("queries") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int[]>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    int[] arg_queries = default;
+                    var result = handler(arg_queries);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    int[] arg_queries = default;
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_queries));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 40)] = (
            (del, builder) => 
             {
                 
@@ -631,7 +720,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 44)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 46)] = (
            (del, builder) => 
             {
                 
@@ -641,7 +730,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<int, string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, string> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -658,15 +747,18 @@ namespace Microsoft.AspNetCore.Builder
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
                     }
                     var result = handler(arg_id);
                     return httpContext.Response.WriteAsync(result);
@@ -674,15 +766,17 @@ namespace Microsoft.AspNetCore.Builder
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
                     }
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
                     await ExecuteObjectResult(result, httpContext);
@@ -691,7 +785,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 51)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 53)] = (
            (del, builder) => 
             {
                 
@@ -701,7 +795,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<int, string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, string> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -718,15 +812,18 @@ namespace Microsoft.AspNetCore.Builder
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
                     }
                     var result = handler(arg_id);
                     return httpContext.Response.WriteAsync(result);
@@ -734,15 +831,17 @@ namespace Microsoft.AspNetCore.Builder
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
                     }
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
                     await ExecuteObjectResult(result, httpContext);
@@ -751,7 +850,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 57)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 59)] = (
            (del, builder) => 
             {
                 
@@ -792,7 +891,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 72)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 74)] = (
            (del, builder) => 
             {
                 
@@ -802,7 +901,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<int, string>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, string> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_idRouteOrQueryResolver = routePattern?.GetParameter("id") is null ? ResolveByQuery : ResolveByRoute;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -819,15 +918,18 @@ namespace Microsoft.AspNetCore.Builder
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
                     }
                     var result = handler(arg_id);
                     return httpContext.Response.WriteAsync(result);
@@ -835,15 +937,17 @@ namespace Microsoft.AspNetCore.Builder
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
                     var arg_id_Value = arg_idRouteOrQueryResolver(httpContext, "id").ToString();
                     int arg_id;
-                    if (arg_id_Value != null && int.TryParse(arg_id_Value, out var arg_id_Temp))
-                    {
-                        arg_id = arg_id_Temp;
-                    }
-                    else
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
                     {
                         arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
                     }
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
                     await ExecuteObjectResult(result, httpContext);
@@ -919,6 +1023,16 @@ namespace Microsoft.AspNetCore.Builder
             return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string[], string[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+        }
+
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int[], int[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+        }
+
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
@@ -990,8 +1104,8 @@ namespace Microsoft.AspNetCore.Builder
             }
         }
 
-        private static string ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
-        private static string ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+        private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+        private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
         private static ValueTask<T> ResolveService<T>(HttpContext context) => new ValueTask<T>(context.RequestServices.GetRequiredService<T>());
         private static ValueTask<T> ResolveBody<T>(HttpContext context) => context.Request.ReadFromJsonAsync<T>();
     }
