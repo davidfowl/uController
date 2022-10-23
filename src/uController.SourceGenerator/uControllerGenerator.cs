@@ -55,6 +55,7 @@ namespace uController.SourceGenerator
             var fromFormAttributeType = metadataLoadContext.Resolve<FromFormAttribute>();
             var fromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
             var fromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
+            var endpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
 
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
@@ -90,7 +91,7 @@ namespace uController.SourceGenerator
                                 if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
                                 {
                                     // We need to generate the method
-                                    method = si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                    method = si.CandidateSymbols.Length == 1 ? si.CandidateSymbols[0] as IMethodSymbol : null;
                                 }
 
                                 if (method is null)
@@ -122,7 +123,7 @@ namespace uController.SourceGenerator
                                 if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
                                 {
                                     // We need to generate the method
-                                    return si.CandidateSymbols.SingleOrDefault() as IMethodSymbol;
+                                    return si.CandidateSymbols.Length == 1 ? si.CandidateSymbols[0] as IMethodSymbol : null;
                                 }
 
                                 return si.Symbol as IMethodSymbol;
@@ -356,7 +357,7 @@ namespace uController.SourceGenerator
                 {
                     // Don't add metadata
                 }
-                else if (metadataLoadContext.Resolve<IEndpointMetadataProvider>() is { } t && t.IsAssignableFrom(returnType))
+                else if (endpointMetadataProviderType is not null && endpointMetadataProviderType.IsAssignableFrom(returnType))
                 {
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.
