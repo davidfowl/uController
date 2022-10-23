@@ -16,6 +16,17 @@ namespace uController.SourceGenerator
     [Generator]
     public class uControllerGenerator : ISourceGenerator
     {
+        private static readonly Dictionary<string, string> MethodDescriptions = new()
+        {
+            ["MapGet"] = "HTTP GET",
+            ["MapPost"] = "HTTP POST",
+            ["MapPut"] = "HTTP PUT",
+            ["MapDelete"] = "HTTP DELETE",
+            ["MapPatch"] = "HTTP PATCH",
+            ["Map"] = "HTTP",
+            ["MapFallback"] = "HTTP",
+        };
+
         public void Execute(GeneratorExecutionContext context)
         {
             if (context.SyntaxReceiver is not SyntaxReceiver receiver)
@@ -398,8 +409,10 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
+                MethodDescriptions.TryGetValue(callName, out var description);
+
                 var text = @$"        /// <summary>
-        /// Adds a <see cref=""RouteEndpoint""/> to the <see cref=""IEndpointRouteBuilder""/> that matches HTTP {callName} requests
+        /// Adds a <see cref=""RouteEndpoint""/> to the <see cref=""IEndpointRouteBuilder""/> that matches {description ?? "HTTP"} requests
         /// for the specified pattern.
         /// </summary>
         /// <param name=""endpoints"">The <see cref=""IEndpointRouteBuilder""/> to add the route to.</param>
