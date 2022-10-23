@@ -125,7 +125,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 15)] = (
            (del, builder) => 
             {
                 
@@ -164,7 +164,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 15)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (
            (del, builder) => 
             {
                 
@@ -205,7 +205,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 17)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 18)] = (
            (del, builder) => 
             {
                 
@@ -244,7 +244,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 19)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 20)] = (
            (del, builder) => 
             {
                 
@@ -288,7 +288,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 21)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 22)] = (
            (del, builder) => 
             {
                 
@@ -330,7 +330,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 24)] = (
            (del, builder) => 
             {
                 
@@ -372,7 +372,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 24)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 25)] = (
            (del, builder) => 
             {
                 
@@ -414,7 +414,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 26)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 27)] = (
            (del, builder) => 
             {
                 
@@ -455,7 +455,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 30)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 31)] = (
            (del, builder) => 
             {
                 
@@ -515,7 +515,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 32)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 33)] = (
            (del, builder) => 
             {
                 
@@ -557,7 +557,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 34)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 35)] = (
            (del, builder) => 
             {
                 
@@ -599,7 +599,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 35)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 36)] = (
            (del, builder) => 
             {
                 
@@ -641,7 +641,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 36)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 37)] = (
            (del, builder) => 
             {
                 
@@ -716,7 +716,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 41)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 42)] = (
            (del, builder) => 
             {
                 
@@ -755,7 +755,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 47)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 48)] = (
            (del, builder) => 
             {
                 
@@ -820,7 +820,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 54)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 55)] = (
            (del, builder) => 
             {
                 
@@ -885,7 +885,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 60)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 61)] = (
            (del, builder) => 
             {
                 
@@ -926,7 +926,865 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
+            map[(@"C:\dev\git\uController\samples\Program.cs", 63)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 64)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                                        if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 65)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 66)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                                        if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 67)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 68)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                                        if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 69)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 70)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                                        if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 71)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 72)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                                        if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 73)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_n_Value = httpContext.Request.RouteValues["n"]?.ToString();
+                    int arg_n;
+                    if (arg_n_Value == null || !int.TryParse(arg_n_Value, out arg_n))
+                    {
+                        arg_n = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_n);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_n_Value = httpContext.Request.RouteValues["n"]?.ToString();
+                    int arg_n;
+                    if (arg_n_Value == null || !int.TryParse(arg_n_Value, out arg_n))
+                    {
+                        arg_n = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_n));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
             map[(@"C:\dev\git\uController\samples\Program.cs", 75)] = (
+           (del, builder) => 
+            {
+                
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<Parsable, Parsable>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Parsable>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_p_Value = httpContext.Request.Query["p"].ToString();
+                    Parsable arg_p;
+                    if (arg_p_Value == null || !Parsable.TryParse(arg_p_Value, System.Globalization.CultureInfo.InvariantCulture, out arg_p))
+                    {
+                        arg_p = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_p);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_p_Value = httpContext.Request.Query["p"].ToString();
+                    Parsable arg_p;
+                    if (arg_p_Value == null || !Parsable.TryParse(arg_p_Value, System.Globalization.CultureInfo.InvariantCulture, out arg_p))
+                    {
+                        arg_p = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_p));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            });
+
+            map[(@"C:\dev\git\uController\samples\Program.cs", 108)] = (
            (del, builder) => 
             {
                 
@@ -993,84 +1851,355 @@ namespace Microsoft.AspNetCore.Builder
 
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Person> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Person> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<System.Security.Claims.ClaimsPrincipal, ISayHello, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Security.Claims.ClaimsPrincipal, ISayHello, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Model, Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Model, Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Action<Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<System.Threading.CancellationToken, object> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Threading.CancellationToken, object> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int?, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int?, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpRequest, Microsoft.AspNetCore.Http.HttpResponse, System.Threading.Tasks.Task> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PATCH requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpRequest, Microsoft.AspNetCore.Http.HttpResponse, System.Threading.Tasks.Task> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<string[], string[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string[], string[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int[], int[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int[], int[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, System.Func<int, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PUT requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPut(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPut(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PUT requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPut(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPut(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP DELETE requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapDelete(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapDelete(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP DELETE requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapDelete(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapDelete(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PATCH requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PATCH requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Parsable, Parsable> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
         }
 
         private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
