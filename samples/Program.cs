@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Sample;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
@@ -71,10 +72,30 @@ app.MapPatch("/test/patch", (int x) => x);
 app.MapPatch("/test/patch", (int x, int y) => { });
 app.Map("/test/{n}", (int n) => n);
 
+app.MapGet("/something/parsable", ([FromQuery]Parsable p) => p);
+
 app.Run();
 
 record Person(string Name);
 record Product(string Name, decimal Price);
+
+struct Parsable : IParsable<Parsable>
+{
+    public Parsable()
+    {
+
+    }
+
+    public static Parsable Parse(string s, IFormatProvider provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool TryParse([NotNullWhen(true)] string s, IFormatProvider provider, [MaybeNullWhen(false)] out Parsable result)
+    {
+        throw new NotImplementedException();
+    }
+}
 
 class Wrapper
 {

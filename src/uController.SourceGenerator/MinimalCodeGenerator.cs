@@ -410,15 +410,18 @@ namespace uController.CodeGeneration
 
         private bool HasTryParseMethod(Type t, out MethodInfo mi)
         {
+            // TODO: Make this more efficient
             mi = GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
-            // TODO: Add IFormatProvider overload
+            mi ??= GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), _metadataLoadContext.Resolve<IFormatProvider>(), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
             return mi != null;
         }
 
         private bool HasBindAsync(Type t, out MethodInfo mi, out int parameterCount)
         {
+            // TODO: Make this more efficient
+
             var httpContextType = _metadataLoadContext.Resolve<HttpContext>();
 
             // TODO: Validate return type
@@ -491,15 +494,20 @@ namespace uController.CodeGeneration
 
         private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type, ref bool generatedParamCheck)
         {
-            // TODO: Support different TryParse overloads
+            var underlyingType = Unwrap(type);
 
-            var unwrappedType = Unwrap(type) ?? type;
+            // Support different TryParse overloads
+            string TryParseExpression(string outputExpression) => tryParseMethod.GetParameters().Length switch
+            {
+                2 => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, out {outputExpression})",
+                _ => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, System.Globalization.CultureInfo.InvariantCulture, out {outputExpression})"
+            };
 
-            if (Unwrap(type) == null)
+            if (underlyingType is null)
             {
                 generatedParamCheck = true;
                 // Type isn't nullable
-                WriteLine($"if ({sourceName} == null || !{S(type)}.TryParse({sourceName}, out {outputName}))");
+                WriteLine($"if ({sourceName} == null || !{TryParseExpression(outputName)})");
                 WriteLine("{");
                 Indent();
                 WriteLine($"{outputName} = default;");
@@ -509,7 +517,7 @@ namespace uController.CodeGeneration
             }
             else
             {
-                WriteLine($"if ({sourceName} != null && {S(unwrappedType)}.TryParse({sourceName}, out var {outputName}_Temp))");
+                WriteLine($"if ({sourceName} != null && {TryParseExpression($"var {outputName}_Temp")})");
                 WriteLine("{");
                 Indent();
                 WriteLine($"{outputName} = {outputName}_Temp;");
