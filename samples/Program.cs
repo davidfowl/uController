@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Primitives;
 using Sample;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Pipelines;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
@@ -30,6 +31,9 @@ app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 IResult NoAccess(int? id) => Results.StatusCode(401);
 
 app.Map("/private", NoAccess);
+
+app.MapPost("/post/q", (Stream s) => Results.Stream(s));
+app.MapPost("/post/q", (PipeReader r) => Results.Stream(r.AsStream()));
 
 app.MapPatch("/patch", (HttpRequest req, HttpResponse resp) => Task.CompletedTask);
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
@@ -24,7 +25,7 @@ namespace uController.CodeGeneration
             _metadataLoadContext = metadataLoadContext;
         }
 
-        public HashSet<ParameterModel> FromBodyTypes { get; set; } = new HashSet<ParameterModel>();
+        public HashSet<ParameterModel> FromBodyParameters { get; set; } = new HashSet<ParameterModel>();
 
         private Type Unwrap(Type type)
         {
@@ -294,11 +295,10 @@ namespace uController.CodeGeneration
             {
                 WriteLine($"var {parameterName} = httpContext.Request.Body;");
             }
-            // TODO: PipeReader
-            //else if (parameter.ParameterType.Equals(typeof(PipeReader)))
-            //{
-            //    WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
-            //}
+            else if (parameter.ParameterType.Equals(typeof(PipeReader)))
+            {
+                WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
+            }
             else if (parameter.FromRoute != null)
             {
                 if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck, nullable: true))
@@ -340,23 +340,20 @@ namespace uController.CodeGeneration
             }
             else if (parameter.FromBody)
             {
-                if (!hasFromBody)
-                {
-                    hasFromBody = true;
-                }
+                FromBodyParameters.Add(parameter);
 
-                // TODO: PipeReader
-                if (parameter.ParameterType.Equals(typeof(Stream)))
+                if (parameter.ParameterType.Equals(typeof(PipeReader)))
+                {
+                    WriteLine($"var {parameterName} = httpContext.Request.BodyReader;");
+                }
+                else if (parameter.ParameterType.Equals(typeof(Stream)))
                 {
                     WriteLine($"var {parameterName} = httpContext.Request.Body;");
-                    FromBodyTypes.Add(parameter);
                 }
                 else
                 {
                     // TODO: Handle empty body (required parameters)
-
                     WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{parameter.ParameterType}>();");
-                    FromBodyTypes.Add(parameter);
                 }
 
                 hasAwait = true;
@@ -408,6 +405,8 @@ namespace uController.CodeGeneration
 
         private bool HasTryParseMethod(Type t, out MethodInfo mi)
         {
+            // TODO: Handle specific types (Uri, DateTime etc) with relevant options
+
             // TODO: Make this more efficient
             mi = GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
@@ -437,7 +436,6 @@ namespace uController.CodeGeneration
         {
             var getter = methodCall ? $@"{sourceExpression}(httpContext, ""{key}"")" : $@"{sourceExpression}[""{key}""]";
 
-            // TODO: Handle specific types (Uri, DateTime etc) with relevant options
             if (type.Equals(typeof(string)))
             {
                 WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));

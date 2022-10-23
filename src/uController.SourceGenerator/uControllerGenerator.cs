@@ -243,7 +243,7 @@ namespace uController.SourceGenerator
 
                 gen.Generate(methodModel);
 
-                if (gen.FromBodyTypes.Count > 1)
+                if (gen.FromBodyParameters.Count > 1)
                 {
                     var mainLocation = (method.DeclaringSyntaxReferences[0].GetSyntax() switch
                     {
@@ -251,9 +251,9 @@ namespace uController.SourceGenerator
                         var expr => expr.GetLocation()
                     });
 
-                    var otherLocations = gen.FromBodyTypes.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
+                    var otherLocations = gen.FromBodyParameters.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, mainLocation, otherLocations));
-                    foreach (var p in gen.FromBodyTypes)
+                    foreach (var p in gen.FromBodyParameters)
                     {
                         p.Unresovled = true;
                     }
@@ -571,66 +571,6 @@ namespace Microsoft.AspNetCore.Builder
                     MapActions.Add((mapActionCall, args[1].Expression, method));
                 }
             }
-        }
-    }
-
-    class RoutePattern
-    {
-        private static readonly char[] Slash = new[] { '/' };
-
-        public string Pattern { get; }
-
-        private string[] _parameterNames;
-
-        public RoutePattern(string pattern, string[] parameterNames)
-        {
-            Pattern = pattern;
-            _parameterNames = parameterNames;
-        }
-
-        public bool HasParameter(string name) => _parameterNames.Contains(name);
-
-        public override string ToString() => Pattern;
-
-        public static RoutePattern Parse(string pattern)
-        {
-            if (pattern is null)
-            {
-                return null;
-            }
-
-            var segments = pattern.Split(Slash, StringSplitOptions.RemoveEmptyEntries);
-
-            List<string> parameters = null;
-            foreach (var s in segments)
-            {
-                // Ignore complex segments and escaping
-
-                var start = s.IndexOf('{');
-                if (start != -1)
-                {
-                    var end = s.IndexOf('}', start + 1);
-
-                    if (end == -1)
-                    {
-                        continue;
-                    }
-
-                    var p = s.Substring(start + 1, end - start - 1);
-                    var constraintToken = p.IndexOf(':');
-
-                    if (constraintToken != -1)
-                    {
-                        // Remove the constraint
-                        p = p.Substring(0, constraintToken);
-                    }
-
-                    parameters ??= new();
-                    parameters.Add(p);
-                }
-            }
-
-            return new RoutePattern(pattern, parameters?.ToArray() ?? Array.Empty<string>());
         }
     }
 

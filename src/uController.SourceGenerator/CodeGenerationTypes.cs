@@ -32,3 +32,8 @@ namespace Microsoft.Extensions.Primitives
 {
     public struct StringValues { }
 }
+
+namespace System.IO.Pipelines
+{
+    public class PipeReader { }
+}
