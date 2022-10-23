@@ -15,7 +15,8 @@ namespace System.Reflection
         public MetadataLoadContext(Compilation compilation)
         {
             _compilation = compilation;
-            
+
+            // TODO: Make this more efficient
             var assemblies = compilation.References
                                         .OfType<PortableExecutableReference>()
                                         .ToDictionary(r => AssemblyName.GetAssemblyName(r.FilePath),
