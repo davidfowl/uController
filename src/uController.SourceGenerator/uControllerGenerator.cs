@@ -606,7 +606,7 @@ namespace Microsoft.AspNetCore.Builder
 
     class Diagnostics
     {
-        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MIN001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\"", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        public static readonly DiagnosticDescriptor UnknownDelegateType = new DiagnosticDescriptor("MIN001", "DelegateTypeUnknown", "Unable to determine the parameter and return types from expression \"{0}\", only method groups, lambda expressions or readonly fields/variables are allowed", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MIN002", "ParameterSourceUnknown", "Unable to resolve \"{0}\", consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 

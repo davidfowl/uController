@@ -107,7 +107,7 @@ struct Parsable : IParsable<Parsable>
 
 class Wrapper
 {
-    public static string RoutePattern = "/foo/{s}";
+    public static readonly string RoutePattern = "/foo/{id}";
 
     public static readonly Func<string, string> HelloDelegate = Hello2;
 
