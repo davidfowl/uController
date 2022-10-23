@@ -103,6 +103,20 @@ namespace uController.SourceGenerator
 
                                 if (method is null)
                                 {
+                                    var isReadOnly = si.Symbol switch
+                                    {
+                                        IFieldSymbol fieldSymbol => fieldSymbol.IsReadOnly,
+                                        ILocalSymbol localSymbol => localSymbol.IsConst,
+                                        _ => false
+                                    };
+
+                                    // If the reference to fields or locals are not const the we
+                                    // can't assume it won't be re-assigned
+                                    if (!isReadOnly)
+                                    {
+                                        return null;
+                                    }
+
                                     foreach (var syntaxReference in si.Symbol.DeclaringSyntaxReferences)
                                     {
                                         var syn = syntaxReference.GetSyntax();
@@ -157,9 +171,23 @@ namespace uController.SourceGenerator
                             return null;
                         }
 
-                        foreach (var decl in symbol.DeclaringSyntaxReferences)
+                        var isReadOnly = symbol switch
                         {
-                            var syntax = decl.GetSyntax();
+                            IFieldSymbol fieldSymbol => fieldSymbol.IsReadOnly,
+                            ILocalSymbol localSymbol => localSymbol.IsConst,
+                            _ => false
+                        };
+
+                        // If the reference to fields or locals are not const the we
+                        // can't assume it won't be re-assigned
+                        if (!isReadOnly)
+                        {
+                            return null;
+                        }
+
+                        foreach (var syntaxReference in symbol.DeclaringSyntaxReferences)
+                        {
+                            var syntax = syntaxReference.GetSyntax();
 
                             if (syntax is VariableDeclaratorSyntax
                                 {
