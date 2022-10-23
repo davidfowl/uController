@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,9 +25,6 @@ namespace uController.CodeGeneration
         }
 
         public HashSet<ParameterModel> FromBodyTypes { get; set; } = new HashSet<ParameterModel>();
-
-        // Pretty print the type name
-        private string S(Type type) => type.ToString();
 
         private Type Unwrap(Type type)
         {
@@ -284,7 +282,7 @@ namespace uController.CodeGeneration
                 WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
                 hasAwait = true;
             }
-            else if (parameter.ParameterType.Equals(_metadataLoadContext.LoadFromAssemblyName("System.Security.Claims").GetType("System.Security.Claims.ClaimsPrincipal")))
+            else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
             {
                 WriteLine($"var {parameterName} = httpContext.User;");
             }
@@ -324,7 +322,7 @@ namespace uController.CodeGeneration
             }
             else if (parameter.FromServices)
             {
-                WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{S(parameter.ParameterType)}>();");
+                WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{parameter.ParameterType}>();");
             }
             else if (parameter.FromForm != null)
             {
@@ -357,7 +355,7 @@ namespace uController.CodeGeneration
                 {
                     // TODO: Handle empty body (required parameters)
 
-                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{S(parameter.ParameterType)}>();");
+                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{parameter.ParameterType}>();");
                     FromBodyTypes.Add(parameter);
                 }
 
@@ -372,13 +370,13 @@ namespace uController.CodeGeneration
                 {
                     if (parameterCount == 1)
                     {
-                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext);");
+                        WriteLine($"var {parameterName} = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext);");
                     }
                     else
                     {
                         parameter.RequiresParameterInfo = true;
 
-                        WriteLine($"var {parameterName} = await {S(bindAsyncMethod.DeclaringType)}.BindAsync(httpContext, {parameter.GeneratedName}ParameterInfo);");
+                        WriteLine($"var {parameterName} = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext, {parameter.GeneratedName}ParameterInfo);");
                     }
 
                     hasAwait = true;
@@ -460,7 +458,7 @@ namespace uController.CodeGeneration
                 {
                     if (!HasTryParseMethod(unwrappedType, out tryParseMethod))
                     {
-                        WriteLine($"{S(type)} {sourceName} = default;");
+                        WriteLine($"{type} {sourceName} = default;");
                         return false;
                     }
                 }
@@ -484,7 +482,7 @@ namespace uController.CodeGeneration
                 else
                 {
                     WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
-                    WriteLine($"{S(type)} {sourceName};");
+                    WriteLine($"{type} {sourceName};");
 
                     GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, ref generatedParamCheck);
                 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
 
 namespace System.Reflection
@@ -289,8 +288,7 @@ namespace System.Reflection
             {
                 return _typeSymbol.Equals(tww._typeSymbol, SymbolEqualityComparer.Default);
             }
-
-            return base.Equals(o);
+            return false;
         }
 
         public override bool Equals(Type o)
@@ -303,7 +301,7 @@ namespace System.Reflection
             {
                 return _typeSymbol.Equals(tww._typeSymbol, SymbolEqualityComparer.Default);
             }
-            return base.Equals(o);
+            return false;
         }
     }
 }

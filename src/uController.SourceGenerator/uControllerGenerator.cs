@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -48,7 +49,6 @@ namespace uController.SourceGenerator
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
 
-            var endpointMetadataProviderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider");
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
@@ -182,17 +182,16 @@ namespace uController.SourceGenerator
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
-                    MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
+                    MethodInfo = method.AsMethodInfo(metadataLoadContext),
                     RoutePattern = RoutePattern.Parse(ResolveRoutePattern(routePattern.Expression))
                 };
 
-                var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
-                var fromQueryAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromQueryAttribute");
-                var fromRouteAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromRouteAttribute");
-                var fromHeaderAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromHeaderAttribute");
-                var fromFormAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromFormAttribute");
-                var fromBodyAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromBodyAttribute");
-                var fromServicesAttributeType = mvcAssembly.GetType("Microsoft.AspNetCore.Mvc.FromServicesAttribute");
+                var fromQueryAttributeType = metadataLoadContext.Resolve<FromQueryAttribute>();
+                var fromRouteAttributeType = metadataLoadContext.Resolve<FromRouteAttribute>();
+                var fromHeaderAttributeType = metadataLoadContext.Resolve<FromHeaderAttribute>();
+                var fromFormAttributeType = metadataLoadContext.Resolve<FromFormAttribute>();
+                var fromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
+                var fromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
 
                 var hasAmbiguousParameterWithoutRoute = false;
                 var parameterIndex = 0;
