@@ -67,7 +67,6 @@ namespace uController.SourceGenerator
 
             foreach (var (invocation, argument, callName) in receiver.MapActions)
             {
-                var types = new List<string>();
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
                 var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
@@ -152,13 +151,6 @@ namespace uController.SourceGenerator
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnknownDelegateType, argument.GetLocation(), argument.ToFullString()));
                     continue;
-                }
-
-                var gen = new MinimalCodeGenerator(metadataLoadContext);
-
-                for (int i = 0; i < 4; i++)
-                {
-                    gen.Indent();
                 }
 
                 string ResolveRoutePattern(ExpressionSyntax expression)
@@ -271,6 +263,13 @@ namespace uController.SourceGenerator
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveRoutePattern, routePattern.GetLocation()));
                 }
 
+                var gen = new MinimalCodeGenerator(metadataLoadContext);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    gen.Indent();
+                }
+
                 gen.Generate(methodModel);
 
                 if (gen.FromBodyParameters.Count > 1)
@@ -344,6 +343,8 @@ namespace uController.SourceGenerator
                     }
                 }
 
+                // List of parameters and return type
+                var types = new List<string>();
                 foreach (var p in method.Parameters)
                 {
                     types.Add(p.Type.ToDisplayString());
