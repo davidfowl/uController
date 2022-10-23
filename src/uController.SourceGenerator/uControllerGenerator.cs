@@ -123,13 +123,6 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                foreach (var p in method.Parameters)
-                {
-                    types.Add(p.Type.ToDisplayString());
-                }
-
-                types.Add(method.ReturnType.ToDisplayString());
-
                 var gen = new MinimalCodeGenerator(metadataLoadContext);
 
                 for (int i = 0; i < 4; i++)
@@ -175,18 +168,11 @@ namespace uController.SourceGenerator
                     };
                 }
 
-                static bool ShouldDisableInferredBodyForMethod(string method) =>
-                    // GET, DELETE, HEAD, CONNECT, TRACE, and OPTIONS normally do not contain bodies
-                    method.Equals("MapGet", StringComparison.Ordinal) ||
-                    method.Equals("MapDelete", StringComparison.Ordinal) ||
-                    method.Equals("MapConnect", StringComparison.Ordinal);
-
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = new MethodInfoWrapper(method, metadataLoadContext),
-                    RoutePattern = RoutePattern.Parse(ResolveRoutePattern(routePattern.Expression)),
-                    DisableInferBodyFromParameters = ShouldDisableInferredBodyForMethod(callName)
+                    RoutePattern = RoutePattern.Parse(ResolveRoutePattern(routePattern.Expression))
                 };
 
                 var mvcAssembly = metadataLoadContext.LoadFromAssemblyName("Microsoft.AspNetCore.Mvc.Core");
@@ -318,15 +304,23 @@ namespace uController.SourceGenerator
                     }
                 }
 
+                foreach (var p in method.Parameters)
+                {
+                    types.Add(p.Type.ToDisplayString());
+                }
+
+                types.Add(method.ReturnType.ToDisplayString());
+
                 var formattedTypeArgs = string.Join(", ", types);
 
                 formattedTypeArgs = method.ReturnsVoid ? string.Join(", ", types.Take(types.Count - 1)) : formattedTypeArgs;
                 var delegateType = method.ReturnsVoid ? "System.Action" : "System.Func";
                 var fullDelegateType = formattedTypeArgs.Length == 0 ? delegateType : $"{delegateType}<{formattedTypeArgs}>";
 
-                var formattedOpenGenericArgs = string.Join(", ", (method.ReturnsVoid ? types.Take(types.Count - 1) : types).Select((t, i) => $"T{i}"));
-                formattedOpenGenericArgs = formattedOpenGenericArgs.Length == 0 ? formattedOpenGenericArgs : $"<{formattedOpenGenericArgs}>";
-                var openGenericType = formattedOpenGenericArgs.Length == 0 ? delegateType : $"{delegateType}{formattedOpenGenericArgs}";
+                // REVIEW: Figure out why open generics don't work
+                //var formattedOpenGenericArgs = string.Join(", ", (method.ReturnsVoid ? types.Take(types.Count - 1) : types).Select((t, i) => $"T{i}"));
+                //formattedOpenGenericArgs = formattedOpenGenericArgs.Length == 0 ? formattedOpenGenericArgs : $"<{formattedOpenGenericArgs}>";
+                //var openGenericType = formattedOpenGenericArgs.Length == 0 ? delegateType : $"{delegateType}{formattedOpenGenericArgs}";
 
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
@@ -404,9 +398,17 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                var text = @$"        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+                var text = @$"        /// <summary>
+        /// Adds a <see cref=""RouteEndpoint""/> to the <see cref=""IEndpointRouteBuilder""/> that matches HTTP {callName} requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name=""endpoints"">The <see cref=""IEndpointRouteBuilder""/> to add the route to.</param>
+        /// <param name=""pattern"">The route pattern.</param>
+        /// <param name=""handler"">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref=""RouteHandlerBuilder""/> that can be used to further customize the endpoint.</returns>    
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
-            return MapCore(routes, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
         }}
 
 ";

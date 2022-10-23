@@ -146,7 +146,7 @@ namespace uController.CodeGeneration
             bool first = true;
             foreach (var parameter in method.Parameters)
             {
-                var parameterName = "arg_" + parameter.Name.Replace("_", "__");
+                var parameterName = parameter.GeneratedName;
                 if (!first)
                 {
                     WriteNoIndent(", ");
