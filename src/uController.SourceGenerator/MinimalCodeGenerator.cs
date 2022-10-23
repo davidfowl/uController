@@ -403,19 +403,19 @@ namespace uController.CodeGeneration
             }
         }
 
-        private bool HasTryParseMethod(Type t, out MethodInfo mi)
+        private bool HasTryParseMethod(Type type, out MethodInfo mi)
         {
             // TODO: Handle specific types (Uri, DateTime etc) with relevant options
 
             // TODO: Make this more efficient
-            mi = GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi = GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
-            mi ??= GetStaticMethodFromHierarchy(t, "TryParse", new[] { typeof(string), _metadataLoadContext.Resolve<IFormatProvider>(), t.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _metadataLoadContext.Resolve<IFormatProvider>(), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
             return mi != null;
         }
 
-        private bool HasBindAsync(Type t, out MethodInfo mi, out int parameterCount)
+        private bool HasBindAsync(Type type, out MethodInfo mi, out int parameterCount)
         {
             // TODO: Make this more efficient
 
@@ -423,9 +423,9 @@ namespace uController.CodeGeneration
 
             // TODO: Validate return type
 
-            mi = GetStaticMethodFromHierarchy(t, "BindAsync", new[] { httpContextType }, m => true);
+            mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] { httpContextType }, m => true);
 
-            mi ??= GetStaticMethodFromHierarchy(t, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
+            mi ??= GetStaticMethodFromHierarchy(type, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
 
             parameterCount = mi?.GetParameters().Length ?? 0;
 
