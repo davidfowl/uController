@@ -41,7 +41,7 @@ namespace uController.SourceGenerator
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
-            var formattedTypes = new HashSet<string>();
+            var generatedMethodSignatures = new HashSet<string>();
 
             thunks.AppendLine(@$"        static MapActionsExtensions()");
             thunks.AppendLine("        {");
@@ -399,7 +399,7 @@ namespace uController.SourceGenerator
 
 ");
 
-                if (!formattedTypes.Add(fullDelegateType))
+                if (!generatedMethodSignatures.Add($"{callName}_{fullDelegateType}"))
                 {
                     continue;
                 }

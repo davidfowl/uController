@@ -59,6 +59,13 @@ var f = (string s) => "hello";
 
 app.MapGet(path, f);
 
+app.Map("/test/map", (int x) => x);
+app.MapPut("/test/put", (int x) => x);
+app.MapPost("/test/post", (int x) => x);
+app.MapDelete("/test/delete", (int x) => x);
+app.MapPatch("/test/patch", (int x) => x);
+app.Map("/test/{n}", (int n) => n);
+
 app.Run();
 
 record Person(string Name);
