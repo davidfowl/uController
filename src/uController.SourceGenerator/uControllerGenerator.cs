@@ -83,50 +83,49 @@ namespace uController.SourceGenerator
                 {
                     switch (expression)
                     {
-                        case IdentifierNameSyntax identifierName:
+                        case ParenthesizedLambdaExpressionSyntax:
+                        case MemberAccessExpressionSyntax:
+                        case IdentifierNameSyntax:
                             {
+                                var si = semanticModel.GetSymbolInfo(expression);
+
+                                if (si.Symbol is IMethodSymbol methodSymbol)
+                                {
+                                    return methodSymbol;
+                                }
+
                                 IMethodSymbol method = null;
 
-                                var si = semanticModel.GetSymbolInfo(identifierName);
                                 if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
                                 {
-                                    // We need to generate the method
                                     method = si.CandidateSymbols.Length == 1 ? si.CandidateSymbols[0] as IMethodSymbol : null;
                                 }
 
                                 if (method is null)
                                 {
-                                    var syn = si.Symbol.DeclaringSyntaxReferences[0].GetSyntax();
-
-                                    if (syn is VariableDeclaratorSyntax
-                                        {
-                                            Initializer:
-                                            {
-                                                Value: var expr
-                                            }
-                                        })
+                                    foreach (var syntaxReference in si.Symbol.DeclaringSyntaxReferences)
                                     {
-                                        method = ResolveMethod(semanticModel, expr);
+                                        var syn = syntaxReference.GetSyntax();
+
+                                        if (syn is VariableDeclaratorSyntax
+                                            {
+                                                Initializer:
+                                                {
+                                                    Value: var expr
+                                                }
+                                            })
+                                        {
+                                            method = ResolveMethod(semanticModel, expr);
+
+                                            if (method is not null)
+                                            {
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
 
                                 return method;
-                            }
-                        case ParenthesizedLambdaExpressionSyntax lambda:
-                            {
-                                var si = semanticModel.GetSymbolInfo(lambda);
-                                return si.Symbol as IMethodSymbol;
-                            }
-                        case MemberAccessExpressionSyntax memberAccessExpression:
-                            {
-                                var si = semanticModel.GetSymbolInfo(memberAccessExpression);
-                                if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
-                                {
-                                    // We need to generate the method
-                                    return si.CandidateSymbols.Length == 1 ? si.CandidateSymbols[0] as IMethodSymbol : null;
-                                }
-
-                                return si.Symbol as IMethodSymbol;
                             }
                         default:
                             return null;

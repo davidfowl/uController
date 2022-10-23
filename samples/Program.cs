@@ -52,6 +52,9 @@ var s = Wrapper.RoutePattern;
 
 app.MapGet(s, new Wrapper().Hello);
 
+app.MapGet("/another", Wrapper.HelloDelegate);
+app.MapGet("/another1", Wrapper.HelloDelegate2);
+
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
 
@@ -105,6 +108,12 @@ struct Parsable : IParsable<Parsable>
 class Wrapper
 {
     public static string RoutePattern = "/foo/{s}";
+
+    public static readonly Func<string, string> HelloDelegate = Hello2;
+
+    public static readonly Func<string, string> HelloDelegate2 = (name) => $"Hello {name}";
+
+    public static string Hello2(string name) => $"Hello {name}";
 
     public string Hello(int id) => "Hello World";
 
