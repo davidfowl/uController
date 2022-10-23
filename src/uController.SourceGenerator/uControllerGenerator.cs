@@ -313,6 +313,8 @@ namespace uController.SourceGenerator
                             generatedParameterInfos = true;
                             preReq.AppendLine("                var parameterInfos = del.Method.GetParameters();");
                         }
+
+                        runtimeChecks.AppendLine($@"                var {p.GeneratedName}ParameterInfo = parameterInfos[{p.Index}];");
                     }
                 }
 

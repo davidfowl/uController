@@ -340,7 +340,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Func<Model, Model>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var parameterInfos = del.Method.GetParameters();
-
+                var arg_mParameterInfo = parameterInfos[0];
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -357,14 +357,14 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
+                    var arg_m = await Model.BindAsync(httpContext, arg_mParameterInfo);
                     var result = handler(arg_m);
                     await httpContext.Response.WriteAsJsonAsync(result);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
+                    var arg_m = await Model.BindAsync(httpContext, arg_mParameterInfo);
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
                     await ExecuteObjectResult(result, httpContext);
                 }
@@ -382,7 +382,7 @@ namespace Microsoft.AspNetCore.Builder
                 var handler = (System.Action<Model>)del;
                 EndpointFilterDelegate filteredInvocation = null;
                 var parameterInfos = del.Method.GetParameters();
-
+                var arg_mParameterInfo = parameterInfos[0];
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -400,13 +400,13 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
+                    var arg_m = await Model.BindAsync(httpContext, arg_mParameterInfo);
                                         handler(arg_m);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
+                    var arg_m = await Model.BindAsync(httpContext, arg_mParameterInfo);
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
                     await ExecuteObjectResult(result, httpContext);
                 }
