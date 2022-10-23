@@ -125,7 +125,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 13)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (
            (del, builder) => 
             {
                 
@@ -164,7 +164,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 14)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 15)] = (
            (del, builder) => 
             {
                 
@@ -205,7 +205,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 17)] = (
            (del, builder) => 
             {
                 
@@ -244,7 +244,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 18)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 19)] = (
            (del, builder) => 
             {
                 
@@ -288,7 +288,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 20)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 21)] = (
            (del, builder) => 
             {
                 
@@ -330,7 +330,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 22)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
            (del, builder) => 
             {
                 
@@ -339,6 +339,7 @@ namespace Microsoft.AspNetCore.Builder
             {
                 var handler = (System.Func<Model, Model>)del;
                 EndpointFilterDelegate filteredInvocation = null;
+                var parameterInfos = del.Method.GetParameters();
 
                 if (builder.FilterFactories.Count > 0)
                 {
@@ -356,14 +357,14 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext);
+                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
                     var result = handler(arg_m);
                     await httpContext.Response.WriteAsJsonAsync(result);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext);
+                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
                     await ExecuteObjectResult(result, httpContext);
                 }
@@ -371,7 +372,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 24)] = (
            (del, builder) => 
             {
                 
@@ -380,6 +381,7 @@ namespace Microsoft.AspNetCore.Builder
             {
                 var handler = (System.Action<Model>)del;
                 EndpointFilterDelegate filteredInvocation = null;
+                var parameterInfos = del.Method.GetParameters();
 
                 if (builder.FilterFactories.Count > 0)
                 {
@@ -398,13 +400,13 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext);
+                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
                                         handler(arg_m);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_m = await Model.BindAsync(httpContext);
+                    var arg_m = await Model.BindAsync(httpContext, parameterInfos[0]);
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_m));
                     await ExecuteObjectResult(result, httpContext);
                 }
@@ -412,7 +414,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 25)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 26)] = (
            (del, builder) => 
             {
                 
@@ -453,7 +455,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 29)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 30)] = (
            (del, builder) => 
             {
                 
@@ -513,7 +515,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 31)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 32)] = (
            (del, builder) => 
             {
                 
@@ -555,7 +557,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 33)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 34)] = (
            (del, builder) => 
             {
                 
@@ -597,7 +599,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 34)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 35)] = (
            (del, builder) => 
             {
                 
@@ -639,7 +641,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 35)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 36)] = (
            (del, builder) => 
             {
                 
@@ -666,14 +668,47 @@ namespace Microsoft.AspNetCore.Builder
 
                 System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
+                    var arg_queries_Value = arg_queriesRouteOrQueryResolver(httpContext, "queries").ToArray();
                     int[] arg_queries = default;
+                    for (var i = 0; i < arg_queries.Length; i++)
+                    {
+                        arg_queries ??= new int[arg_queries_Value.Length];
+                        if (arg_queries_Value[i] == null || !int.TryParse(arg_queries_Value[i], out arg_queries[i]))
+                        {
+                            arg_queries[i] = default;
+                            wasParamCheckFailure = true;
+                        }
+                    }
+                    arg_queries ??= System.Array.Empty<int>();
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
                     var result = handler(arg_queries);
                     return httpContext.Response.WriteAsJsonAsync(result);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
+                    var wasParamCheckFailure = false;
+                    var arg_queries_Value = arg_queriesRouteOrQueryResolver(httpContext, "queries").ToArray();
                     int[] arg_queries = default;
+                    for (var i = 0; i < arg_queries.Length; i++)
+                    {
+                        arg_queries ??= new int[arg_queries_Value.Length];
+                        if (arg_queries_Value[i] == null || !int.TryParse(arg_queries_Value[i], out arg_queries[i]))
+                        {
+                            arg_queries[i] = default;
+                            wasParamCheckFailure = true;
+                        }
+                    }
+                    arg_queries ??= System.Array.Empty<int>();
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_queries));
                     await ExecuteObjectResult(result, httpContext);
                 }
@@ -681,7 +716,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 40)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 41)] = (
            (del, builder) => 
             {
                 
@@ -720,7 +755,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 46)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 47)] = (
            (del, builder) => 
             {
                 
@@ -785,7 +820,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 53)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 54)] = (
            (del, builder) => 
             {
                 
@@ -850,7 +885,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 59)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 60)] = (
            (del, builder) => 
             {
                 
@@ -891,7 +926,7 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 74)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 75)] = (
            (del, builder) => 
             {
                 
