@@ -83,10 +83,11 @@ namespace uController.CodeGeneration
             }
 
             var resultExpression = "";
+
             AwaitableInfo awaitableInfo = default;
             if (method.MethodInfo.ReturnType.Equals(typeof(void)))
             {
-                Write("");
+                resultExpression = "";
             }
             else
             {
@@ -139,10 +140,7 @@ namespace uController.CodeGeneration
                 _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
-            if (!string.IsNullOrEmpty(resultExpression))
-            {
-                Write(resultExpression);
-            }
+            Write(resultExpression);
 
             WriteNoIndent($"handler(");
             bool first = true;
