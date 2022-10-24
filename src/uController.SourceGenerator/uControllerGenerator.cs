@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -41,10 +42,10 @@ namespace uController.SourceGenerator
                 System.Diagnostics.Debugger.Launch();
             }
 
-            //while (!System.Diagnostics.Debugger.IsAttached)
-            //{
-            //    System.Threading.Thread.Sleep(1000);
-            //}
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                System.Threading.Thread.Sleep(1000);
+            }
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
@@ -56,9 +57,9 @@ namespace uController.SourceGenerator
             var fromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
             var fromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
             var endpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
+            var endpointRouteBuilderType = metadataLoadContext.Resolve<IEndpointRouteBuilder>();
             var delegateMetadataType = metadataLoadContext.Resolve<Delegate>();
 
-            var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
             var generatedMethodSignatures = new HashSet<string>();
@@ -73,20 +74,12 @@ namespace uController.SourceGenerator
                 var mapMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
 
                 if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } && 
-                    delegateMetadataType.Equals(parameters[1].Type))
+                    delegateMetadataType.Equals(parameters[1].Type) &&
+                    endpointRouteBuilderType.Equals(mapMethodSymbol.ReceiverType))
                 {
-                    // We only want to generate overloads for calls that have a Delegate overload
+                    // We only want to generate overloads for calls that have a Delegate parameter
                 }
                 else
-                {
-                    continue;
-                }
-
-                var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
-                var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
-
-                if (!SymbolEqualityComparer.Default.Equals(typeInfo.Type, endpointRouteBuilderType) &&
-                    !typeInfo.Type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, endpointRouteBuilderType)))
                 {
                     continue;
                 }

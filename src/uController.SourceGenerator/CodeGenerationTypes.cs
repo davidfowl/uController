@@ -38,3 +38,8 @@ namespace System.IO.Pipelines
 {
     public class PipeReader { }
 }
+
+namespace Microsoft.AspNetCore.Routing
+{
+    public interface IEndpointRouteBuilder { }
+}
