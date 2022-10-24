@@ -13,6 +13,8 @@ namespace System.Reflection
 
         public static IMethodSymbol GetMethodSymbol(this MethodInfo methodInfo) => (methodInfo as MethodInfoWrapper)?.MethodSymbol;
 
+        public static IPropertySymbol GetPropertySymbol(this PropertyInfo property) => (property as PropertyWrapper)?.PropertySymbol;
+
         public static IParameterSymbol GetParameterSymbol(this ParameterInfo parameterInfo) => (parameterInfo as ParameterWrapper)?.ParameterSymbol;
 
         public static ITypeSymbol GetTypeSymbol(this Type type) => (type as TypeWrapper)?.TypeSymbol;

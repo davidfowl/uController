@@ -15,6 +15,8 @@ namespace System.Reflection
             _metadataLoadContext = metadataLoadContext;
         }
 
+        public IPropertySymbol PropertySymbol => _property;
+
         public override PropertyAttributes Attributes => throw new NotImplementedException();
 
         public override bool CanRead => _property.GetMethod != null;

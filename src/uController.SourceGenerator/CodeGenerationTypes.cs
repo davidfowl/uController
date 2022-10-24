@@ -1,8 +1,5 @@
 ﻿// This class is a helper with the right type names
 
-using System;
-using System.Runtime.CompilerServices;
-
 namespace Microsoft.AspNetCore.Http
 {
     public interface IResult { }

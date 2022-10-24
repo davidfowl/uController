@@ -4,15 +4,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Microsoft.AspNetCore.Http.Metadata;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Internal;
-using uController.CodeGeneration;
 
 namespace uController.SourceGenerator
 {
@@ -50,16 +46,7 @@ namespace uController.SourceGenerator
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
-
-            var fromQueryAttributeType = metadataLoadContext.Resolve<FromQueryAttribute>();
-            var fromRouteAttributeType = metadataLoadContext.Resolve<FromRouteAttribute>();
-            var fromHeaderAttributeType = metadataLoadContext.Resolve<FromHeaderAttribute>();
-            var fromFormAttributeType = metadataLoadContext.Resolve<FromFormAttribute>();
-            var fromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
-            var fromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
-            var endpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
-            var endpointRouteBuilderType = metadataLoadContext.Resolve<IEndpointRouteBuilder>();
-            var delegateMetadataType = metadataLoadContext.Resolve<Delegate>();
+            var wellKnownTypes = new WellKnownTypes(metadataLoadContext);
 
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
@@ -75,8 +62,8 @@ namespace uController.SourceGenerator
                 var mapMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
 
                 if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } &&
-                    delegateMetadataType.Equals(parameters[1].Type) &&
-                    endpointRouteBuilderType.Equals(mapMethodSymbol.ReceiverType))
+                    wellKnownTypes.DelegateType.Equals(parameters[1].Type) &&
+                    wellKnownTypes.EndpointRouteBuilderType.Equals(mapMethodSymbol.ReceiverType))
                 {
                     // We only want to generate overloads for calls that have a Delegate parameter
                 }
@@ -226,12 +213,12 @@ namespace uController.SourceGenerator
 
                 foreach (var parameter in methodModel.MethodInfo.GetParameters())
                 {
-                    var fromQuery = parameter.GetCustomAttributeData(fromQueryAttributeType);
-                    var fromHeader = parameter.GetCustomAttributeData(fromHeaderAttributeType);
-                    var fromForm = parameter.GetCustomAttributeData(fromFormAttributeType);
-                    var fromBody = parameter.GetCustomAttributeData(fromBodyAttributeType);
-                    var fromRoute = parameter.GetCustomAttributeData(fromRouteAttributeType);
-                    var fromService = parameter.GetCustomAttributeData(fromServicesAttributeType);
+                    var fromQuery = parameter.GetCustomAttributeData(wellKnownTypes.FromQueryAttributeType);
+                    var fromHeader = parameter.GetCustomAttributeData(wellKnownTypes.FromHeaderAttributeType);
+                    var fromForm = parameter.GetCustomAttributeData(wellKnownTypes.FromFormAttributeType);
+                    var fromBody = parameter.GetCustomAttributeData(wellKnownTypes.FromBodyAttributeType);
+                    var fromRoute = parameter.GetCustomAttributeData(wellKnownTypes.FromRouteAttributeType);
+                    var fromService = parameter.GetCustomAttributeData(wellKnownTypes.FromServicesAttributeType);
 
                     var parameterModel = new ParameterModel
                     {
@@ -270,7 +257,7 @@ namespace uController.SourceGenerator
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveRoutePattern, routePattern.GetLocation()));
                 }
 
-                var codeGenerator = new MinimalCodeGenerator(metadataLoadContext);
+                var codeGenerator = new MinimalCodeGenerator(wellKnownTypes);
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -401,7 +388,7 @@ namespace uController.SourceGenerator
                 {
                     // Don't add metadata
                 }
-                else if (endpointMetadataProviderType is not null && endpointMetadataProviderType.IsAssignableFrom(returnType))
+                else if (wellKnownTypes.EndpointMetadataProviderType is not null && wellKnownTypes.EndpointMetadataProviderType.IsAssignableFrom(returnType))
                 {
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.

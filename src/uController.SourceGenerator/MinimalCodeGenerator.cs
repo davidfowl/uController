@@ -12,17 +12,17 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Primitives;
 
-namespace uController.CodeGeneration
+namespace uController.SourceGenerator
 {
     class MinimalCodeGenerator
     {
         private readonly StringBuilder _codeBuilder = new();
-        private readonly MetadataLoadContext _metadataLoadContext;
+        private readonly WellKnownTypes _wellKnownTypes;
         private int _indent;
 
-        public MinimalCodeGenerator(MetadataLoadContext metadataLoadContext)
+        public MinimalCodeGenerator(WellKnownTypes wellKnownTypes)
         {
-            _metadataLoadContext = metadataLoadContext;
+            _wellKnownTypes = wellKnownTypes;
         }
 
         public HashSet<ParameterModel> BodyParameters { get; set; } = new HashSet<ParameterModel>();
@@ -177,7 +177,7 @@ namespace uController.CodeGeneration
             }
 
             var unwrappedType = awaitableInfo.ResultType ?? method.MethodInfo.ReturnType;
-            if (_metadataLoadContext.Resolve<IResult>().IsAssignableFrom(unwrappedType))
+            if (_wellKnownTypes.IResultType.IsAssignableFrom(unwrappedType))
             {
                 AwaitOrReturn("result.ExecuteAsync(httpContext);");
             }
@@ -428,7 +428,7 @@ namespace uController.CodeGeneration
             // TODO: Make this more efficient
             mi = GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
-            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _metadataLoadContext.Resolve<IFormatProvider>(), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _wellKnownTypes.IFormatProviderType, type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
             return mi != null;
         }
@@ -437,13 +437,11 @@ namespace uController.CodeGeneration
         {
             // TODO: Make this more efficient
 
-            var httpContextType = _metadataLoadContext.Resolve<HttpContext>();
-
             // TODO: Validate return type
 
-            mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] { httpContextType }, m => true);
+            mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] { _wellKnownTypes.HttpContextType }, m => true);
 
-            mi ??= GetStaticMethodFromHierarchy(type, "BindAsync", new[] { httpContextType, _metadataLoadContext.Resolve<ParameterInfo>() }, m => true);
+            mi ??= GetStaticMethodFromHierarchy(type, "BindAsync", new[] { _wellKnownTypes.HttpContextType, _wellKnownTypes.ParamterInfoType }, m => true);
 
             parameterCount = mi?.GetParameters().Length ?? 0;
 
