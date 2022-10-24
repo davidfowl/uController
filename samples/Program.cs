@@ -21,7 +21,7 @@ app.MapGet("/person", () => new Person("David"));
 app.MapGet("/ok", (ClaimsPrincipal c, ISayHello hellosvc) => Results.Ok(hellosvc.Hello()));
 
 app.MapPost("/implictbody", (JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
-app.MapPost("/", ([FromBody]JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
+app.MapPost("/", ([FromBody] JsonNode node) => node).AddEndpointFilter((context, next) => next(context));
 
 app.MapPost("/model", (Model m) => m);
 app.MapPost("/model2", (Model m) => { });
@@ -94,7 +94,14 @@ app.MapPatch("/test/patch", (int x) => x);
 app.MapPatch("/test/patch", (int x, int y) => { });
 app.Map("/test/{n}", (int n) => n);
 
-app.MapGet("/something/parsable", ([FromQuery]Parsable p) => p);
+//void Foo([FromBody] JsonNode a1, [FromBody] JsonNode a2)
+//{
+
+//}
+
+//app.MapGet("/twobodies", Foo);
+
+app.MapGet("/something/parsable", ([FromQuery] Parsable p) => p);
 
 app.Run();
 

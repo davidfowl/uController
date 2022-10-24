@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -42,10 +43,10 @@ namespace uController.SourceGenerator
                 System.Diagnostics.Debugger.Launch();
             }
 
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                System.Threading.Thread.Sleep(1000);
-            }
+            //while (!System.Diagnostics.Debugger.IsAttached)
+            //{
+            //    System.Threading.Thread.Sleep(1000);
+            //}
             // System.Diagnostics.Debugger.Launch();
 
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
@@ -73,7 +74,7 @@ namespace uController.SourceGenerator
 
                 var mapMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
 
-                if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } && 
+                if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } &&
                     delegateMetadataType.Equals(parameters[1].Type) &&
                     endpointRouteBuilderType.Equals(mapMethodSymbol.ReceiverType))
                 {
@@ -269,29 +270,37 @@ namespace uController.SourceGenerator
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveRoutePattern, routePattern.GetLocation()));
                 }
 
-                var gen = new MinimalCodeGenerator(metadataLoadContext);
+                var codeGenerator = new MinimalCodeGenerator(metadataLoadContext);
 
                 for (int i = 0; i < 4; i++)
                 {
-                    gen.Indent();
+                    codeGenerator.Indent();
                 }
 
-                gen.Generate(methodModel);
+                codeGenerator.Generate(methodModel);
 
-                if (gen.BodyParameters.Count > 1)
+                if (codeGenerator.BodyParameters.Count > 1)
                 {
                     var mainLocation = (method.DeclaringSyntaxReferences[0].GetSyntax() switch
                     {
                         MethodDeclarationSyntax methodDeclarationSyntax => methodDeclarationSyntax.Identifier.GetLocation(),
+                        LocalFunctionStatementSyntax localFunctionStatementSyntax => localFunctionStatementSyntax.Identifier.GetLocation(),
                         var expr => expr.GetLocation()
                     });
 
-                    var otherLocations = gen.BodyParameters.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
-                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, mainLocation, otherLocations));
-                    foreach (var p in gen.BodyParameters)
+                    var otherLocations = new List<Location>();
+
+                    foreach (var p in codeGenerator.BodyParameters)
                     {
+                        foreach (var syntaxReference in p.ParameterSymbol.DeclaringSyntaxReferences)
+                        {
+                            otherLocations.Add(syntaxReference.GetSyntax().GetLocation());
+                        }
+
                         p.Unresovled = true;
                     }
+
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, mainLocation, otherLocations));
                 }
 
                 var preReq = new StringBuilder();
@@ -305,7 +314,7 @@ namespace uController.SourceGenerator
                     if (p.Unresovled)
                     {
                         var loc = p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLocation();
-                        if (p.HasBindingSource)
+                        if (p.HasBindingSource && !p.FromBody)
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveTryParseForType, loc, p.ParameterType.FullName));
                         }
@@ -371,6 +380,7 @@ namespace uController.SourceGenerator
 
                 var filterArgumentString = string.Join(", ", types.Take(types.Count - 1).Select((t, i) => $"ic.GetArgument<{t}>({i})"));
 
+                // Get the source location (file and line number)
                 var span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
                 var lineNumber = span.StartLinePosition.Line + 1;
 
@@ -434,7 +444,7 @@ namespace uController.SourceGenerator
                     handler.Method);
                 }}
 
-{gen}
+{codeGenerator}
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }});
 
