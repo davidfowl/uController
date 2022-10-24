@@ -285,7 +285,7 @@ namespace uController.SourceGenerator
 
                 gen.Generate(methodModel);
 
-                if (gen.FromBodyParameters.Count > 1)
+                if (gen.BodyParameters.Count > 1)
                 {
                     var mainLocation = (method.DeclaringSyntaxReferences[0].GetSyntax() switch
                     {
@@ -293,9 +293,9 @@ namespace uController.SourceGenerator
                         var expr => expr.GetLocation()
                     });
 
-                    var otherLocations = gen.FromBodyParameters.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
+                    var otherLocations = gen.BodyParameters.Select(p => p.ParameterSymbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken());
                     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MultipleParametersConsumingBody, mainLocation, otherLocations));
-                    foreach (var p in gen.FromBodyParameters)
+                    foreach (var p in gen.BodyParameters)
                     {
                         p.Unresovled = true;
                     }

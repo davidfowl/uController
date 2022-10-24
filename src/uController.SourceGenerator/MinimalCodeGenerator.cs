@@ -25,7 +25,7 @@ namespace uController.CodeGeneration
             _metadataLoadContext = metadataLoadContext;
         }
 
-        public HashSet<ParameterModel> FromBodyParameters { get; set; } = new HashSet<ParameterModel>();
+        public HashSet<ParameterModel> BodyParameters { get; set; } = new HashSet<ParameterModel>();
 
         private Type Unwrap(Type type)
         {
@@ -264,7 +264,7 @@ namespace uController.CodeGeneration
             WriteLine("}");
         }
 
-        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasFromForm, ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
+        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasForm, ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
         {
             if (parameter.ParameterType.Equals(typeof(HttpContext)))
             {
@@ -278,10 +278,27 @@ namespace uController.CodeGeneration
             {
                 WriteLine($"var {parameterName} = httpContext.Response;");
             }
+            else if (parameter.ParameterType.Equals(typeof(IFormFile)))
+            {
+                if (!hasForm)
+                {
+                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    hasAwait = true;
+                    hasForm = true;
+                }
+
+                WriteLine($@"var {parameterName} = formCollection.Files[""{parameter.Name}""];");
+            }
             else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
             {
-                WriteLine($"var {parameterName} = await httpContext.Request.ReadFormAsync();");
-                hasAwait = true;
+                if (!hasForm)
+                {
+                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    hasAwait = true;
+                    hasForm = true;
+                }
+
+                WriteLine($"var {parameterName} = formCollection;");
             }
             else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
             {
@@ -326,11 +343,11 @@ namespace uController.CodeGeneration
             }
             else if (parameter.FromForm != null)
             {
-                if (!hasFromForm)
+                if (!hasForm)
                 {
                     WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
                     hasAwait = true;
-                    hasFromForm = true;
+                    hasForm = true;
                 }
 
                 if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection", ref generatedParamCheck))
@@ -340,7 +357,7 @@ namespace uController.CodeGeneration
             }
             else if (parameter.FromBody)
             {
-                FromBodyParameters.Add(parameter);
+                BodyParameters.Add(parameter);
 
                 if (parameter.ParameterType.Equals(typeof(PipeReader)))
                 {
@@ -574,6 +591,11 @@ namespace uController.CodeGeneration
 
         private void Write(string value)
         {
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
             if (_indent > 0)
             {
                 _codeBuilder.Append(new string(' ', _indent * 4));

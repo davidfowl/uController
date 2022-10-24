@@ -26,6 +26,16 @@ app.MapPost("/", ([FromBody]JsonNode node) => node).AddEndpointFilter((context, 
 app.MapPost("/model", (Model m) => m);
 app.MapPost("/model2", (Model m) => { });
 
+app.MapPost("/fileupload", (IFormFile file) =>
+{
+    return $"Uploaded {file.Name}";
+});
+
+app.MapPost("/formpost", (IFormCollection formCollection) =>
+{
+    return $"Uploaded {formCollection.Count} files";
+});
+
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));
 
 IResult NoAccess(int? id) => Results.StatusCode(401);

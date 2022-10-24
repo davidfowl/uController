@@ -10,6 +10,7 @@ namespace Microsoft.AspNetCore.Http
     public class HttpRequest { }
     public class HttpResponse { }
     public interface IFormCollection { }
+    public interface IFormFile { }
 }
 
 namespace Microsoft.AspNetCore.Mvc
