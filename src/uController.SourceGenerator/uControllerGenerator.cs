@@ -56,6 +56,7 @@ namespace uController.SourceGenerator
             var fromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
             var fromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
             var endpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
+            var delegateMetadataType = metadataLoadContext.Resolve<Delegate>();
 
             var endpointRouteBuilderType = context.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
             var sb = new StringBuilder();
@@ -68,6 +69,18 @@ namespace uController.SourceGenerator
             foreach (var (invocation, argument, callName) in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
+
+                var mapMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+
+                if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } && 
+                    delegateMetadataType.Equals(parameters[1].Type))
+                {
+                    // We only want to generate overloads for calls that have a Delegate overload
+                }
+                else
+                {
+                    continue;
+                }
 
                 var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
                 var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);

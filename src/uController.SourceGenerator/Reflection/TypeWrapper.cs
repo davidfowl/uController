@@ -288,6 +288,11 @@ namespace System.Reflection
             {
                 return _typeSymbol.Equals(tww._typeSymbol, SymbolEqualityComparer.Default);
             }
+            else if (o is ITypeSymbol ts)
+            {
+                return _typeSymbol.Equals(ts, SymbolEqualityComparer.Default);
+            }
+
             return false;
         }
 
