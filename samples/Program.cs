@@ -60,13 +60,17 @@ wrapper.AddRoutes(app);
 
 var d = wrapper.Hello;
 
-app.MapGet("/del", d);
+// This can't be resolved
+// app.MapGet("/del", d);
 
-var path = "/foo/{s}";
+// var path = "/foo/{s}";
 
 var f = (string s) => "hello";
 
-app.MapGet(path, f);
+// This neither
+// app.MapGet(path, f);
+
+// void Helper(string s, Func<string, string> handler) => app.MapGet(s, handler);
 
 app.Map("/test/map", (int x) => x);
 app.Map("/test/map", (int x, int y) => { });
