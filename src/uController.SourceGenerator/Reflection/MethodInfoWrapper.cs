@@ -46,6 +46,9 @@ namespace System.Reflection
         public override bool IsGenericMethod => _method.IsGenericMethod;
 
         public override Type ReflectedType => throw new NotImplementedException();
+
+        public IMethodSymbol MethodSymbol => _method;
+
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
             var attributes = new List<CustomAttributeData>();

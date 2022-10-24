@@ -11,6 +11,11 @@ namespace System.Reflection
 
         public static MethodInfo AsMethodInfo(this IMethodSymbol methodSymbol, MetadataLoadContext metadataLoadContext) => methodSymbol == null ? null : new MethodInfoWrapper(methodSymbol, metadataLoadContext);
 
+        public static IMethodSymbol GetMethodSymbol(this MethodInfo methodInfo) => (methodInfo as MethodInfoWrapper)?.MethodSymbol;
+
+        public static IParameterSymbol GetParameterSymbol(this ParameterInfo parameterInfo) => (parameterInfo as ParameterWrapper)?.ParameterSymbol;
+
+        public static ITypeSymbol GetTypeSymbol(this Type type) => (type as TypeWrapper)?.TypeSymbol;
 
         public static IEnumerable<INamedTypeSymbol> BaseTypes(this INamedTypeSymbol typeSymbol)
         {

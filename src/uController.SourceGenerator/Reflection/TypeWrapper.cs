@@ -45,6 +45,8 @@ namespace System.Reflection
 
         public override bool IsGenericTypeDefinition => base.IsGenericTypeDefinition;
 
+        public ITypeSymbol TypeSymbol => _typeSymbol;
+
         public override int GetArrayRank()
         {
             return ArrayTypeSymbol.Rank;

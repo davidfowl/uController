@@ -242,7 +242,7 @@ namespace uController.SourceGenerator
                     var parameterModel = new ParameterModel
                     {
                         Method = methodModel,
-                        ParameterSymbol = (parameter as ParameterWrapper).ParameterSymbol,
+                        ParameterSymbol = parameter.GetParameterSymbol(),
                         Name = parameter.Name,
                         GeneratedName = "arg_" + parameter.Name.Replace("_", "__"),
                         ParameterType = parameter.ParameterType,
