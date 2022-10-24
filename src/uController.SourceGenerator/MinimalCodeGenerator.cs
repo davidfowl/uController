@@ -139,7 +139,10 @@ namespace uController.CodeGeneration
                 _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
-            Write(resultExpression);
+            if (!string.IsNullOrEmpty(resultExpression))
+            {
+                Write(resultExpression);
+            }
 
             WriteNoIndent($"handler(");
             bool first = true;
@@ -591,11 +594,6 @@ namespace uController.CodeGeneration
 
         private void Write(string value)
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                return;
-            }
-
             if (_indent > 0)
             {
                 _codeBuilder.Append(new string(' ', _indent * 4));
