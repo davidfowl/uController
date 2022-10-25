@@ -226,7 +226,7 @@ namespace uController.SourceGenerator
                         Method = methodModel,
                         ParameterSymbol = parameter.GetParameterSymbol(),
                         Name = parameter.Name,
-                        GeneratedName = "arg_" + parameter.Name.Replace("_", "__"),
+                        GeneratedName = "arg_" + parameter.Name,
                         ParameterType = parameter.ParameterType,
                         FromQuery = fromQuery == null ? null : fromQuery?.GetConstructorArgument<string>(0) ?? parameter.Name,
                         FromHeader = fromHeader == null ? null : fromHeader?.GetConstructorArgument<string>(0) ?? parameter.Name,
@@ -452,7 +452,7 @@ namespace uController.SourceGenerator
         /// <param name=""endpoints"">The <see cref=""IEndpointRouteBuilder""/> to add the route to.</param>
         /// <param name=""pattern"">The route pattern.</param>
         /// <param name=""handler"">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref=""RouteHandlerBuilder""/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref=""RouteHandlerBuilder""/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder {callName}(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {{
             return MapCore(endpoints, pattern, handler, static (r, p, h) => r.{callName}(p, h), filePath, lineNumber);
@@ -489,6 +489,7 @@ namespace Microsoft.AspNetCore.Builder
 {thunks}
 {sb.ToString().TrimEnd()}
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(""Trimmer"", ""IL2026"", Justification = ""Dynamic code generation is overridden with static code generation."")]
         private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
             this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
             string pattern, 
