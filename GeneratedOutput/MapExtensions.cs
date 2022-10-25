@@ -9,8 +9,13 @@
 //------------------------------------------------------------------------------
 
 #if NET7_0_OR_GREATER
+using System.Diagnostics;
+using System.Reflection;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -19,13 +24,19 @@ namespace Microsoft.AspNetCore.Builder
 
     public static class MapActionsExtensions
     {
+        private static readonly string[] GetVerb = new[] { HttpMethods.Get };
+        private static readonly string[] PostVerb = new[] { HttpMethods.Post };
+        private static readonly string[] PutVerb = new[]  { HttpMethods.Put };
+        private static readonly string[] DeleteVerb = new[] { HttpMethods.Delete };
+        private static readonly string[] PatchVerb = new[] { HttpMethods.Patch };
+
         private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new();
         static MapActionsExtensions()
         {
             map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 10)] = (
            (del, builder) => 
             {
-                
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>>(del.Method, builder);
             }, 
            (del, builder) => 
             {
@@ -64,7 +75,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 11)] = (
            (del, builder) => 
             {
-                
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>(del.Method, builder);
             }, 
            (del, builder) => 
             {
@@ -128,7 +139,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 16)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -167,7 +178,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 17)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -208,7 +219,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 19)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -247,7 +258,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 21)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -291,7 +302,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -333,7 +344,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 24)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -356,14 +367,14 @@ namespace Microsoft.AspNetCore.Builder
 
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
+                    var arg_node = await ResolveBody<System.Text.Json.Nodes.JsonNode>(httpContext);
                     var result = handler(arg_node);
                     await httpContext.Response.WriteAsJsonAsync(result);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var arg_node = await httpContext.Request.ReadFromJsonAsync<System.Text.Json.Nodes.JsonNode>();
+                    var arg_node = await ResolveBody<System.Text.Json.Nodes.JsonNode>(httpContext);
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_node));
                     await ExecuteObjectResult(result, httpContext);
                 }
@@ -374,7 +385,7 @@ namespace Microsoft.AspNetCore.Builder
             map[(@"C:\dev\git\uController\samples\Program.cs", 26)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -442,7 +453,7 @@ namespace Microsoft.AspNetCore.Builder
                 async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
                     var arg_m = await Model.BindAsync(httpContext, arg_mParameterInfo);
-handler(arg_m);
+                    handler(arg_m);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
@@ -458,7 +469,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 29)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -501,7 +512,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 34)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -544,7 +555,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 39)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -585,7 +596,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 43)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -645,7 +656,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 45)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -686,7 +697,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 46)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -769,7 +780,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 50)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -811,7 +822,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 51)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -853,7 +864,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 52)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -928,7 +939,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 57)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -967,7 +978,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 63)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -1032,7 +1043,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 65)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -1074,7 +1085,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 66)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -1116,7 +1127,7 @@ handler(arg_m);
             map[(@"C:\dev\git\uController\samples\Program.cs", 85)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1227,7 +1238,7 @@ handler(arg_m);
                         httpContext.Response.StatusCode = 400;
                         return Task.CompletedTask;
                     }
-handler(arg_x, arg_y);
+                    handler(arg_x, arg_y);
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
                 
@@ -1262,7 +1273,7 @@ handler(arg_x, arg_y);
             map[(@"C:\dev\git\uController\samples\Program.cs", 87)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1373,7 +1384,7 @@ handler(arg_x, arg_y);
                         httpContext.Response.StatusCode = 400;
                         return Task.CompletedTask;
                     }
-handler(arg_x, arg_y);
+                    handler(arg_x, arg_y);
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
                 
@@ -1408,7 +1419,7 @@ handler(arg_x, arg_y);
             map[(@"C:\dev\git\uController\samples\Program.cs", 89)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1519,7 +1530,7 @@ handler(arg_x, arg_y);
                         httpContext.Response.StatusCode = 400;
                         return Task.CompletedTask;
                     }
-handler(arg_x, arg_y);
+                    handler(arg_x, arg_y);
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
                 
@@ -1554,7 +1565,7 @@ handler(arg_x, arg_y);
             map[(@"C:\dev\git\uController\samples\Program.cs", 91)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1665,7 +1676,7 @@ handler(arg_x, arg_y);
                         httpContext.Response.StatusCode = 400;
                         return Task.CompletedTask;
                     }
-handler(arg_x, arg_y);
+                    handler(arg_x, arg_y);
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
                 
@@ -1700,7 +1711,7 @@ handler(arg_x, arg_y);
             map[(@"C:\dev\git\uController\samples\Program.cs", 93)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1811,7 +1822,7 @@ handler(arg_x, arg_y);
                         httpContext.Response.StatusCode = 400;
                         return Task.CompletedTask;
                     }
-handler(arg_x, arg_y);
+                    handler(arg_x, arg_y);
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
                 
@@ -1846,7 +1857,7 @@ handler(arg_x, arg_y);
             map[(@"C:\dev\git\uController\samples\Program.cs", 95)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1907,10 +1918,10 @@ handler(arg_x, arg_y);
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 97)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 104)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
             }, 
            (del, builder) => 
             {
@@ -1971,10 +1982,10 @@ handler(arg_x, arg_y);
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             });
 
-            map[(@"C:\dev\git\uController\samples\Program.cs", 136)] = (
+            map[(@"C:\dev\git\uController\samples\Program.cs", 143)] = (
            (del, builder) => 
             {
-                
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
             {
@@ -2045,10 +2056,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2058,10 +2069,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2071,10 +2082,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2084,10 +2095,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2097,10 +2108,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Person> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2110,10 +2121,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Security.Claims.ClaimsPrincipal, ISayHello, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2123,10 +2134,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Text.Json.Nodes.JsonNode, System.Text.Json.Nodes.JsonNode> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2136,10 +2147,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Model, Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2149,10 +2160,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<Model> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2162,10 +2173,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.IFormFile, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2175,10 +2186,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.IFormCollection, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2188,10 +2199,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.Threading.CancellationToken, object> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2201,10 +2212,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int?, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, null, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2214,10 +2225,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.IO.Stream, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2227,10 +2238,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<System.IO.Pipelines.PipeReader, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2240,10 +2251,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpRequest, Microsoft.AspNetCore.Http.HttpResponse, System.Threading.Tasks.Task> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PatchVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2253,10 +2264,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.Extensions.Primitives.StringValues, string?[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2266,10 +2277,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string[], string[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2279,10 +2290,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int[], int[]> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2292,10 +2303,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2305,10 +2316,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, null, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2318,10 +2329,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Map(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.Map(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, null, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2331,10 +2342,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPut(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPut(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PutVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2344,10 +2355,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPut(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPut(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PutVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2357,10 +2368,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2370,10 +2381,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPost(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2383,10 +2394,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapDelete(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapDelete(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, DeleteVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2396,10 +2407,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapDelete(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapDelete(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, DeleteVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2409,10 +2420,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PatchVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2422,10 +2433,10 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPatch(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Action<int, int> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapPatch(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, PatchVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2435,34 +2446,45 @@ handler(arg_x, arg_y);
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
-        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>    
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Parsable, Parsable> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
-            return MapCore(endpoints, pattern, handler, static (r, p, h) => r.MapGet(p, h), filePath, lineNumber);
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
             this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
             string pattern, 
-            System.Delegate handler, 
-            Func<Microsoft.AspNetCore.Routing.IEndpointRouteBuilder, string, System.Delegate, Microsoft.AspNetCore.Builder.RouteHandlerBuilder> mapper,
+            System.Delegate handler,
+            IEnumerable<string> httpMethods,
             string filePath,
             int lineNumber)
         {
             var (populate, factory) = map[(filePath, lineNumber)];
-            var conventionBuilder = mapper(routes, pattern, handler);
 
-            conventionBuilder.Add(e =>
+            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+        }
+
+        private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
+        {
+            SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
+
+            foreach (var dataSource in endpoints.DataSources)
             {
-                populate(handler, e);
-            });
+                if (dataSource is SourceGeneratedRouteEndpointDataSource foundDataSource)
+                {
+                    routeEndpointDataSource = foundDataSource;
+                    break;
+                }
+            }
 
-            conventionBuilder.Finally(e =>
+            if (routeEndpointDataSource is null)
             {
-                e.RequestDelegate = factory(handler, e);
-            });
+                routeEndpointDataSource = new SourceGeneratedRouteEndpointDataSource(endpoints.ServiceProvider);
+                endpoints.DataSources.Add(routeEndpointDataSource);
+            }
 
-            return conventionBuilder;
+            return routeEndpointDataSource;
         }
 
         private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
@@ -2509,8 +2531,314 @@ handler(arg_x, arg_y);
 
         private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
         private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
-        private static ValueTask<T> ResolveService<T>(HttpContext context) => new ValueTask<T>(context.RequestServices.GetRequiredService<T>());
-        private static ValueTask<T> ResolveBody<T>(HttpContext context) => context.Request.ReadFromJsonAsync<T>();
+        private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
+        private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
+        {
+            var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
+
+            if (feature?.CanHaveBody == true)
+            {
+                if (!httpContext.Request.HasJsonContentType())
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
+                    return default;
+                }
+                try
+                {
+                    return await httpContext.Request.ReadFromJsonAsync<T>();
+                }
+                catch (IOException)
+                {
+                    return default;
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return default;
+                }
+            }
+            return default;
+        }
+    }
+
+    sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
+    {
+        public Type? Type { get; set; }
+
+        public int StatusCode { get; set; } = 200;
+
+        public IEnumerable<string> ContentTypes { get; init; } = Enumerable.Empty<string>();
+
+        public static ResponseTypeMetadata Create(string contentType)
+        {
+            return new ResponseTypeMetadata { ContentTypes = new[] { contentType } };
+        }
+    }
+
+    internal sealed class SourceGeneratedRouteEndpointDataSource : EndpointDataSource
+    {
+        private readonly List<RouteEntry> _routeEntries = new();
+        private readonly IServiceProvider _applicationServices;
+
+        public SourceGeneratedRouteEndpointDataSource(IServiceProvider applicationServices)
+        {
+            _applicationServices = applicationServices;
+        }
+
+        public RouteHandlerBuilder AddRouteHandler(
+            RoutePattern pattern,
+            Delegate routeHandler,
+            IEnumerable<string> httpMethods,
+            bool isFallback,
+            MetadataPopulator metadataPopulator,
+            RequestDelegateFactoryFunc requestDelegateFactoryFunc)
+        {
+            var conventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
+            var finallyConventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
+
+            var routeAttributes = RouteAttributes.RouteHandler;
+            if (isFallback)
+            {
+                routeAttributes |= RouteAttributes.Fallback;
+            }
+
+            _routeEntries.Add(new()
+            {
+                RoutePattern = pattern,
+                RouteHandler = routeHandler,
+                HttpMethods = httpMethods,
+                RouteAttributes = routeAttributes,
+                Conventions = conventions,
+                FinallyConventions = finallyConventions,
+                RequestDelegateFactory = requestDelegateFactoryFunc,
+                MetadataPopulator = metadataPopulator,
+            });
+
+            return new RouteHandlerBuilder(new[] { new ConventionBuilder(conventions, finallyConventions) });
+        }
+
+        public override IReadOnlyList<RouteEndpoint> Endpoints
+        {
+            get
+            {
+                var endpoints = new RouteEndpoint[_routeEntries.Count];
+                for (int i = 0; i < _routeEntries.Count; i++)
+                {
+                    endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i]).Build();
+                }
+                return endpoints;
+            }
+        }
+
+        public override IReadOnlyList<RouteEndpoint> GetGroupedEndpoints(RouteGroupContext context)
+        {
+            var endpoints = new RouteEndpoint[_routeEntries.Count];
+            for (int i = 0; i < _routeEntries.Count; i++)
+            {
+                endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i], context.Prefix, context.Conventions, context.FinallyConventions).Build();
+            }
+            return endpoints;
+        }
+
+        public override IChangeToken GetChangeToken() => NullChangeToken.Singleton;
+
+        // For testing
+        internal RouteEndpointBuilder GetSingleRouteEndpointBuilder()
+        {
+            if (_routeEntries.Count is not 1)
+            {
+                throw new InvalidOperationException($"There are {_routeEntries.Count} endpoints defined! This can only be called for a single endpoint.");
+            }
+
+            return CreateRouteEndpointBuilder(_routeEntries[0]);
+        }
+
+        private RouteEndpointBuilder CreateRouteEndpointBuilder(
+            RouteEntry entry, RoutePattern? groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>>? groupConventions = null, IReadOnlyList<Action<EndpointBuilder>>? groupFinallyConventions = null)
+        {
+            var pattern = RoutePatternFactory.Combine(groupPrefix, entry.RoutePattern);
+            var handler = entry.RouteHandler;
+            var isRouteHandler = (entry.RouteAttributes & RouteAttributes.RouteHandler) == RouteAttributes.RouteHandler;
+            var isFallback = (entry.RouteAttributes & RouteAttributes.Fallback) == RouteAttributes.Fallback;
+
+            var order = isFallback ? int.MaxValue : 0;
+            var displayName = pattern.RawText ?? pattern.ToString();
+
+            if (entry.HttpMethods is not null)
+            {
+                // Prepends the HTTP method to the DisplayName produced with pattern + method name
+                displayName = $"HTTP: {string.Join(", ", entry.HttpMethods)} {displayName}";
+            }
+
+            if (isFallback)
+            {
+                displayName = $"Fallback {displayName}";
+            }
+
+            // If we're not a route handler, we started with a fully realized (although unfiltered) RequestDelegate, so we can just redirect to that
+            // while running any conventions. We'll put the original back if it remains unfiltered right before building the endpoint.
+            RequestDelegate? factoryCreatedRequestDelegate = null;
+
+            // Let existing conventions capture and call into builder.RequestDelegate as long as they do so after it has been created.
+            RequestDelegate redirectRequestDelegate = context =>
+            {
+                if (factoryCreatedRequestDelegate is null)
+                {
+                    throw new InvalidOperationException("Resources.RouteEndpointDataSource_RequestDelegateCannotBeCalledBeforeBuild");
+                }
+
+                return factoryCreatedRequestDelegate(context);
+            };
+
+            // Add MethodInfo and HttpMethodMetadata (if any) as first metadata items as they are intrinsic to the route much like
+            // the pattern or default display name. This gives visibility to conventions like WithOpenApi() to intrinsic route details
+            // (namely the MethodInfo) even when applied early as group conventions.
+            RouteEndpointBuilder builder = new(redirectRequestDelegate, pattern, order)
+            {
+                DisplayName = displayName,
+                ApplicationServices = _applicationServices,
+            };
+
+            if (isRouteHandler)
+            {
+                builder.Metadata.Add(handler.Method);
+            }
+
+            if (entry.HttpMethods is not null)
+            {
+                builder.Metadata.Add(new HttpMethodMetadata(entry.HttpMethods));
+            }
+
+            // Apply group conventions before entry-specific conventions added to the RouteHandlerBuilder.
+            if (groupConventions is not null)
+            {
+                foreach (var groupConvention in groupConventions)
+                {
+                    groupConvention(builder);
+                }
+            }
+
+            // Any metadata inferred directly inferred by RDF or indirectly inferred via IEndpoint(Parameter)MetadataProviders are
+            // considered less specific than method-level attributes and conventions but more specific than group conventions
+            // so inferred metadata gets added in between these. If group conventions need to override inferred metadata,
+            // they can do so via IEndpointConventionBuilder.Finally like the do to override any other entry-specific metadata.
+            if (isRouteHandler)
+            {
+                entry.MetadataPopulator(entry.RouteHandler, builder);
+            }
+
+            // Add delegate attributes as metadata before entry-specific conventions but after group conventions.
+            var attributes = handler.Method.GetCustomAttributes();
+            if (attributes is not null)
+            {
+                foreach (var attribute in attributes)
+                {
+                    builder.Metadata.Add(attribute);
+                }
+            }
+
+            entry.Conventions.IsReadOnly = true;
+            foreach (var entrySpecificConvention in entry.Conventions)
+            {
+                entrySpecificConvention(builder);
+            }
+
+            // If no convention has modified builder.RequestDelegate, we can use the RequestDelegate returned by the RequestDelegateFactory directly.
+            var conventionOverriddenRequestDelegate = ReferenceEquals(builder.RequestDelegate, redirectRequestDelegate) ? null : builder.RequestDelegate;
+
+            if (isRouteHandler || builder.FilterFactories.Count > 0)
+            {
+                factoryCreatedRequestDelegate = entry.RequestDelegateFactory(entry.RouteHandler, builder);
+            }
+
+            Debug.Assert(factoryCreatedRequestDelegate is not null);
+
+            // Use the overridden RequestDelegate if it exists. If the overridden RequestDelegate is merely wrapping the final RequestDelegate,
+            // it will still work because of the redirectRequestDelegate.
+            builder.RequestDelegate = conventionOverriddenRequestDelegate ?? factoryCreatedRequestDelegate;
+
+            entry.FinallyConventions.IsReadOnly = true;
+            foreach (var entryFinallyConvention in entry.FinallyConventions)
+            {
+                entryFinallyConvention(builder);
+            }
+
+            if (groupFinallyConventions is not null)
+            {
+                // Group conventions are ordered by the RouteGroupBuilder before
+                // being provided here.
+                foreach (var groupFinallyConvention in groupFinallyConventions)
+                {
+                    groupFinallyConvention(builder);
+                }
+            }
+
+            return builder;
+        }
+        private struct RouteEntry
+        {
+            public MetadataPopulator MetadataPopulator { get; init; }
+            public RequestDelegateFactoryFunc RequestDelegateFactory { get; init; }
+            public RoutePattern RoutePattern { get; init; }
+            public Delegate RouteHandler { get; init; }
+            public IEnumerable<string> HttpMethods { get; init; }
+            public RouteAttributes RouteAttributes { get; init; }
+            public ThrowOnAddAfterEndpointBuiltConventionCollection Conventions { get; init; }
+            public ThrowOnAddAfterEndpointBuiltConventionCollection FinallyConventions { get; init; }
+        }
+
+        [Flags]
+        private enum RouteAttributes
+        {
+            // The endpoint was defined by a RequestDelegate, RequestDelegateFactory.Create() should be skipped unless there are endpoint filters.
+            None = 0,
+            // This was added as Delegate route handler, so RequestDelegateFactory.Create() should always be called.
+            RouteHandler = 1,
+            // This was added by MapFallback.
+            Fallback = 2,
+        }
+
+        // This private class is only exposed to internal code via ICollection<Action<EndpointBuilder>> in RouteEndpointBuilder where only Add is called.
+        private sealed class ThrowOnAddAfterEndpointBuiltConventionCollection : List<Action<EndpointBuilder>>, ICollection<Action<EndpointBuilder>>
+        {
+            // We throw if someone tries to add conventions to the RouteEntry after endpoints have already been resolved meaning the conventions
+            // will not be observed given RouteEndpointDataSource is not meant to be dynamic and uses NullChangeToken.Singleton.
+            public bool IsReadOnly { get; set; }
+
+            void ICollection<Action<EndpointBuilder>>.Add(Action<EndpointBuilder> convention)
+            {
+                if (IsReadOnly)
+                {
+                    throw new InvalidOperationException("Resources.RouteEndpointDataSource_ConventionsCannotBeModifiedAfterBuild");
+                }
+
+                Add(convention);
+            }
+        }
+
+        private class ConventionBuilder : IEndpointConventionBuilder
+        {
+            private readonly ICollection<Action<EndpointBuilder>> _conventions;
+            private readonly ICollection<Action<EndpointBuilder>> _finallyConventions;
+            public ConventionBuilder(ICollection<Action<EndpointBuilder>> conventions, ICollection<Action<EndpointBuilder>> finallyConventions)
+            {
+                _conventions = conventions;
+                _finallyConventions = finallyConventions;
+            }
+
+            /// <summary>
+            /// Adds the specified convention to the builder. Conventions are used to customize <see cref="EndpointBuilder"/> instances.
+            /// </summary>
+            /// <param name="convention">The convention to add to the builder.</param>
+            public void Add(Action<EndpointBuilder> convention)
+            {
+                _conventions.Add(convention);
+            }
+            public void Finally(Action<EndpointBuilder> finalConvention)
+            {
+                _finallyConventions.Add(finalConvention);
+            }
+        }
     }
 }
 #endif
