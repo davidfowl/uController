@@ -205,7 +205,6 @@ namespace uController.SourceGenerator
 
         private void GenerateFilteredMethod(MethodModel method)
         {
-            var methodStartIndex = _codeBuilder.Length + 4 * _indent;
             WriteLine($"async {typeof(Task)} {method.UniqueName}Filtered({typeof(HttpContext)} httpContext)");
             WriteLine("{");
             Indent();
@@ -370,8 +369,8 @@ namespace uController.SourceGenerator
                 }
                 else
                 {
-                    // TODO: Handle empty body (required parameters)
-                    WriteLine($"var {parameterName} = await httpContext.Request.ReadFromJsonAsync<{parameter.ParameterType}>();");
+
+                    WriteLine($"var {parameterName} = await ResolveBody<{parameter.ParameterType}>(httpContext);");
                 }
 
                 hasAwait = true;

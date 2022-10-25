@@ -219,6 +219,7 @@ namespace uController.SourceGenerator
                     var fromBody = parameter.GetCustomAttributeData(wellKnownTypes.FromBodyAttributeType);
                     var fromRoute = parameter.GetCustomAttributeData(wellKnownTypes.FromRouteAttributeType);
                     var fromService = parameter.GetCustomAttributeData(wellKnownTypes.FromServicesAttributeType);
+                    var asParameters = parameter.GetCustomAttributeData(wellKnownTypes.AsParametersAttributeType);
 
                     var parameterModel = new ParameterModel
                     {
@@ -556,8 +557,34 @@ namespace Microsoft.AspNetCore.Builder
 
         private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
         private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
-        private static ValueTask<T> ResolveService<T>(HttpContext context) => new ValueTask<T>(context.RequestServices.GetRequiredService<T>());
-        private static ValueTask<T> ResolveBody<T>(HttpContext context) => context.Request.ReadFromJsonAsync<T>();
+        private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
+        private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
+        {{
+            var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
+
+            if (feature?.CanHaveBody == true)
+            {{
+                if (!httpContext.Request.HasJsonContentType())
+                {{
+                    httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
+                    return default;
+                }}
+                try
+                {{
+                    return await httpContext.Request.ReadFromJsonAsync<T>();
+                }}
+                catch (IOException)
+                {{
+                    return default;
+                }}
+                catch (System.Text.Json.JsonException)
+                {{
+                    httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return default;
+                }}
+            }}
+            return default;
+        }}
     }}
 }}
 #endif
