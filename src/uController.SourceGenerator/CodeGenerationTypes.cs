@@ -2,42 +2,44 @@
 
 namespace Microsoft.AspNetCore.Http
 {
-    internal interface IResult { }
-    internal class HttpContext { }
-    internal class HttpRequest { }
-    internal class HttpResponse { }
-    internal interface IFormCollection { }
-    internal interface IFormFile { }
-    internal class AsParametersAttribute { }
+    interface IResult { }
+    class HttpContext { }
+    class HttpRequest { }
+    class HttpResponse { }
+    interface IFormCollection { }
+    interface IFormFile { }
+    class AsParametersAttribute { }
 }
 
 namespace Microsoft.AspNetCore.Mvc
 {
-    internal class FromQueryAttribute { }
-    internal class FromRouteAttribute { }
-    internal class FromHeaderAttribute { }
-    internal class FromFormAttribute { }
-    internal class FromBodyAttribute { }
-    internal class FromServicesAttribute { }
+    class FromQueryAttribute { }
+    class FromRouteAttribute { }
+    class FromHeaderAttribute { }
+    class FromFormAttribute { }
+    class FromBodyAttribute { }
+    class FromServicesAttribute { }
 }
 
 namespace Microsoft.AspNetCore.Http.Metadata
 {
 
-    internal interface IEndpointMetadataProvider { }
+    interface IEndpointMetadataProvider { }
+
+    interface IEndpointParameterMetadataProvider { }
 }
 
 namespace Microsoft.Extensions.Primitives
 {
-    internal struct StringValues { }
+    struct StringValues { }
 }
 
 namespace System.IO.Pipelines
 {
-    internal class PipeReader { }
+    class PipeReader { }
 }
 
 namespace Microsoft.AspNetCore.Routing
 {
-    internal interface IEndpointRouteBuilder { }
+    interface IEndpointRouteBuilder { }
 }

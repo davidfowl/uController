@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using MinimalApis.Extensions.Binding;
 using Sample;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
@@ -34,6 +35,17 @@ app.MapPost("/fileupload", (IFormFile file) =>
 app.MapPost("/formpost", (IFormCollection formCollection) =>
 {
     return $"Uploaded {formCollection.Count} files";
+});
+
+app.MapPost("/body", (Body<string> body) => body.Value);
+
+app.MapPost("/validated", (Validated<Model> model) =>
+{
+    if (!model.IsValid)
+    {
+        return Results.ValidationProblem(model.Errors);
+    }
+    return Results.Ok();
 });
 
 app.MapGet("/something", object (CancellationToken ct) => new Person("Hello"));

@@ -19,7 +19,8 @@ namespace uController.SourceGenerator
             FromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
             FromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
             AsParametersAttributeType = metadataLoadContext.Resolve<AsParametersAttribute>();
-            EndpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
+            IEndpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
+            IEndpointParameterMetadataProviderType = metadataLoadContext.Resolve<IEndpointParameterMetadataProvider>();
             EndpointRouteBuilderType = metadataLoadContext.Resolve<IEndpointRouteBuilder>();
             DelegateType = metadataLoadContext.Resolve<Delegate>();
             IResultType = metadataLoadContext.Resolve<IResult>();
@@ -35,7 +36,8 @@ namespace uController.SourceGenerator
         public Type FromBodyAttributeType { get; }
         public Type FromServicesAttributeType { get; }
         public Type AsParametersAttributeType { get; }
-        public Type EndpointMetadataProviderType { get; }
+        public Type IEndpointMetadataProviderType { get; }
+        public Type IEndpointParameterMetadataProviderType { get; }
         public Type EndpointRouteBuilderType { get; }
         public Type DelegateType { get; }
         public Type IResultType { get; }

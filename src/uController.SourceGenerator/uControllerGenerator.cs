@@ -377,6 +377,27 @@ namespace uController.SourceGenerator
                     $@"return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));";
 
                 var populateMetadata = new StringBuilder();
+                var metadataPreReqs = new StringBuilder();
+                var generatedMetadataParameterInfo = false;
+
+                foreach (var p in methodModel.Parameters)
+                {
+                    if (wellKnownTypes.IEndpointMetadataProviderType?.IsAssignableFrom(p.ParameterType) is true)
+                    {
+                        populateMetadata.AppendLine($@"                PopulateMetadata<{p.ParameterType}>(del.Method, builder);");
+                    }
+
+                    if (wellKnownTypes.IEndpointParameterMetadataProviderType?.IsAssignableFrom(p.ParameterType) is true)
+                    {
+                        if (!generatedMetadataParameterInfo)
+                        {
+                            metadataPreReqs.AppendLine("                var parameterInfos = del.Method.GetParameters();");
+                            generatedMetadataParameterInfo = true;
+                        }
+                        populateMetadata.AppendLine($@"                PopulateMetadata<{p.ParameterType}>(parameterInfos[{p.Index}], builder);");
+                    }
+                }
+
                 Type returnType = methodModel.MethodInfo.ReturnType;
 
                 if (AwaitableInfo.IsTypeAwaitable(returnType, out var awaitableInfo))
@@ -388,33 +409,31 @@ namespace uController.SourceGenerator
                 {
                     // Don't add metadata
                 }
-                else if (wellKnownTypes.EndpointMetadataProviderType is not null && wellKnownTypes.EndpointMetadataProviderType.IsAssignableFrom(returnType))
+                else if (wellKnownTypes.IEndpointMetadataProviderType?.IsAssignableFrom(returnType) == true)
                 {
                     // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
                     // we can avoid that reflection here.
 
-                    // TODO: Enable this when we stop calling RDF
                     // Static abstract call
-                    populateMetadata.AppendLine($@"PopulateMetadata<{returnType}>(del.Method, builder);");
+                    populateMetadata.AppendLine($@"                PopulateMetadata<{returnType}>(del.Method, builder);");
                 }
                 else if (returnType.Equals(typeof(string)))
                 {
                     // Add string plaintext
-                    populateMetadata.AppendLine($@"builder.Metadata.Add(ResponseTypeMetadata.Create(""text/plain""));");
+                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""text/plain""));");
                 }
                 else
                 {
                     // Add JSON
-                    populateMetadata.AppendLine($@"builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json""));");
+                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json""));");
                 }
-
-                // TODO: Populate the metadata for parameters
 
                 // Generate code here for this thunk
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
-                {populateMetadata.ToString().TrimEnd()}
+{metadataPreReqs}
+{populateMetadata.ToString().TrimEnd()}
             }}, 
            (del, builder) => 
             {{
@@ -562,6 +581,11 @@ namespace Microsoft.AspNetCore.Builder
         private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
         {{
             T.PopulateMetadata(method, builder);
+        }}
+
+        private static void PopulateMetadata<T>(System.Reflection.ParameterInfo parameter, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointParameterMetadataProvider
+        {{
+            T.PopulateMetadata(parameter, builder);
         }}
 
         private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
