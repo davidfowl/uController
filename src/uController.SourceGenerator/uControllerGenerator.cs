@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -432,7 +431,7 @@ namespace uController.SourceGenerator
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
-{metadataPreReqs}
+{metadataPreReqs.ToString().TrimEnd()}
 {populateMetadata.ToString().TrimEnd()}
             }}, 
            (del, builder) => 
