@@ -77,6 +77,8 @@ app.MapGet(s, new Wrapper().Hello);
 app.MapGet("/another", Wrapper.HelloDelegate);
 app.MapGet("/another1", Wrapper.HelloDelegate2);
 
+app.MapGet("/choose/{c}", (Choices c) => c.ToString());
+
 var wrapper = new Wrapper();
 wrapper.AddRoutes(app);
 
@@ -171,4 +173,11 @@ public class Model
     {
         return ValueTask.FromResult(new Model());
     }
+}
+
+enum Choices
+{
+    One,
+    Two,
+    Three,
 }

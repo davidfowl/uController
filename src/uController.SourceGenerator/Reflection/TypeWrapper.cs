@@ -47,6 +47,8 @@ namespace System.Reflection
 
         public ITypeSymbol TypeSymbol => _typeSymbol;
 
+        public override bool IsEnum => _typeSymbol.TypeKind == TypeKind.Enum;
+
         public override int GetArrayRank()
         {
             return ArrayTypeSymbol.Rank;

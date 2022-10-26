@@ -108,5 +108,10 @@ namespace System.Reflection
         {
             throw new NotImplementedException();
         }
+
+        public override string ToString()
+        {
+            return _method.ToString();
+        }
     }
 }

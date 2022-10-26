@@ -424,8 +424,16 @@ namespace uController.SourceGenerator
         {
             // TODO: Handle specific types (Uri, DateTime etc) with relevant options
 
+            mi = null;
+
+            if (type.IsEnum)
+            {
+                // Use 
+                mi = GetEnumTryParseMethod();
+            }
+
             // TODO: Make this more efficient
-            mi = GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
             mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _wellKnownTypes.IFormatProviderType, type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
@@ -508,10 +516,12 @@ namespace uController.SourceGenerator
             var underlyingType = Unwrap(type);
 
             // Support different TryParse overloads
-            string TryParseExpression(string outputExpression) => tryParseMethod.GetParameters().Length switch
+            string TryParseExpression(string outputExpression) => (tryParseMethod.DeclaringType, tryParseMethod.GetParameters().Length) switch
             {
-                2 => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, out {outputExpression})",
-                _ => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, System.Globalization.CultureInfo.InvariantCulture, out {outputExpression})"
+                (_, 2) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, out {outputExpression})",
+                (var type, 3) when type.Equals(_wellKnownTypes.EnumType) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, true, out {outputExpression})",
+                (_, 3) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, System.Globalization.CultureInfo.InvariantCulture, out {outputExpression})",
+                _ => throw new NotSupportedException("Unknown TryParse method")
             };
 
             if (underlyingType is null)
@@ -541,6 +551,16 @@ namespace uController.SourceGenerator
                 Unindent();
                 WriteLine("}");
             }
+        }
+        private MethodInfo GetEnumTryParseMethod()
+        {
+            var tryParse = (from m in _wellKnownTypes.EnumType.GetMethods()
+                            let parameters = m.GetParameters()
+                            where parameters.Length == 3 && m.Name == "TryParse" && m.IsPublic && m.IsStatic && m.IsGenericMethod &&
+                                  parameters[0].ParameterType.Equals(typeof(string)) &&
+                                  parameters[1].ParameterType.Equals(typeof(bool))
+                            select m).FirstOrDefault();
+            return tryParse;
         }
 
         private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes, Func<MethodInfo, bool> validateReturnType)

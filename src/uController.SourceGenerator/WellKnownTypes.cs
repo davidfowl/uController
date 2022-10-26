@@ -27,6 +27,7 @@ namespace uController.SourceGenerator
             HttpContextType = metadataLoadContext.Resolve<HttpContext>();
             ParamterInfoType = metadataLoadContext.Resolve<ParameterInfo>();
             IFormatProviderType = metadataLoadContext.Resolve<IFormatProvider>();
+            EnumType = metadataLoadContext.Resolve<Enum>();
         }
 
         public Type FromQueryAttributeType { get; }
@@ -44,5 +45,6 @@ namespace uController.SourceGenerator
         public Type HttpContextType { get; }
         public Type ParamterInfoType { get; }
         public Type IFormatProviderType { get; }
+        public Type EnumType { get; }
     }
 }
