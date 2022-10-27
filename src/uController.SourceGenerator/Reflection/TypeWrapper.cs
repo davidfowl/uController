@@ -12,9 +12,9 @@ namespace System.Reflection
         private readonly MetadataLoadContext _metadataLoadContext;
         private readonly bool _isByRef;
 
-        public TypeWrapper(ITypeSymbol namedTypeSymbol, MetadataLoadContext metadataLoadContext, bool isByRef = false)
+        public TypeWrapper(ITypeSymbol typeSymbol, MetadataLoadContext metadataLoadContext, bool isByRef = false)
         {
-            _typeSymbol = namedTypeSymbol;
+            _typeSymbol = typeSymbol;
             _metadataLoadContext = metadataLoadContext;
             _isByRef = isByRef;
         }
@@ -48,6 +48,8 @@ namespace System.Reflection
         public ITypeSymbol TypeSymbol => _typeSymbol;
 
         public override bool IsEnum => _typeSymbol.TypeKind == TypeKind.Enum;
+
+        public override bool IsConstructedGenericType => NamedTypeSymbol?.IsUnboundGenericType == false;
 
         public override int GetArrayRank()
         {
@@ -214,7 +216,14 @@ namespace System.Reflection
 
         protected override TypeAttributes GetAttributeFlagsImpl()
         {
-            throw new NotImplementedException();
+            TypeAttributes flags = default;
+
+            if (_typeSymbol.TypeKind == TypeKind.Interface)
+            {
+                flags |= TypeAttributes.Interface;
+            }
+
+            return flags;
         }
 
         protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
