@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
-    internal class MemberInfoWrapper : MemberInfo
+    internal class RoslynMemberInfo : MemberInfo
     {
         private readonly ISymbol _member;
         private readonly MetadataLoadContext _metadataLoadContext;
 
-        public MemberInfoWrapper(ISymbol member, MetadataLoadContext metadataLoadContext)
+        public RoslynMemberInfo(ISymbol member, MetadataLoadContext metadataLoadContext)
         {
             _member = member;
             _metadataLoadContext = metadataLoadContext;
@@ -27,7 +29,7 @@ namespace System.Reflection
             var attributes = new List<CustomAttributeData>();
             foreach (var a in _member.GetAttributes())
             {
-                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
+                attributes.Add(new RoslynCustomAttributeData(a, _metadataLoadContext));
             }
             return attributes;
         }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Roslyn.Reflection;
 
 namespace uController.SourceGenerator
 {
@@ -12,22 +13,22 @@ namespace uController.SourceGenerator
         public WellKnownTypes(MetadataLoadContext metadataLoadContext)
         {
             // REVIEW: Consider making this lazy
-            FromQueryAttributeType = metadataLoadContext.Resolve<FromQueryAttribute>();
-            FromRouteAttributeType = metadataLoadContext.Resolve<FromRouteAttribute>();
-            FromHeaderAttributeType = metadataLoadContext.Resolve<FromHeaderAttribute>();
-            FromFormAttributeType = metadataLoadContext.Resolve<FromFormAttribute>();
-            FromBodyAttributeType = metadataLoadContext.Resolve<FromBodyAttribute>();
-            FromServicesAttributeType = metadataLoadContext.Resolve<FromServicesAttribute>();
-            AsParametersAttributeType = metadataLoadContext.Resolve<AsParametersAttribute>();
-            IEndpointMetadataProviderType = metadataLoadContext.Resolve<IEndpointMetadataProvider>();
-            IEndpointParameterMetadataProviderType = metadataLoadContext.Resolve<IEndpointParameterMetadataProvider>();
-            EndpointRouteBuilderType = metadataLoadContext.Resolve<IEndpointRouteBuilder>();
-            DelegateType = metadataLoadContext.Resolve<Delegate>();
-            IResultType = metadataLoadContext.Resolve<IResult>();
-            HttpContextType = metadataLoadContext.Resolve<HttpContext>();
-            ParamterInfoType = metadataLoadContext.Resolve<ParameterInfo>();
-            IFormatProviderType = metadataLoadContext.Resolve<IFormatProvider>();
-            EnumType = metadataLoadContext.Resolve<Enum>();
+            FromQueryAttributeType = metadataLoadContext.ResolveType<FromQueryAttribute>();
+            FromRouteAttributeType = metadataLoadContext.ResolveType<FromRouteAttribute>();
+            FromHeaderAttributeType = metadataLoadContext.ResolveType<FromHeaderAttribute>();
+            FromFormAttributeType = metadataLoadContext.ResolveType<FromFormAttribute>();
+            FromBodyAttributeType = metadataLoadContext.ResolveType<FromBodyAttribute>();
+            FromServicesAttributeType = metadataLoadContext.ResolveType<FromServicesAttribute>();
+            AsParametersAttributeType = metadataLoadContext.ResolveType<AsParametersAttribute>();
+            IEndpointMetadataProviderType = metadataLoadContext.ResolveType<IEndpointMetadataProvider>();
+            IEndpointParameterMetadataProviderType = metadataLoadContext.ResolveType<IEndpointParameterMetadataProvider>();
+            EndpointRouteBuilderType = metadataLoadContext.ResolveType<IEndpointRouteBuilder>();
+            DelegateType = metadataLoadContext.ResolveType<Delegate>();
+            IResultType = metadataLoadContext.ResolveType<IResult>();
+            HttpContextType = metadataLoadContext.ResolveType<HttpContext>();
+            ParamterInfoType = metadataLoadContext.ResolveType<ParameterInfo>();
+            IFormatProviderType = metadataLoadContext.ResolveType<IFormatProvider>();
+            EnumType = metadataLoadContext.ResolveType<Enum>();
         }
 
         public Type FromQueryAttributeType { get; }

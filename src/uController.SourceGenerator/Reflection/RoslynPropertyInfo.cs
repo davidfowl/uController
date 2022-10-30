@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
-    internal class PropertyWrapper : PropertyInfo
+    internal class RoslynPropertyInfo : PropertyInfo
     {
         private readonly IPropertySymbol _property;
-        private MetadataLoadContext _metadataLoadContext;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public PropertyWrapper(IPropertySymbol property, MetadataLoadContext metadataLoadContext)
+        public RoslynPropertyInfo(IPropertySymbol property, MetadataLoadContext metadataLoadContext)
         {
             _property = property;
             _metadataLoadContext = metadataLoadContext;
@@ -56,7 +58,7 @@ namespace System.Reflection
             var parameters = new List<ParameterInfo>();
             foreach (var p in _property.Parameters)
             {
-                parameters.Add(new ParameterWrapper(p, _metadataLoadContext));
+                parameters.Add(new RoslynParameterInfo(p, _metadataLoadContext));
             }
             return parameters.ToArray();
         }

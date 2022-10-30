@@ -428,11 +428,10 @@ namespace uController.SourceGenerator
 
             if (type.IsEnum)
             {
-                // Use 
+                // Use Enum.TryParse<T>(string, bool, out T) for enums
                 mi = GetEnumTryParseMethod();
             }
 
-            // TODO: Make this more efficient
             mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
 
             mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _wellKnownTypes.IFormatProviderType, type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
@@ -442,8 +441,6 @@ namespace uController.SourceGenerator
 
         private bool HasBindAsync(Type type, out MethodInfo mi, out int parameterCount)
         {
-            // TODO: Make this more efficient
-
             // TODO: Validate return type
 
             mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] { _wellKnownTypes.HttpContextType }, m => true);
@@ -554,9 +551,9 @@ namespace uController.SourceGenerator
         }
         private MethodInfo GetEnumTryParseMethod()
         {
-            var tryParse = (from m in _wellKnownTypes.EnumType.GetMethods()
+            var tryParse = (from m in _wellKnownTypes.EnumType.GetMethods(BindingFlags.Public | BindingFlags.Static)
                             let parameters = m.GetParameters()
-                            where parameters.Length == 3 && m.Name == "TryParse" && m.IsPublic && m.IsStatic && m.IsGenericMethod &&
+                            where parameters.Length == 3 && m.Name == "TryParse" && m.IsGenericMethod &&
                                   parameters[0].ParameterType.Equals(typeof(string)) &&
                                   parameters[1].ParameterType.Equals(typeof(bool))
                             select m).FirstOrDefault();
@@ -567,9 +564,11 @@ namespace uController.SourceGenerator
         {
             bool IsMatch(MethodInfo method) => method is not null && !method.IsAbstract && validateReturnType(method);
 
-            MethodInfo Search(Type t) => t.GetMethods().FirstOrDefault(m => m.Name == name && m.IsPublic && m.IsStatic && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(parameterTypes));
-
-            var methodInfo = Search(type);
+            var methodInfo = type.GetMethod(name,
+                                            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
+                                            binder: null,
+                                            types: parameterTypes,
+                                            modifiers: default);
 
             if (IsMatch(methodInfo))
             {
@@ -581,7 +580,11 @@ namespace uController.SourceGenerator
             // Check all interfaces for implementations. Fail if there are duplicates.
             foreach (var implementedInterface in type.GetInterfaces())
             {
-                var interfaceMethod = Search(implementedInterface);
+                var interfaceMethod = implementedInterface.GetMethod(name,
+                    BindingFlags.Public | BindingFlags.Static,
+                    binder: null,
+                    types: parameterTypes,
+                    modifiers: default);
 
                 if (IsMatch(interfaceMethod))
                 {

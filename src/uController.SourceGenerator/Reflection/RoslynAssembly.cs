@@ -1,17 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
-    internal class AssemblyWrapper : Assembly
+    internal class RoslynAssembly : Assembly
     {
         private readonly MetadataLoadContext _metadataLoadContext;
 
-        public AssemblyWrapper(IAssemblySymbol assembly, MetadataLoadContext metadataLoadContext)
+        public RoslynAssembly(IAssemblySymbol assembly, MetadataLoadContext metadataLoadContext)
         {
             Symbol = assembly;
             _metadataLoadContext = metadataLoadContext;
         }
+
+        public override string FullName => Symbol.Name;
 
         internal IAssemblySymbol Symbol { get; }
 
