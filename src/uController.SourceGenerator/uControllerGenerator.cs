@@ -405,6 +405,7 @@ namespace uController.SourceGenerator
                     returnType = awaitableInfo.ResultType;
                 }
 
+                populateMetadata.AppendLine($@"                builder.Metadata.Add(new SourceKey(@""{invocation.SyntaxTree.FilePath}"", {lineNumber}));");
                 if (returnType.Equals(typeof(void)))
                 {
                     // Don't add metadata
@@ -432,8 +433,7 @@ namespace uController.SourceGenerator
                 thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
-{metadataPreReqs.ToString().TrimEnd()}
-{populateMetadata.ToString().TrimEnd()}
+{metadataPreReqs.ToString().Trim()}{populateMetadata.ToString().TrimEnd()}
             }}, 
            (del, builder) => 
             {{
@@ -509,6 +509,7 @@ namespace Microsoft.AspNetCore.Builder
 {{
     delegate void MetadataPopulator(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
     delegate Microsoft.AspNetCore.Http.RequestDelegate RequestDelegateFactoryFunc(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
+    internal record SourceKey(string Path, int Line);
 
     public static class MapActionsExtensions
     {{
@@ -920,7 +921,7 @@ namespace Microsoft.AspNetCore.Builder
 ";
             if (sb.Length > 0)
             {
-                context.AddSource($"MapExtensions", SourceText.From(mapActionsText, Encoding.UTF8));
+                context.AddSource($"RouteBuilderExtensions.g.cs", SourceText.From(mapActionsText, Encoding.UTF8));
             }
         }
 

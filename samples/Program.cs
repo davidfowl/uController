@@ -117,6 +117,12 @@ app.Map("/test/{n}", (int n) => n);
 
 app.MapGet("/something/parsable", ([FromQuery] Parsable p) => p);
 
+app.MapGet("/lineinfo", string (HttpContext context) =>
+{
+    var sourceKey = context.GetEndpoint()?.Metadata.GetMetadata<SourceKey>();
+    return sourceKey.ToString();
+});
+
 app.Run();
 
 record Person(string Name);

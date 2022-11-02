@@ -28,12 +28,9 @@ namespace Roslyn.Reflection
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
-            var attributes = new List<CustomAttributeData>();
-            foreach (var a in _parameter.GetAttributes())
-            {
-                attributes.Add(new RoslynCustomAttributeData(a, _metadataLoadContext));
-            }
-            return attributes;
+            return SharedUtilities.GetCustomAttributesData(_parameter, _metadataLoadContext);
         }
+
+        public override string ToString() => _parameter.ToString();
     }
 }

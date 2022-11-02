@@ -27,13 +27,13 @@ namespace Roslyn.Reflection
 
         public override Type BaseType => _typeSymbol.BaseType.AsType(_metadataLoadContext);
 
-        public override string FullName => Namespace == null || Namespace == "<global namespace>" ? Name : Namespace + "." + Name;
+        public override string FullName => Namespace is null ? Name : Namespace + "." + Name;
 
         public override Guid GUID => Guid.Empty;
 
         public override Module Module => throw new NotImplementedException();
 
-        public override string Namespace => _typeSymbol.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
+        public override string Namespace => _typeSymbol.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)) is { Length: > 0 } ns ? ns : null;
 
         public override Type UnderlyingSystemType => this;
 
@@ -81,12 +81,7 @@ namespace Roslyn.Reflection
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
-            var attributes = new List<CustomAttributeData>();
-            foreach (var a in _typeSymbol.GetAttributes())
-            {
-                attributes.Add(new RoslynCustomAttributeData(a, _metadataLoadContext));
-            }
-            return attributes;
+            return SharedUtilities.GetCustomAttributesData(_typeSymbol, _metadataLoadContext);
         }
 
         public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
@@ -96,19 +91,18 @@ namespace Roslyn.Reflection
                 return Array.Empty<ConstructorInfo>();
             }
 
-            var ctors = new List<ConstructorInfo>();
+            List<ConstructorInfo> ctors = default;
             foreach (var c in NamedTypeSymbol.Constructors)
             {
-                var flags = SharedUtilities.ComputeBindingFlags(c);
-
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, c))
                 {
                     continue;
                 }
 
+                ctors ??= new();
                 ctors.Add(new RoslynConstructorInfo(c, _metadataLoadContext));
             }
-            return ctors.ToArray();
+            return ctors?.ToArray() ?? Array.Empty<ConstructorInfo>();
         }
 
         public override Type MakeByRefType()
@@ -166,13 +160,12 @@ namespace Roslyn.Reflection
         {
             foreach (var symbol in _typeSymbol.GetMembers())
             {
-                var flags = SharedUtilities.ComputeBindingFlags(symbol);
                 if (symbol is not IFieldSymbol fieldSymbol)
                 {
                     continue;
                 }
 
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, symbol))
                 {
                     continue;
                 }
@@ -194,9 +187,7 @@ namespace Roslyn.Reflection
                     continue;
                 }
 
-                var flags = SharedUtilities.ComputeBindingFlags(symbol);
-
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, symbol))
                 {
                     continue;
                 }
@@ -236,30 +227,31 @@ namespace Roslyn.Reflection
         {
             List<MemberInfo> members = null;
 
-            foreach (var symbol in _typeSymbol.GetMembers())
+            foreach (var t in _typeSymbol.BaseTypes())
             {
-                var flags = SharedUtilities.ComputeBindingFlags(symbol);
-
-                if ((flags & bindingAttr) != flags)
+                foreach (var symbol in t.GetMembers())
                 {
-                    continue;
+                    if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, symbol))
+                    {
+                        continue;
+                    }
+
+                    MemberInfo member = symbol switch
+                    {
+                        IFieldSymbol f => f.AsFieldInfo(_metadataLoadContext),
+                        IPropertySymbol p => p.AsPropertyInfo(_metadataLoadContext),
+                        IMethodSymbol m => m.AsMethodInfo(_metadataLoadContext),
+                        _ => null
+                    };
+
+                    if (member is null)
+                    {
+                        continue;
+                    }
+
+                    members ??= new();
+                    members.Add(member);
                 }
-
-                MemberInfo member = symbol switch
-                {
-                    IFieldSymbol f => f.AsFieldInfo(_metadataLoadContext),
-                    IPropertySymbol p => p.AsPropertyInfo(_metadataLoadContext),
-                    IMethodSymbol m => m.AsMethodInfo(_metadataLoadContext),
-                    _ => null
-                };
-
-                if (member is null)
-                {
-                    continue;
-                }
-
-                members ??= new();
-                members.Add(member);
             }
 
             // https://github.com/dotnet/runtime/blob/9ec7fc21862f3446c6c6f7dcfff275942e3884d3/src/coreclr/System.Private.CoreLib/src/System/RuntimeType.CoreCLR.cs#L2693-L2694
@@ -282,23 +274,23 @@ namespace Roslyn.Reflection
         {
             List<MethodInfo> methods = null;
 
-            foreach (var m in _typeSymbol.GetMembers())
+            foreach (var t in _typeSymbol.BaseTypes())
             {
-                if (m is not IMethodSymbol method || method.MethodKind == MethodKind.Constructor)
+                foreach (var m in t.GetMembers())
                 {
-                    // Only methods that are not constructors
-                    continue;
+                    if (m is not IMethodSymbol method || method.MethodKind == MethodKind.Constructor)
+                    {
+                        continue;
+                    }
+
+                    if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, method))
+                    {
+                        continue;
+                    }
+
+                    methods ??= new();
+                    methods.Add(method.AsMethodInfo(_metadataLoadContext));
                 }
-
-                var flags = SharedUtilities.ComputeBindingFlags(m);
-
-                if ((flags & bindingAttr) != flags)
-                {
-                    continue;
-                }
-
-                methods ??= new();
-                methods.Add(method.AsMethodInfo(_metadataLoadContext));
             }
 
             return methods?.ToArray() ?? Array.Empty<MethodInfo>();
@@ -308,8 +300,7 @@ namespace Roslyn.Reflection
         {
             foreach (var type in _typeSymbol.GetTypeMembers(name))
             {
-                var flags = SharedUtilities.ComputeBindingFlags(type);
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, type))
                 {
                     continue;
                 }
@@ -324,8 +315,7 @@ namespace Roslyn.Reflection
             List<Type> nestedTypes = default;
             foreach (var type in _typeSymbol.GetTypeMembers())
             {
-                var flags = SharedUtilities.ComputeBindingFlags(type);
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, type))
                 {
                     continue;
                 }
@@ -339,21 +329,23 @@ namespace Roslyn.Reflection
         public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
         {
             List<PropertyInfo> properties = default;
-            foreach (var symbol in _typeSymbol.GetMembers())
+            foreach (var t in _typeSymbol.BaseTypes())
             {
-                if (symbol is not IPropertySymbol property)
+                foreach (var symbol in t.GetMembers())
                 {
-                    continue;
-                }
+                    if (symbol is not IPropertySymbol property)
+                    {
+                        continue;
+                    }
 
-                var flags = SharedUtilities.ComputeBindingFlags(symbol);
-                if ((flags & bindingAttr) != flags)
-                {
-                    continue;
-                }
+                    if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, symbol))
+                    {
+                        continue;
+                    }
 
-                properties ??= new();
-                properties.Add(new RoslynPropertyInfo(property, _metadataLoadContext));
+                    properties ??= new();
+                    properties.Add(new RoslynPropertyInfo(property, _metadataLoadContext));
+                }
             }
             return properties?.ToArray() ?? Array.Empty<PropertyInfo>();
         }
@@ -365,7 +357,7 @@ namespace Roslyn.Reflection
 
         public override bool IsDefined(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         protected override TypeAttributes GetAttributeFlagsImpl()
@@ -420,7 +412,58 @@ namespace Roslyn.Reflection
 
         protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
         {
-            throw new NotImplementedException();
+            // TODO: Use callConvention and modifiers
+            StringComparison comparison = (bindingAttr & BindingFlags.IgnoreCase) == BindingFlags.IgnoreCase
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
+            foreach (var m in _typeSymbol.GetMembers())
+            {
+                if (m is not IMethodSymbol method || method.MethodKind != MethodKind.Constructor)
+                {
+                    // Only methods that are constructors
+                    continue;
+                }
+
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, m))
+                {
+                    continue;
+                }
+
+                var parameterCount = types?.Length ?? 0;
+
+                // Compare parameter types
+                if (parameterCount != method.Parameters.Length)
+                {
+                    continue;
+                }
+
+                var valid = true;
+                for (int i = 0; i < parameterCount; i++)
+                {
+                    var parameterType = types[i];
+                    var parameterTypeSymbol = _metadataLoadContext.ResolveType(parameterType)?.GetTypeSymbol();
+
+                    if (parameterTypeSymbol is null)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    if (!method.Parameters[i].Type.Equals(parameterTypeSymbol, SymbolEqualityComparer.Default))
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid)
+                {
+                    return new RoslynConstructorInfo(method, _metadataLoadContext);
+                }
+            }
+
+            return null;
         }
 
         protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
@@ -438,9 +481,7 @@ namespace Roslyn.Reflection
                     continue;
                 }
 
-                var flags = SharedUtilities.ComputeBindingFlags(m);
-
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, m))
                 {
                     continue;
                 }
@@ -450,14 +491,16 @@ namespace Roslyn.Reflection
                     continue;
                 }
 
+                var parameterCount = types?.Length ?? 0;
+
                 // Compare parameter types
-                if (types.Length != method.Parameters.Length)
+                if (parameterCount != method.Parameters.Length)
                 {
                     continue;
                 }
 
                 var valid = true;
-                for (int i = 0; i < types.Length; i++)
+                for (int i = 0; i < parameterCount; i++)
                 {
                     var parameterType = types[i];
                     var parameterTypeSymbol = _metadataLoadContext.ResolveType(parameterType)?.GetTypeSymbol();
@@ -497,8 +540,7 @@ namespace Roslyn.Reflection
                     continue;
                 }
 
-                var flags = SharedUtilities.ComputeBindingFlags(symbol);
-                if ((flags & bindingAttr) != flags)
+                if (!SharedUtilities.MatchBindingFlags(bindingAttr, _typeSymbol, symbol))
                 {
                     continue;
                 }
@@ -508,15 +550,17 @@ namespace Roslyn.Reflection
                     continue;
                 }
 
-                var returnTypeSymbol = _metadataLoadContext.ResolveType(returnType);
+                var roslynReturnType = _metadataLoadContext.ResolveType(returnType);
 
-                if (returnTypeSymbol?.Equals(property.Type) == false)
+                if (roslynReturnType?.Equals(property.Type) == false)
                 {
                     continue;
                 }
 
+                var parameterCount = types?.Length ?? 0;
+
                 // Compare parameter types
-                if (types.Length != property.Parameters.Length)
+                if (parameterCount != property.Parameters.Length)
                 {
                     continue;
                 }
@@ -553,7 +597,28 @@ namespace Roslyn.Reflection
 
         protected override bool IsPrimitiveImpl()
         {
-            throw new NotImplementedException();
+            // Is IsPrimitive
+            // https://github.com/dotnet/runtime/blob/55e95c80a7d7ec9d7bbbd5ad434604a1dc33e19c/src/libraries/System.Reflection.MetadataLoadContext/src/System/Reflection/TypeLoading/Types/RoType.TypeClassification.cs#L85
+
+            return _typeSymbol.SpecialType switch
+            {
+                SpecialType.System_Boolean => true,
+                SpecialType.System_Char => true,
+                SpecialType.System_SByte => true,
+                SpecialType.System_Byte => true,
+                SpecialType.System_Int16 => true,
+                SpecialType.System_UInt16 => true,
+                SpecialType.System_Int32 => true,
+                SpecialType.System_UInt32 => true,
+                SpecialType.System_Int64 => true,
+                SpecialType.System_UInt64 => true,
+                SpecialType.System_Single => true,
+                SpecialType.System_Double => true,
+                SpecialType.System_String => true,
+                SpecialType.System_IntPtr => true,
+                SpecialType.System_UIntPtr => true,
+                _ => false
+            };
         }
 
         public override string ToString()
