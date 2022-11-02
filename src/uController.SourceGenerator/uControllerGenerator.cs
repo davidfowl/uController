@@ -51,9 +51,6 @@ namespace uController.SourceGenerator
             var thunks = new StringBuilder();
             var generatedMethodSignatures = new HashSet<string>();
 
-            thunks.AppendLine(@$"        static MapActionsExtensions()");
-            thunks.AppendLine("        {");
-
             foreach (var (invocation, argument, callName) in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
@@ -430,10 +427,11 @@ namespace uController.SourceGenerator
                 }
 
                 // Generate code here for this thunk
-                thunks.Append($@"            map[(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
+                thunks.Append($@"            [(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
-{metadataPreReqs.ToString().Trim()}{populateMetadata.ToString().TrimEnd()}
+{metadataPreReqs.ToString().TrimEnd()}
+{populateMetadata.ToString().TrimEnd()}
             }}, 
            (del, builder) => 
             {{
@@ -456,7 +454,7 @@ namespace uController.SourceGenerator
 
 {codeGenerator}
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            }});
+            }}),
 
 ");
 
@@ -483,8 +481,6 @@ namespace uController.SourceGenerator
 ";
                 sb.Append(text);
             }
-
-            thunks.AppendLine("        }");
 
             var mapActionsText = $@"
 //------------------------------------------------------------------------------
@@ -519,8 +515,10 @@ namespace Microsoft.AspNetCore.Builder
         private static readonly string[] DeleteVerb = new[] {{ HttpMethods.Delete }};
         private static readonly string[] PatchVerb = new[] {{ HttpMethods.Patch }};
 
-        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new();
+        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
+        {{
 {thunks}
+        }};
 {sb.ToString().TrimEnd()}
 
         private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
