@@ -547,441 +547,443 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 
+using MetadataPopulator = System.Action<System.Delegate, Microsoft.AspNetCore.Builder.EndpointBuilder>;
+using RequestDelegateFactoryFunc = System.Func<System.Delegate, Microsoft.AspNetCore.Builder.EndpointBuilder, Microsoft.AspNetCore.Http.RequestDelegate>;
+
 namespace Microsoft.AspNetCore.Builder
 {{
-    delegate void MetadataPopulator(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
-    delegate Microsoft.AspNetCore.Http.RequestDelegate RequestDelegateFactoryFunc(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
     internal record SourceKey(string Path, int Line);
+}}
 
-    public static class MapActionsExtensions
+internal static class GeneratedRouteBuilderExtensions
+{{
+    private static readonly string[] GetVerb = new[] {{ HttpMethods.Get }};
+    private static readonly string[] PostVerb = new[] {{ HttpMethods.Post }};
+    private static readonly string[] PutVerb = new[]  {{ HttpMethods.Put }};
+    private static readonly string[] DeleteVerb = new[] {{ HttpMethods.Delete }};
+    private static readonly string[] PatchVerb = new[] {{ HttpMethods.Patch }};
+
+    private class GenericThunks<T>
     {{
-        private static readonly string[] GetVerb = new[] {{ HttpMethods.Get }};
-        private static readonly string[] PostVerb = new[] {{ HttpMethods.Post }};
-        private static readonly string[] PutVerb = new[]  {{ HttpMethods.Put }};
-        private static readonly string[] DeleteVerb = new[] {{ HttpMethods.Delete }};
-        private static readonly string[] PatchVerb = new[] {{ HttpMethods.Patch }};
-
-        private class GenericThunks<T>
+        public static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
         {{
-            public static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
-            {{
-    {genericThunks}
-            }};
-        }}
-
-        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
-        {{
-{thunks}
+{genericThunks}
         }};
+    }}
+
+    private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
+    {{
+{thunks}
+    }};
 {sb.ToString().TrimEnd()}
 
-        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore<T>(
-            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
-            string pattern, 
-            System.Delegate handler,
-            IEnumerable<string> httpMethods,
-            string filePath,
-            int lineNumber)
+    private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore<T>(
+        this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+        string pattern, 
+        System.Delegate handler,
+        IEnumerable<string> httpMethods,
+        string filePath,
+        int lineNumber)
+    {{
+        var (populate, factory) = GenericThunks<T>.map[(filePath, lineNumber)];
+
+        return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+    }}
+
+    private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
+        this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+        string pattern, 
+        System.Delegate handler,
+        IEnumerable<string> httpMethods,
+        string filePath,
+        int lineNumber)
+    {{
+        var (populate, factory) = map[(filePath, lineNumber)];
+
+        return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+    }}
+
+    private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
+    {{
+        SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
+
+        foreach (var dataSource in endpoints.DataSources)
         {{
-            var (populate, factory) = GenericThunks<T>.map[(filePath, lineNumber)];
-
-            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
-        }}
-
-        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
-            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
-            string pattern, 
-            System.Delegate handler,
-            IEnumerable<string> httpMethods,
-            string filePath,
-            int lineNumber)
-        {{
-            var (populate, factory) = map[(filePath, lineNumber)];
-
-            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
-        }}
-
-        private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
-        {{
-            SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
-
-            foreach (var dataSource in endpoints.DataSources)
+            if (dataSource is SourceGeneratedRouteEndpointDataSource foundDataSource)
             {{
-                if (dataSource is SourceGeneratedRouteEndpointDataSource foundDataSource)
-                {{
-                    routeEndpointDataSource = foundDataSource;
-                    break;
-                }}
-            }}
-
-            if (routeEndpointDataSource is null)
-            {{
-                routeEndpointDataSource = new SourceGeneratedRouteEndpointDataSource(endpoints.ServiceProvider);
-                endpoints.DataSources.Add(routeEndpointDataSource);
-            }}
-
-            return routeEndpointDataSource;
-        }}
-
-        private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
-        {{
-            var routeHandlerFilters =  builder.FilterFactories;
-
-            var context0 = new EndpointFilterFactoryContext
-            {{
-                MethodInfo = mi,
-                ApplicationServices = builder.ApplicationServices,
-            }};
-
-            var initialFilteredInvocation = filteredInvocation;
-
-            for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-            {{
-                var filterFactory = routeHandlerFilters[i];
-                filteredInvocation = filterFactory(context0, filteredInvocation);
-            }}
-
-            return filteredInvocation;
-        }}
-
-        private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
-        {{
-            T.PopulateMetadata(method, builder);
-        }}
-
-        private static void PopulateMetadata<T>(System.Reflection.ParameterInfo parameter, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointParameterMetadataProvider
-        {{
-            T.PopulateMetadata(parameter, builder);
-        }}
-
-        private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
-        {{
-            if (obj is IResult r)
-            {{
-                return r.ExecuteAsync(httpContext);
-            }}
-            else if (obj is string s)
-            {{
-                return httpContext.Response.WriteAsync(s);
-            }}
-            else
-            {{
-                return httpContext.Response.WriteAsJsonAsync(obj);
+                routeEndpointDataSource = foundDataSource;
+                break;
             }}
         }}
 
-        private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
-        private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
-        private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
-        private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
+        if (routeEndpointDataSource is null)
         {{
-            var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
+            routeEndpointDataSource = new SourceGeneratedRouteEndpointDataSource(endpoints.ServiceProvider);
+            endpoints.DataSources.Add(routeEndpointDataSource);
+        }}
 
-            if (feature?.CanHaveBody == true)
-            {{
-                if (!httpContext.Request.HasJsonContentType())
-                {{
-                    httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
-                    return default;
-                }}
-                try
-                {{
-                    return await httpContext.Request.ReadFromJsonAsync<T>();
-                }}
-                catch (IOException)
-                {{
-                    return default;
-                }}
-                catch (System.Text.Json.JsonException)
-                {{
-                    httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    return default;
-                }}
-            }}
-            return default;
+        return routeEndpointDataSource;
+    }}
+
+    private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
+    {{
+        var routeHandlerFilters =  builder.FilterFactories;
+
+        var context0 = new EndpointFilterFactoryContext
+        {{
+            MethodInfo = mi,
+            ApplicationServices = builder.ApplicationServices,
+        }};
+
+        var initialFilteredInvocation = filteredInvocation;
+
+        for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+        {{
+            var filterFactory = routeHandlerFilters[i];
+            filteredInvocation = filterFactory(context0, filteredInvocation);
+        }}
+
+        return filteredInvocation;
+    }}
+
+    private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
+    {{
+        T.PopulateMetadata(method, builder);
+    }}
+
+    private static void PopulateMetadata<T>(System.Reflection.ParameterInfo parameter, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointParameterMetadataProvider
+    {{
+        T.PopulateMetadata(parameter, builder);
+    }}
+
+    private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
+    {{
+        if (obj is IResult r)
+        {{
+            return r.ExecuteAsync(httpContext);
+        }}
+        else if (obj is string s)
+        {{
+            return httpContext.Response.WriteAsync(s);
+        }}
+        else
+        {{
+            return httpContext.Response.WriteAsJsonAsync(obj);
         }}
     }}
 
-    sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
+    private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+    private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+    private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
+    private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
     {{
-        public Type Type {{ get; set; }}
+        var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
 
-        public int StatusCode {{ get; set; }} = 200;
-
-        public IEnumerable<string> ContentTypes {{ get; init; }} = Enumerable.Empty<string>();
-
-        public static ResponseTypeMetadata Create(string contentType)
+        if (feature?.CanHaveBody == true)
         {{
-            return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }} }};
+            if (!httpContext.Request.HasJsonContentType())
+            {{
+                httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
+                return default;
+            }}
+            try
+            {{
+                return await httpContext.Request.ReadFromJsonAsync<T>();
+            }}
+            catch (IOException)
+            {{
+                return default;
+            }}
+            catch (System.Text.Json.JsonException)
+            {{
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return default;
+            }}
         }}
+        return default;
+    }}
+}}
+
+sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
+{{
+    public Type Type {{ get; set; }}
+
+    public int StatusCode {{ get; set; }} = 200;
+
+    public IEnumerable<string> ContentTypes {{ get; init; }} = Enumerable.Empty<string>();
+
+    public static ResponseTypeMetadata Create(string contentType)
+    {{
+        return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }} }};
+    }}
+}}
+
+internal sealed class SourceGeneratedRouteEndpointDataSource : EndpointDataSource
+{{
+    private readonly List<RouteEntry> _routeEntries = new();
+    private readonly IServiceProvider _applicationServices;
+
+    public SourceGeneratedRouteEndpointDataSource(IServiceProvider applicationServices)
+    {{
+        _applicationServices = applicationServices;
     }}
 
-    internal sealed class SourceGeneratedRouteEndpointDataSource : EndpointDataSource
+    public RouteHandlerBuilder AddRouteHandler(
+        RoutePattern pattern,
+        Delegate routeHandler,
+        IEnumerable<string> httpMethods,
+        bool isFallback,
+        MetadataPopulator metadataPopulator,
+        RequestDelegateFactoryFunc requestDelegateFactoryFunc)
     {{
-        private readonly List<RouteEntry> _routeEntries = new();
-        private readonly IServiceProvider _applicationServices;
+        var conventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
+        var finallyConventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
 
-        public SourceGeneratedRouteEndpointDataSource(IServiceProvider applicationServices)
+        var routeAttributes = RouteAttributes.RouteHandler;
+        if (isFallback)
         {{
-            _applicationServices = applicationServices;
+            routeAttributes |= RouteAttributes.Fallback;
         }}
 
-        public RouteHandlerBuilder AddRouteHandler(
-            RoutePattern pattern,
-            Delegate routeHandler,
-            IEnumerable<string> httpMethods,
-            bool isFallback,
-            MetadataPopulator metadataPopulator,
-            RequestDelegateFactoryFunc requestDelegateFactoryFunc)
+        _routeEntries.Add(new()
         {{
-            var conventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
-            var finallyConventions = new ThrowOnAddAfterEndpointBuiltConventionCollection();
+            RoutePattern = pattern,
+            RouteHandler = routeHandler,
+            HttpMethods = httpMethods,
+            RouteAttributes = routeAttributes,
+            Conventions = conventions,
+            FinallyConventions = finallyConventions,
+            RequestDelegateFactory = requestDelegateFactoryFunc,
+            MetadataPopulator = metadataPopulator,
+        }});
 
-            var routeAttributes = RouteAttributes.RouteHandler;
-            if (isFallback)
-            {{
-                routeAttributes |= RouteAttributes.Fallback;
-            }}
+        return new RouteHandlerBuilder(new[] {{ new ConventionBuilder(conventions, finallyConventions) }});
+    }}
 
-            _routeEntries.Add(new()
-            {{
-                RoutePattern = pattern,
-                RouteHandler = routeHandler,
-                HttpMethods = httpMethods,
-                RouteAttributes = routeAttributes,
-                Conventions = conventions,
-                FinallyConventions = finallyConventions,
-                RequestDelegateFactory = requestDelegateFactoryFunc,
-                MetadataPopulator = metadataPopulator,
-            }});
-
-            return new RouteHandlerBuilder(new[] {{ new ConventionBuilder(conventions, finallyConventions) }});
-        }}
-
-        public override IReadOnlyList<RouteEndpoint> Endpoints
-        {{
-            get
-            {{
-                var endpoints = new RouteEndpoint[_routeEntries.Count];
-                for (int i = 0; i < _routeEntries.Count; i++)
-                {{
-                    endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i]).Build();
-                }}
-                return endpoints;
-            }}
-        }}
-
-        public override IReadOnlyList<RouteEndpoint> GetGroupedEndpoints(RouteGroupContext context)
+    public override IReadOnlyList<RouteEndpoint> Endpoints
+    {{
+        get
         {{
             var endpoints = new RouteEndpoint[_routeEntries.Count];
             for (int i = 0; i < _routeEntries.Count; i++)
             {{
-                endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i], context.Prefix, context.Conventions, context.FinallyConventions).Build();
+                endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i]).Build();
             }}
             return endpoints;
         }}
+    }}
 
-        public override IChangeToken GetChangeToken() => NullChangeToken.Singleton;
-
-        // For testing
-        internal RouteEndpointBuilder GetSingleRouteEndpointBuilder()
+    public override IReadOnlyList<RouteEndpoint> GetGroupedEndpoints(RouteGroupContext context)
+    {{
+        var endpoints = new RouteEndpoint[_routeEntries.Count];
+        for (int i = 0; i < _routeEntries.Count; i++)
         {{
-            if (_routeEntries.Count is not 1)
-            {{
-                throw new InvalidOperationException($""There are {{_routeEntries.Count}} endpoints defined! This can only be called for a single endpoint."");
-            }}
+            endpoints[i] = (RouteEndpoint)CreateRouteEndpointBuilder(_routeEntries[i], context.Prefix, context.Conventions, context.FinallyConventions).Build();
+        }}
+        return endpoints;
+    }}
 
-            return CreateRouteEndpointBuilder(_routeEntries[0]);
+    public override IChangeToken GetChangeToken() => NullChangeToken.Singleton;
+
+    // For testing
+    internal RouteEndpointBuilder GetSingleRouteEndpointBuilder()
+    {{
+        if (_routeEntries.Count is not 1)
+        {{
+            throw new InvalidOperationException($""There are {{_routeEntries.Count}} endpoints defined! This can only be called for a single endpoint."");
         }}
 
-        private RouteEndpointBuilder CreateRouteEndpointBuilder(
-            RouteEntry entry, RoutePattern groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>> groupConventions = null, IReadOnlyList<Action<EndpointBuilder>> groupFinallyConventions = null)
+        return CreateRouteEndpointBuilder(_routeEntries[0]);
+    }}
+
+    private RouteEndpointBuilder CreateRouteEndpointBuilder(
+        RouteEntry entry, RoutePattern groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>> groupConventions = null, IReadOnlyList<Action<EndpointBuilder>> groupFinallyConventions = null)
+    {{
+        var pattern = RoutePatternFactory.Combine(groupPrefix, entry.RoutePattern);
+        var handler = entry.RouteHandler;
+        var isRouteHandler = (entry.RouteAttributes & RouteAttributes.RouteHandler) == RouteAttributes.RouteHandler;
+        var isFallback = (entry.RouteAttributes & RouteAttributes.Fallback) == RouteAttributes.Fallback;
+
+        var order = isFallback ? int.MaxValue : 0;
+        var displayName = pattern.RawText ?? pattern.ToString();
+
+        if (entry.HttpMethods is not null)
         {{
-            var pattern = RoutePatternFactory.Combine(groupPrefix, entry.RoutePattern);
-            var handler = entry.RouteHandler;
-            var isRouteHandler = (entry.RouteAttributes & RouteAttributes.RouteHandler) == RouteAttributes.RouteHandler;
-            var isFallback = (entry.RouteAttributes & RouteAttributes.Fallback) == RouteAttributes.Fallback;
-
-            var order = isFallback ? int.MaxValue : 0;
-            var displayName = pattern.RawText ?? pattern.ToString();
-
-            if (entry.HttpMethods is not null)
-            {{
-                // Prepends the HTTP method to the DisplayName produced with pattern + method name
-                displayName = $""HTTP: {{string.Join("", "", entry.HttpMethods)}} {{displayName}}"";
-            }}
-
-            if (isFallback)
-            {{
-                displayName = $""Fallback {{displayName}}"";
-            }}
-
-            // If we're not a route handler, we started with a fully realized (although unfiltered) RequestDelegate, so we can just redirect to that
-            // while running any conventions. We'll put the original back if it remains unfiltered right before building the endpoint.
-            RequestDelegate factoryCreatedRequestDelegate = null;
-
-            // Let existing conventions capture and call into builder.RequestDelegate as long as they do so after it has been created.
-            RequestDelegate redirectRequestDelegate = context =>
-            {{
-                if (factoryCreatedRequestDelegate is null)
-                {{
-                    throw new InvalidOperationException(""Resources.RouteEndpointDataSource_RequestDelegateCannotBeCalledBeforeBuild"");
-                }}
-
-                return factoryCreatedRequestDelegate(context);
-            }};
-
-            // Add MethodInfo and HttpMethodMetadata (if any) as first metadata items as they are intrinsic to the route much like
-            // the pattern or default display name. This gives visibility to conventions like WithOpenApi() to intrinsic route details
-            // (namely the MethodInfo) even when applied early as group conventions.
-            RouteEndpointBuilder builder = new(redirectRequestDelegate, pattern, order)
-            {{
-                DisplayName = displayName,
-                ApplicationServices = _applicationServices,
-            }};
-
-            if (isRouteHandler)
-            {{
-                builder.Metadata.Add(handler.Method);
-            }}
-
-            if (entry.HttpMethods is not null)
-            {{
-                builder.Metadata.Add(new HttpMethodMetadata(entry.HttpMethods));
-            }}
-
-            // Apply group conventions before entry-specific conventions added to the RouteHandlerBuilder.
-            if (groupConventions is not null)
-            {{
-                foreach (var groupConvention in groupConventions)
-                {{
-                    groupConvention(builder);
-                }}
-            }}
-
-            // Any metadata inferred directly inferred by RDF or indirectly inferred via IEndpoint(Parameter)MetadataProviders are
-            // considered less specific than method-level attributes and conventions but more specific than group conventions
-            // so inferred metadata gets added in between these. If group conventions need to override inferred metadata,
-            // they can do so via IEndpointConventionBuilder.Finally like the do to override any other entry-specific metadata.
-            if (isRouteHandler)
-            {{
-                entry.MetadataPopulator(entry.RouteHandler, builder);
-            }}
-
-            // Add delegate attributes as metadata before entry-specific conventions but after group conventions.
-            var attributes = handler.Method.GetCustomAttributes();
-            if (attributes is not null)
-            {{
-                foreach (var attribute in attributes)
-                {{
-                    builder.Metadata.Add(attribute);
-                }}
-            }}
-
-            entry.Conventions.IsReadOnly = true;
-            foreach (var entrySpecificConvention in entry.Conventions)
-            {{
-                entrySpecificConvention(builder);
-            }}
-
-            // If no convention has modified builder.RequestDelegate, we can use the RequestDelegate returned by the RequestDelegateFactory directly.
-            var conventionOverriddenRequestDelegate = ReferenceEquals(builder.RequestDelegate, redirectRequestDelegate) ? null : builder.RequestDelegate;
-
-            if (isRouteHandler || builder.FilterFactories.Count > 0)
-            {{
-                factoryCreatedRequestDelegate = entry.RequestDelegateFactory(entry.RouteHandler, builder);
-            }}
-
-            Debug.Assert(factoryCreatedRequestDelegate is not null);
-
-            // Use the overridden RequestDelegate if it exists. If the overridden RequestDelegate is merely wrapping the final RequestDelegate,
-            // it will still work because of the redirectRequestDelegate.
-            builder.RequestDelegate = conventionOverriddenRequestDelegate ?? factoryCreatedRequestDelegate;
-
-            entry.FinallyConventions.IsReadOnly = true;
-            foreach (var entryFinallyConvention in entry.FinallyConventions)
-            {{
-                entryFinallyConvention(builder);
-            }}
-
-            if (groupFinallyConventions is not null)
-            {{
-                // Group conventions are ordered by the RouteGroupBuilder before
-                // being provided here.
-                foreach (var groupFinallyConvention in groupFinallyConventions)
-                {{
-                    groupFinallyConvention(builder);
-                }}
-            }}
-
-            return builder;
-        }}
-        private struct RouteEntry
-        {{
-            public MetadataPopulator MetadataPopulator {{ get; init; }}
-            public RequestDelegateFactoryFunc RequestDelegateFactory {{ get; init; }}
-            public RoutePattern RoutePattern {{ get; init; }}
-            public Delegate RouteHandler {{ get; init; }}
-            public IEnumerable<string> HttpMethods {{ get; init; }}
-            public RouteAttributes RouteAttributes {{ get; init; }}
-            public ThrowOnAddAfterEndpointBuiltConventionCollection Conventions {{ get; init; }}
-            public ThrowOnAddAfterEndpointBuiltConventionCollection FinallyConventions {{ get; init; }}
+            // Prepends the HTTP method to the DisplayName produced with pattern + method name
+            displayName = $""HTTP: {{string.Join("", "", entry.HttpMethods)}} {{displayName}}"";
         }}
 
-        [Flags]
-        private enum RouteAttributes
+        if (isFallback)
         {{
-            // The endpoint was defined by a RequestDelegate, RequestDelegateFactory.Create() should be skipped unless there are endpoint filters.
-            None = 0,
-            // This was added as Delegate route handler, so RequestDelegateFactory.Create() should always be called.
-            RouteHandler = 1,
-            // This was added by MapFallback.
-            Fallback = 2,
+            displayName = $""Fallback {{displayName}}"";
         }}
 
-        // This private class is only exposed to internal code via ICollection<Action<EndpointBuilder>> in RouteEndpointBuilder where only Add is called.
-        private sealed class ThrowOnAddAfterEndpointBuiltConventionCollection : List<Action<EndpointBuilder>>, ICollection<Action<EndpointBuilder>>
+        // If we're not a route handler, we started with a fully realized (although unfiltered) RequestDelegate, so we can just redirect to that
+        // while running any conventions. We'll put the original back if it remains unfiltered right before building the endpoint.
+        RequestDelegate factoryCreatedRequestDelegate = null;
+
+        // Let existing conventions capture and call into builder.RequestDelegate as long as they do so after it has been created.
+        RequestDelegate redirectRequestDelegate = context =>
         {{
-            // We throw if someone tries to add conventions to the RouteEntry after endpoints have already been resolved meaning the conventions
-            // will not be observed given RouteEndpointDataSource is not meant to be dynamic and uses NullChangeToken.Singleton.
-            public bool IsReadOnly {{ get; set; }}
-
-            void ICollection<Action<EndpointBuilder>>.Add(Action<EndpointBuilder> convention)
+            if (factoryCreatedRequestDelegate is null)
             {{
-                if (IsReadOnly)
-                {{
-                    throw new InvalidOperationException(""Resources.RouteEndpointDataSource_ConventionsCannotBeModifiedAfterBuild"");
-                }}
+                throw new InvalidOperationException(""Resources.RouteEndpointDataSource_RequestDelegateCannotBeCalledBeforeBuild"");
+            }}
 
-                Add(convention);
+            return factoryCreatedRequestDelegate(context);
+        }};
+
+        // Add MethodInfo and HttpMethodMetadata (if any) as first metadata items as they are intrinsic to the route much like
+        // the pattern or default display name. This gives visibility to conventions like WithOpenApi() to intrinsic route details
+        // (namely the MethodInfo) even when applied early as group conventions.
+        RouteEndpointBuilder builder = new(redirectRequestDelegate, pattern, order)
+        {{
+            DisplayName = displayName,
+            ApplicationServices = _applicationServices,
+        }};
+
+        if (isRouteHandler)
+        {{
+            builder.Metadata.Add(handler.Method);
+        }}
+
+        if (entry.HttpMethods is not null)
+        {{
+            builder.Metadata.Add(new HttpMethodMetadata(entry.HttpMethods));
+        }}
+
+        // Apply group conventions before entry-specific conventions added to the RouteHandlerBuilder.
+        if (groupConventions is not null)
+        {{
+            foreach (var groupConvention in groupConventions)
+            {{
+                groupConvention(builder);
             }}
         }}
 
-        private class ConventionBuilder : IEndpointConventionBuilder
+        // Any metadata inferred directly inferred by RDF or indirectly inferred via IEndpoint(Parameter)MetadataProviders are
+        // considered less specific than method-level attributes and conventions but more specific than group conventions
+        // so inferred metadata gets added in between these. If group conventions need to override inferred metadata,
+        // they can do so via IEndpointConventionBuilder.Finally like the do to override any other entry-specific metadata.
+        if (isRouteHandler)
         {{
-            private readonly ICollection<Action<EndpointBuilder>> _conventions;
-            private readonly ICollection<Action<EndpointBuilder>> _finallyConventions;
-            public ConventionBuilder(ICollection<Action<EndpointBuilder>> conventions, ICollection<Action<EndpointBuilder>> finallyConventions)
+            entry.MetadataPopulator(entry.RouteHandler, builder);
+        }}
+
+        // Add delegate attributes as metadata before entry-specific conventions but after group conventions.
+        var attributes = handler.Method.GetCustomAttributes();
+        if (attributes is not null)
+        {{
+            foreach (var attribute in attributes)
             {{
-                _conventions = conventions;
-                _finallyConventions = finallyConventions;
+                builder.Metadata.Add(attribute);
+            }}
+        }}
+
+        entry.Conventions.IsReadOnly = true;
+        foreach (var entrySpecificConvention in entry.Conventions)
+        {{
+            entrySpecificConvention(builder);
+        }}
+
+        // If no convention has modified builder.RequestDelegate, we can use the RequestDelegate returned by the RequestDelegateFactory directly.
+        var conventionOverriddenRequestDelegate = ReferenceEquals(builder.RequestDelegate, redirectRequestDelegate) ? null : builder.RequestDelegate;
+
+        if (isRouteHandler || builder.FilterFactories.Count > 0)
+        {{
+            factoryCreatedRequestDelegate = entry.RequestDelegateFactory(entry.RouteHandler, builder);
+        }}
+
+        Debug.Assert(factoryCreatedRequestDelegate is not null);
+
+        // Use the overridden RequestDelegate if it exists. If the overridden RequestDelegate is merely wrapping the final RequestDelegate,
+        // it will still work because of the redirectRequestDelegate.
+        builder.RequestDelegate = conventionOverriddenRequestDelegate ?? factoryCreatedRequestDelegate;
+
+        entry.FinallyConventions.IsReadOnly = true;
+        foreach (var entryFinallyConvention in entry.FinallyConventions)
+        {{
+            entryFinallyConvention(builder);
+        }}
+
+        if (groupFinallyConventions is not null)
+        {{
+            // Group conventions are ordered by the RouteGroupBuilder before
+            // being provided here.
+            foreach (var groupFinallyConvention in groupFinallyConventions)
+            {{
+                groupFinallyConvention(builder);
+            }}
+        }}
+
+        return builder;
+    }}
+    private struct RouteEntry
+    {{
+        public MetadataPopulator MetadataPopulator {{ get; init; }}
+        public RequestDelegateFactoryFunc RequestDelegateFactory {{ get; init; }}
+        public RoutePattern RoutePattern {{ get; init; }}
+        public Delegate RouteHandler {{ get; init; }}
+        public IEnumerable<string> HttpMethods {{ get; init; }}
+        public RouteAttributes RouteAttributes {{ get; init; }}
+        public ThrowOnAddAfterEndpointBuiltConventionCollection Conventions {{ get; init; }}
+        public ThrowOnAddAfterEndpointBuiltConventionCollection FinallyConventions {{ get; init; }}
+    }}
+
+    [Flags]
+    private enum RouteAttributes
+    {{
+        // The endpoint was defined by a RequestDelegate, RequestDelegateFactory.Create() should be skipped unless there are endpoint filters.
+        None = 0,
+        // This was added as Delegate route handler, so RequestDelegateFactory.Create() should always be called.
+        RouteHandler = 1,
+        // This was added by MapFallback.
+        Fallback = 2,
+    }}
+
+    // This private class is only exposed to internal code via ICollection<Action<EndpointBuilder>> in RouteEndpointBuilder where only Add is called.
+    private sealed class ThrowOnAddAfterEndpointBuiltConventionCollection : List<Action<EndpointBuilder>>, ICollection<Action<EndpointBuilder>>
+    {{
+        // We throw if someone tries to add conventions to the RouteEntry after endpoints have already been resolved meaning the conventions
+        // will not be observed given RouteEndpointDataSource is not meant to be dynamic and uses NullChangeToken.Singleton.
+        public bool IsReadOnly {{ get; set; }}
+
+        void ICollection<Action<EndpointBuilder>>.Add(Action<EndpointBuilder> convention)
+        {{
+            if (IsReadOnly)
+            {{
+                throw new InvalidOperationException(""Resources.RouteEndpointDataSource_ConventionsCannotBeModifiedAfterBuild"");
             }}
 
-            /// <summary>
-            /// Adds the specified convention to the builder. Conventions are used to customize <see cref=""EndpointBuilder""/> instances.
-            /// </summary>
-            /// <param name=""convention"">The convention to add to the builder.</param>
-            public void Add(Action<EndpointBuilder> convention)
-            {{
-                _conventions.Add(convention);
-            }}
-            public void Finally(Action<EndpointBuilder> finalConvention)
-            {{
-                _finallyConventions.Add(finalConvention);
-            }}
+            Add(convention);
+        }}
+    }}
+
+    private class ConventionBuilder : IEndpointConventionBuilder
+    {{
+        private readonly ICollection<Action<EndpointBuilder>> _conventions;
+        private readonly ICollection<Action<EndpointBuilder>> _finallyConventions;
+        public ConventionBuilder(ICollection<Action<EndpointBuilder>> conventions, ICollection<Action<EndpointBuilder>> finallyConventions)
+        {{
+            _conventions = conventions;
+            _finallyConventions = finallyConventions;
+        }}
+
+        /// <summary>
+        /// Adds the specified convention to the builder. Conventions are used to customize <see cref=""EndpointBuilder""/> instances.
+        /// </summary>
+        /// <param name=""convention"">The convention to add to the builder.</param>
+        public void Add(Action<EndpointBuilder> convention)
+        {{
+            _conventions.Add(convention);
+        }}
+        public void Finally(Action<EndpointBuilder> finalConvention)
+        {{
+            _finallyConventions.Add(finalConvention);
         }}
     }}
 }}
+
 #endif
 ";
             if (sb.Length > 0)
