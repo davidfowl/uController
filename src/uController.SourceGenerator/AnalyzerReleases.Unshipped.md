@@ -10,4 +10,5 @@ MIN002  |  Usage   |  Error   | MIN002_uController
 MIN003  |  Usage   |  Error   | MIN003_uController
 MIN004  |  Usage   |  Info    | MIN004_uController
 MIN005  |  Usage   |  Error   | MIN005_uController
+MIN006  |  Usage   |  Error   | MIN006_uController
 

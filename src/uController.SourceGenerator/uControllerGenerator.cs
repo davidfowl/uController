@@ -49,6 +49,7 @@ namespace uController.SourceGenerator
 
             var sb = new StringBuilder();
             var thunks = new StringBuilder();
+            var genericThunks = new StringBuilder();
             var generatedMethodSignatures = new HashSet<string>();
 
             foreach (var (invocation, argument, callName) in receiver.MapActions)
@@ -342,14 +343,34 @@ namespace uController.SourceGenerator
                     }
                 }
 
+                var hasAnonymoysParameterType = false;
                 // List of parameters and return type
                 var types = new List<string>();
                 foreach (var p in method.Parameters)
                 {
+                    if (p.Type.IsAnonymousType)
+                    {
+                        var loc = p.DeclaringSyntaxReferences[0].GetSyntax().GetLocation();
+                        context.ReportDiagnostic(Diagnostic.Create(Diagnostics.AnonymousTypesAsParametersAreNotSupported, loc));
+                    }
+
                     types.Add(p.Type.ToDisplayString());
                 }
 
-                types.Add(method.ReturnType.ToDisplayString());
+                if (hasAnonymoysParameterType)
+                {
+                    // Don't generate this method
+                    continue;
+                }
+
+                if (method.ReturnType.IsAnonymousType)
+                {
+                    types.Add("T");
+                }
+                else
+                {
+                    types.Add(method.ReturnType.ToDisplayString());
+                }
 
                 var formattedTypeArgs = string.Join(", ", types);
 
@@ -426,8 +447,10 @@ namespace uController.SourceGenerator
                     populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json""));");
                 }
 
+                var thunkBuilder = method.ReturnType.IsAnonymousType ? genericThunks : thunks;
+
                 // Generate code here for this thunk
-                thunks.Append($@"            [(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
+                thunkBuilder.Append($@"            [(@""{invocation.SyntaxTree.FilePath}"", {lineNumber})] = (
            (del, builder) => 
             {{
 {metadataPreReqs.ToString().TrimEnd()}
@@ -465,7 +488,28 @@ namespace uController.SourceGenerator
 
                 var verbArgument = MethodDescriptions.TryGetValue(callName, out var verb) ? $"{verb}Verb" : "null";
 
-                var text = @$"        /// <summary>
+                string methodText = null;
+
+                if (method.ReturnType.IsAnonymousType)
+                {
+                    methodText = @$"        /// <summary>
+        /// Adds a <see cref=""RouteEndpoint""/> to the <see cref=""IEndpointRouteBuilder""/> that matches HTTP{(verb is not null ? " " + verb.ToUpperInvariant() : "")} requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name=""endpoints"">The <see cref=""IEndpointRouteBuilder""/> to add the route to.</param>
+        /// <param name=""pattern"">The route pattern.</param>
+        /// <param name=""handler"">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref=""RouteHandlerBuilder""/> that can be used to further customize the endpoint.</returns>
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder {callName}<T>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, {fullDelegateType} handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = """", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {{
+            return MapCore<T>(endpoints, pattern, handler, {verbArgument}, filePath, lineNumber);
+        }}
+
+";
+                }
+                else
+                {
+                    methodText = @$"        /// <summary>
         /// Adds a <see cref=""RouteEndpoint""/> to the <see cref=""IEndpointRouteBuilder""/> that matches HTTP{(verb is not null ? " " + verb.ToUpperInvariant() : "")} requests
         /// for the specified pattern.
         /// </summary>
@@ -479,7 +523,9 @@ namespace uController.SourceGenerator
         }}
 
 ";
-                sb.Append(text);
+                }
+
+                sb.Append(methodText);
             }
 
             var mapActionsText = $@"
@@ -515,11 +561,32 @@ namespace Microsoft.AspNetCore.Builder
         private static readonly string[] DeleteVerb = new[] {{ HttpMethods.Delete }};
         private static readonly string[] PatchVerb = new[] {{ HttpMethods.Patch }};
 
+        private class GenericThunks<T>
+        {{
+            public static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
+            {{
+    {genericThunks}
+            }};
+        }}
+
         private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
         {{
 {thunks}
         }};
 {sb.ToString().TrimEnd()}
+
+        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore<T>(
+            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+            string pattern, 
+            System.Delegate handler,
+            IEnumerable<string> httpMethods,
+            string filePath,
+            int lineNumber)
+        {{
+            var (populate, factory) = GenericThunks<T>.map[(filePath, lineNumber)];
+
+            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+        }}
 
         private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
             this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
@@ -974,5 +1041,7 @@ namespace Microsoft.AspNetCore.Builder
         public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MIN004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "Usage", DiagnosticSeverity.Info, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MIN005", "MultipleParametersFromBody", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor AnonymousTypesAsParametersAreNotSupported = new DiagnosticDescriptor("MIN006", "AnonymousTypesAsParametersAreNotSupported", "Anonymous types are not supported as parameters", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
     }
 }

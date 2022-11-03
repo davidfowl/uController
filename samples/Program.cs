@@ -17,6 +17,8 @@ var app = builder.Build();
 app.MapGet("/", () => "Hello World");
 app.MapGet("/hello/{name}", (string name) => $"Hello {name}");
 
+app.MapGet("/anon", () => new { Name = "David" });
+
 app.MapGet("/person", () => new Person("David"));
 
 app.MapGet("/ok", (ClaimsPrincipal c, ISayHello hellosvc) => Results.Ok(hellosvc.Hello()));
