@@ -29,6 +29,8 @@ namespace uController.SourceGenerator
             ParamterInfoType = metadataLoadContext.ResolveType<ParameterInfo>();
             IFormatProviderType = metadataLoadContext.ResolveType<IFormatProvider>();
             EnumType = metadataLoadContext.ResolveType<Enum>();
+            ResultsType = metadataLoadContext.ResolveType<Results>();
+            TypedResultsType = metadataLoadContext.ResolveType<TypedResults>();
         }
 
         public Type FromQueryAttributeType { get; }
@@ -47,5 +49,7 @@ namespace uController.SourceGenerator
         public Type ParamterInfoType { get; }
         public Type IFormatProviderType { get; }
         public Type EnumType { get; }
+        public Type ResultsType { get; }
+        public Type TypedResultsType { get; }
     }
 }

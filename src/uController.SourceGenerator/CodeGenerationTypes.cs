@@ -9,6 +9,8 @@ namespace Microsoft.AspNetCore.Http
     interface IFormCollection { }
     interface IFormFile { }
     class AsParametersAttribute { }
+    class Results { }
+    class TypedResults { }
 }
 
 namespace Microsoft.AspNetCore.Mvc

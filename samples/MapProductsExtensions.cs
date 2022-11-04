@@ -8,12 +8,14 @@ public static class MapProductsExtensions
     {
         var group = routes.MapGroup("products");
         group.MapGet("/", () => TypedResults.Ok(new[] { new Product("Milk", 10) }));
-        group.MapGet("/{id}", async Task<Results<Ok<Product>, NotFound>> (int id) => id switch
-        {
-            0 => TypedResults.Ok(new Product("Milk", 10)),
-            _ => TypedResults.NotFound(),
-        });
+        group.MapGet("/{id}", GetProductById);
 
         return group;
     }
+
+    private static async Task<Results<Ok<Product>, NotFound>> GetProductById(int id) => id switch
+    {
+        0 => TypedResults.Ok(new Product("Milk", 10)),
+        _ => TypedResults.NotFound()
+    };
 }

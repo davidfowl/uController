@@ -52,6 +52,9 @@ namespace uController.SourceGenerator
             var genericThunks = new StringBuilder();
             var generatedMethodSignatures = new HashSet<string>();
 
+            var knownTypedResultsMethods = wellKnownTypes.TypedResultsType?.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                                                         .ToLookup(m => (m.Name, m.IsGenericMethod));
+
             foreach (var (invocation, argument, callName) in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
@@ -416,14 +419,84 @@ namespace uController.SourceGenerator
                     }
                 }
 
-                Type returnType = methodModel.MethodInfo.ReturnType;
+                Type[] AnalyzeResultTypesForIResultMethods(IMethodSymbol method)
+                {
+                    if (!wellKnownTypes.IResultType.Equals(method.ReturnType))
+                    {
+                        // Don't bother if we're not looking at an IResult returning method
+                        return Array.Empty<Type>();
+                    }
+
+                    List<Type> results = null;
+
+                    foreach (var reference in method.DeclaringSyntaxReferences)
+                    {
+                        var syntax = reference.GetSyntax();
+
+                        // TODO: This needs a real detailed analysis working from return expressions, this is a bit of a hack right now
+                        // looking for *any* results call in this method. This should find all exit points from a method
+                        // and start from there.
+                        foreach (var s in syntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+                        {
+                            if (s is MemberAccessExpressionSyntax
+                                {
+                                    Expression: IdentifierNameSyntax
+                                    {
+                                        Identifier: { ValueText: "Results" }
+                                    }
+                                } expr && expr.IsKind(SyntaxKind.SimpleMemberAccessExpression) &&
+
+                            semanticModel.GetSymbolInfo(expr.Name) is
+                            {
+                                Symbol: IMethodSymbol
+                                {
+                                    IsStatic: true,
+                                } resultsMethod
+                            } && wellKnownTypes.ResultsType.Equals(resultsMethod.ContainingType))
+                            {
+                                var candidate = knownTypedResultsMethods[(resultsMethod.Name, resultsMethod.IsGenericMethod)].FirstOrDefault();
+
+                                if (candidate is not null)
+                                {
+                                    var candidateSymbol = candidate.GetMethodSymbol();
+                                    if (candidate.IsGenericMethod)
+                                    {
+                                        candidate = candidate.MakeGenericMethod(resultsMethod.AsMethodInfo(metadataLoadContext).GetGenericArguments());
+                                    }
+
+                                    results ??= new();
+                                    results.Add(candidate.ReturnType);
+                                }
+
+                                populateMetadata.AppendLine($"// {resultsMethod} = {candidate}");
+                            }
+                        }
+                    }
+
+                    return results?.ToArray() ?? Array.Empty<Type>();
+                }
+
+                populateMetadata.AppendLine($@"                builder.Metadata.Add(new SourceKey(@""{invocation.SyntaxTree.FilePath}"", {lineNumber}));");
+
+                foreach (var resultType in AnalyzeResultTypesForIResultMethods(method))
+                {
+                    if (wellKnownTypes.IEndpointMetadataProviderType?.IsAssignableFrom(resultType) == true)
+                    {
+                        // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
+                        // we can avoid that reflection here.
+
+                        // Static abstract call
+                        populateMetadata.AppendLine($@"                PopulateMetadata<{resultType}>(del.Method, builder);");
+                    }
+                }
+
+                var returnType = methodModel.MethodInfo.ReturnType;
 
                 if (AwaitableInfo.IsTypeAwaitable(returnType, out var awaitableInfo))
                 {
                     returnType = awaitableInfo.ResultType;
                 }
 
-                populateMetadata.AppendLine($@"                builder.Metadata.Add(new SourceKey(@""{invocation.SyntaxTree.FilePath}"", {lineNumber}));");
                 if (returnType.Equals(typeof(void)))
                 {
                     // Don't add metadata
@@ -441,7 +514,7 @@ namespace uController.SourceGenerator
                     // Add string plaintext
                     populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""text/plain""));");
                 }
-                else
+                else if (!wellKnownTypes.IResultType.IsAssignableFrom(returnType))
                 {
                     // Add JSON
                     populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json""));");
