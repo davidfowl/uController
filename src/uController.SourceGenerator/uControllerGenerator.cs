@@ -147,7 +147,7 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                string ResolveRoutePattern(ExpressionSyntax expression)
+                string ResolveLiteralExpression(ExpressionSyntax expression)
                 {
                     string ResolveIdentifier(IdentifierNameSyntax id)
                     {
@@ -183,7 +183,7 @@ namespace uController.SourceGenerator
                                     }
                                 })
                             {
-                                return ResolveRoutePattern(value);
+                                return ResolveLiteralExpression(value);
                             }
                         }
 
@@ -194,7 +194,7 @@ namespace uController.SourceGenerator
                     {
                         LiteralExpressionSyntax literal => literal.Token.ValueText,
                         IdentifierNameSyntax id => ResolveIdentifier(id),
-                        MemberAccessExpressionSyntax member => ResolveRoutePattern(member.Name),
+                        MemberAccessExpressionSyntax member => ResolveLiteralExpression(member.Name),
                         _ => null
                     };
                 }
@@ -205,7 +205,7 @@ namespace uController.SourceGenerator
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = method.AsMethodInfo(metadataLoadContext),
-                    RoutePattern = RoutePattern.Parse(ResolveRoutePattern(routePattern.Expression))
+                    RoutePattern = RoutePattern.Parse(ResolveLiteralExpression(routePattern.Expression))
                 };
 
                 var hasAmbiguousParameterWithoutRoute = false;
@@ -419,15 +419,13 @@ namespace uController.SourceGenerator
                     }
                 }
 
-                Type[] AnalyzeResultTypesForIResultMethods(IMethodSymbol method)
+                void AnalyzeResultTypesForIResultMethods(IMethodSymbol method)
                 {
                     if (!wellKnownTypes.IResultType.Equals(method.ReturnType))
                     {
                         // Don't bother if we're not looking at an IResult returning method
-                        return Array.Empty<Type>();
+                        return;
                     }
-
-                    List<Type> results = null;
 
                     foreach (var reference in method.DeclaringSyntaxReferences)
                     {
@@ -436,14 +434,14 @@ namespace uController.SourceGenerator
                         // TODO: This needs a real detailed analysis working from return expressions, this is a bit of a hack right now
                         // looking for *any* results call in this method. This should find all exit points from a method
                         // and start from there.
-                        foreach (var s in syntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+                        foreach (var s in syntax.DescendantNodes().OfType<InvocationExpressionSyntax>())
                         {
-                            if (s is MemberAccessExpressionSyntax
+                            if (s.Expression is MemberAccessExpressionSyntax
                                 {
                                     Expression: IdentifierNameSyntax
                                     {
                                         Identifier: { ValueText: "Results" }
-                                    }
+                                    },
                                 } expr && expr.IsKind(SyntaxKind.SimpleMemberAccessExpression) &&
 
                             semanticModel.GetSymbolInfo(expr.Name) is
@@ -454,41 +452,44 @@ namespace uController.SourceGenerator
                                 } resultsMethod
                             } && wellKnownTypes.ResultsType.Equals(resultsMethod.ContainingType))
                             {
-                                var candidate = knownTypedResultsMethods[(resultsMethod.Name, resultsMethod.IsGenericMethod)].FirstOrDefault();
-
-                                if (candidate is not null)
+                                if (resultsMethod.Name == "StatusCode")
                                 {
-                                    var candidateSymbol = candidate.GetMethodSymbol();
-                                    if (candidate.IsGenericMethod)
+                                    // Try to resolve the status code statically
+                                    var statusCodeExpression = s.ArgumentList.Arguments[0];
+
+                                    var literalExpression = ResolveLiteralExpression(statusCodeExpression.Expression);
+
+                                    if (literalExpression is not null)
                                     {
-                                        candidate = candidate.MakeGenericMethod(resultsMethod.AsMethodInfo(metadataLoadContext).GetGenericArguments());
+                                        populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create({literalExpression}));");
                                     }
 
-                                    results ??= new();
-                                    results.Add(candidate.ReturnType);
                                 }
+                                else
+                                {
+                                    var candidate = knownTypedResultsMethods[(resultsMethod.Name, resultsMethod.IsGenericMethod)].FirstOrDefault();
 
-                                populateMetadata.AppendLine($"// {resultsMethod} = {candidate}");
+                                    if (candidate is not null)
+                                    {
+                                        if (candidate.IsGenericMethod)
+                                        {
+                                            candidate = candidate.MakeGenericMethod(resultsMethod.AsMethodInfo(metadataLoadContext).GetGenericArguments());
+                                        }
+                                    }
+
+                                    if (wellKnownTypes.IEndpointMetadataProviderType?.IsAssignableFrom(candidate.ReturnType) == true)
+                                    {
+                                        populateMetadata.AppendLine($@"                PopulateMetadata<{candidate.ReturnType}>(del.Method, builder);");
+                                    }
+                                }
                             }
                         }
                     }
-
-                    return results?.ToArray() ?? Array.Empty<Type>();
                 }
 
                 populateMetadata.AppendLine($@"                builder.Metadata.Add(new SourceKey(@""{invocation.SyntaxTree.FilePath}"", {lineNumber}));");
 
-                foreach (var resultType in AnalyzeResultTypesForIResultMethods(method))
-                {
-                    if (wellKnownTypes.IEndpointMetadataProviderType?.IsAssignableFrom(resultType) == true)
-                    {
-                        // TODO: Result<T> internally uses reflection to call this method on it's generic args conditionally
-                        // we can avoid that reflection here.
-
-                        // Static abstract call
-                        populateMetadata.AppendLine($@"                PopulateMetadata<{resultType}>(del.Method, builder);");
-                    }
-                }
+                AnalyzeResultTypesForIResultMethods(method);
 
                 var returnType = methodModel.MethodInfo.ReturnType;
 
@@ -787,6 +788,11 @@ internal static class GeneratedRouteBuilderExtensions
         public static ResponseTypeMetadata Create(string contentType)
         {{
             return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }} }};
+        }}
+
+        public static ResponseTypeMetadata Create(int statusCode)
+        {{
+            return new ResponseTypeMetadata {{ StatusCode = statusCode }};
         }}
     }}
 
