@@ -419,9 +419,9 @@ namespace uController.SourceGenerator
                     }
                 }
 
-                void AnalyzeResultTypesForIResultMethods(IMethodSymbol method)
+                void AnalyzeResultTypesForIResultMethods(IMethodSymbol method, Type returnType)
                 {
-                    if (!wellKnownTypes.IResultType.Equals(method.ReturnType))
+                    if (!wellKnownTypes.IResultType.Equals(returnType))
                     {
                         // Don't bother if we're not looking at an IResult returning method
                         return;
@@ -489,14 +489,14 @@ namespace uController.SourceGenerator
 
                 populateMetadata.AppendLine($@"                builder.Metadata.Add(new SourceKey(@""{invocation.SyntaxTree.FilePath}"", {lineNumber}));");
 
-                AnalyzeResultTypesForIResultMethods(method);
-
                 var returnType = methodModel.MethodInfo.ReturnType;
 
                 if (AwaitableInfo.IsTypeAwaitable(returnType, out var awaitableInfo))
                 {
                     returnType = awaitableInfo.ResultType;
                 }
+
+                AnalyzeResultTypesForIResultMethods(method, returnType);
 
                 if (returnType.Equals(typeof(void)))
                 {

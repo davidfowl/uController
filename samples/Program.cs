@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using MinimalApis.Extensions.Binding;
-using Sample;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Reflection;
@@ -33,6 +32,9 @@ app.MapPost("/fileupload", (IFormFile file) =>
 {
     return $"Uploaded {file.Name}";
 });
+
+app.MapGet("/nameofnot", (string name) => name is null ? Results.NotFound() : Results.Ok($"Hello {name}"));
+
 
 app.MapPost("/formpost", (IFormCollection formCollection) =>
 {
