@@ -518,7 +518,7 @@ namespace uController.SourceGenerator
                 else if (!wellKnownTypes.IResultType.IsAssignableFrom(returnType))
                 {
                     // Add JSON
-                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json""));");
+                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json"", {(returnType.GetTypeSymbol().IsAnonymousType ? "typeof(T)" : $"typeof({returnType})" )}));");
                 }
 
                 var thunkBuilder = method.ReturnType.IsAnonymousType ? genericThunks : thunks;
@@ -779,15 +779,15 @@ internal static class GeneratedRouteBuilderExtensions
 
     private sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
     {{
-        public Type Type {{ get; set; }}
+        public Type Type {{ get; set; }} = typeof(void);
 
         public int StatusCode {{ get; set; }} = 200;
 
         public IEnumerable<string> ContentTypes {{ get; init; }} = Enumerable.Empty<string>();
 
-        public static ResponseTypeMetadata Create(string contentType)
+        public static ResponseTypeMetadata Create(string contentType, Type type = null)
         {{
-            return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }} }};
+            return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }}, Type = type }};
         }}
 
         public static ResponseTypeMetadata Create(int statusCode)

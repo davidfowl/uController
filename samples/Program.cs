@@ -72,7 +72,7 @@ var api = app.MapGroup("/api");
 var personGroup = api.MapGroup("/persons");
 personGroup.MapGet("/", () => new Person("David"));
 
-api.MapProducts();
+api.MapTodoEndpoints();
 
 var s = Wrapper.RoutePattern;
 
