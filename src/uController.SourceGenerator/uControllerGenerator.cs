@@ -7,6 +7,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Internal;
 using Roslyn.Reflection;
@@ -431,33 +432,23 @@ namespace uController.SourceGenerator
                     {
                         var syntax = reference.GetSyntax();
 
+                        var operation = semanticModel.GetOperation(syntax);
                         // TODO: This needs a real detailed analysis working from return expressions, this is a bit of a hack right now
                         // looking for *any* results call in this method. This should find all exit points from a method
                         // and start from there.
-                        foreach (var s in syntax.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                        foreach (var op in operation.Descendants().OfType<IInvocationOperation>())
                         {
-                            if (s.Expression is MemberAccessExpressionSyntax
-                                {
-                                    Expression: IdentifierNameSyntax
-                                    {
-                                        Identifier: { ValueText: "Results" }
-                                    },
-                                } expr && expr.IsKind(SyntaxKind.SimpleMemberAccessExpression) &&
+                            var resultsMethod = op.TargetMethod;
 
-                            semanticModel.GetSymbolInfo(expr.Name) is
-                            {
-                                Symbol: IMethodSymbol
-                                {
-                                    IsStatic: true,
-                                } resultsMethod
-                            } && wellKnownTypes.ResultsType.Equals(resultsMethod.ContainingType))
+                            if (resultsMethod.IsStatic && 
+                                wellKnownTypes.ResultsType.Equals(resultsMethod.ContainingType))
                             {
                                 if (resultsMethod.Name == "StatusCode")
                                 {
                                     // Try to resolve the status code statically
-                                    var statusCodeExpression = s.ArgumentList.Arguments[0];
+                                    var statusCodeExpression = op.Arguments[0].Value.Syntax as ExpressionSyntax;
 
-                                    var literalExpression = ResolveLiteralExpression(statusCodeExpression.Expression);
+                                    var literalExpression = ResolveLiteralExpression(statusCodeExpression);
 
                                     if (literalExpression is not null)
                                     {
