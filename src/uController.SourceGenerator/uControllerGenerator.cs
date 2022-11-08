@@ -104,20 +104,17 @@ namespace uController.SourceGenerator
                 }
 
                 // Could be rewritten as a while loop
-                IMethodSymbol ResolveMethodFromOperation(IOperation operation)
+                IMethodSymbol ResolveMethodFromOperation(IOperation operation) => operation switch
                 {
-                    return operation switch
-                    {
-                        IArgumentOperation argument => ResolveMethodFromOperation(argument.Value),
-                        IConversionOperation conv => ResolveMethodFromOperation(conv.Operand),
-                        IDelegateCreationOperation del => ResolveMethodFromOperation(del.Target),
-                        IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveMethodFromOperation(op),
-                        IAnonymousFunctionOperation anon => anon.Symbol,
-                        ILocalFunctionOperation local => local.Symbol,
-                        IMethodReferenceOperation method => method.Method,
-                        _ => null
-                    };
-                }
+                    IArgumentOperation argument => ResolveMethodFromOperation(argument.Value),
+                    IConversionOperation conv => ResolveMethodFromOperation(conv.Operand),
+                    IDelegateCreationOperation del => ResolveMethodFromOperation(del.Target),
+                    IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveMethodFromOperation(op),
+                    IAnonymousFunctionOperation anon => anon.Symbol,
+                    ILocalFunctionOperation local => local.Symbol,
+                    IMethodReferenceOperation method => method.Method,
+                    _ => null
+                };
 
                 var method = ResolveMethodFromOperation(delegateArgument);
 
@@ -127,17 +124,14 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                object ResolveLiteralOperation(IOperation operation)
+                object ResolveLiteralOperation(IOperation operation) => operation switch
                 {
-                    return operation switch
-                    {
-                        IArgumentOperation argument => ResolveLiteralOperation(argument.Value),
-                        ILiteralOperation literal => literal.ConstantValue.Value,
-                        ILocalReferenceOperation l when l.Local.IsConst && ResolveDeclarationOperation(l.Local) is IOperation op => ResolveLiteralOperation(op),
-                        IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveLiteralOperation(op),
-                        _ => null
-                    };
-                }
+                    IArgumentOperation argument => ResolveLiteralOperation(argument.Value),
+                    ILiteralOperation literal => literal.ConstantValue.Value,
+                    ILocalReferenceOperation l when l.Local.IsConst && ResolveDeclarationOperation(l.Local) is IOperation op => ResolveLiteralOperation(op),
+                    IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveLiteralOperation(op),
+                    _ => null
+                };
 
                 var routePattern = ResolveLiteralOperation(routePatternArgument) as string;
 
