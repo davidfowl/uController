@@ -17,30 +17,32 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 
+using MetadataPopulator = System.Action<System.Delegate, Microsoft.AspNetCore.Builder.EndpointBuilder>;
+using RequestDelegateFactoryFunc = System.Func<System.Delegate, Microsoft.AspNetCore.Builder.EndpointBuilder, Microsoft.AspNetCore.Http.RequestDelegate>;
+
 namespace Microsoft.AspNetCore.Builder
 {
-    delegate void MetadataPopulator(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
-    delegate Microsoft.AspNetCore.Http.RequestDelegate RequestDelegateFactoryFunc(System.Delegate handler, Microsoft.AspNetCore.Builder.EndpointBuilder builder);
     internal record SourceKey(string Path, int Line);
+}
 
-    public static class MapActionsExtensions
+internal static class GeneratedRouteBuilderExtensions
+{
+    private static readonly string[] GetVerb = new[] { HttpMethods.Get };
+    private static readonly string[] PostVerb = new[] { HttpMethods.Post };
+    private static readonly string[] PutVerb = new[]  { HttpMethods.Put };
+    private static readonly string[] DeleteVerb = new[] { HttpMethods.Delete };
+    private static readonly string[] PatchVerb = new[] { HttpMethods.Patch };
+
+    private class GenericThunks<T>
     {
-        private static readonly string[] GetVerb = new[] { HttpMethods.Get };
-        private static readonly string[] PostVerb = new[] { HttpMethods.Post };
-        private static readonly string[] PutVerb = new[]  { HttpMethods.Put };
-        private static readonly string[] DeleteVerb = new[] { HttpMethods.Delete };
-        private static readonly string[] PatchVerb = new[] { HttpMethods.Patch };
-
-        private class GenericThunks<T>
+        public static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
         {
-            public static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
-            {
-                [(@"C:\dev\git\uController\samples\Program.cs", 20)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 19)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 20));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 19));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(T)));
             }, 
            (del, builder) => 
             {
@@ -77,23 +79,24 @@ namespace Microsoft.AspNetCore.Builder
             }),
 
 
-            };
-        }
+        };
+    }
 
-        private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
-        {
-            [(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 10)] = (
+    private static readonly System.Collections.Generic.Dictionary<(string, int), (MetadataPopulator, RequestDelegateFactoryFunc)> map = new()
+    {
+            [(@"C:\dev\git\uController\samples\MapTodos.cs", 9)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 10));
-                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>>(del.Method, builder);
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapTodos.cs", 9));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(System.Collections.Generic.List<Todo>)));
             }, 
            (del, builder) => 
             {
-                var handler = (System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>>)del;
+                var handler = (System.Func<TodoDbContext, System.Threading.Tasks.Task<System.Collections.Generic.List<Todo>>>)del;
                 EndpointFilterDelegate filteredInvocation = null;
-
+                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<TodoDbContext>> arg_dbServiceOrBodyResolver = (ispis?.IsService(typeof(TodoDbContext)) ?? false) ? ResolveService<TodoDbContext> : ResolveBody<TodoDbContext>;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -102,39 +105,43 @@ namespace Microsoft.AspNetCore.Builder
                         {
                             return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
                         }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler());
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<TodoDbContext>(0)));
                     },
                     builder,
                     handler.Method);
                 }
 
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var result = handler();
-                    return result.ExecuteAsync(httpContext);
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    var result = await handler(arg_db);
+                    await httpContext.Response.WriteAsJsonAsync(result);
                 }
                 
                 async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
                 {
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_db));
                     await ExecuteObjectResult(result, httpContext);
                 }
 
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 11)] = (
+            [(@"C:\dev\git\uController\samples\MapTodos.cs", 17)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapProductsExtensions.cs", 11));
-                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>(del.Method, builder);
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapTodos.cs", 17));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<Todo>>(del.Method, builder);
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.NotFound>(del.Method, builder);
             }, 
            (del, builder) => 
             {
-                var handler = (System.Func<int, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>>)del;
+                var handler = (System.Func<int, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>>)del;
                 EndpointFilterDelegate filteredInvocation = null;
-
+                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<TodoDbContext>> arg_dbServiceOrBodyResolver = (ispis?.IsService(typeof(TodoDbContext)) ?? false) ? ResolveService<TodoDbContext> : ResolveBody<TodoDbContext>;
                 if (builder.FilterFactories.Count > 0)
                 {
                     filteredInvocation = BuildFilterDelegate(ic => 
@@ -143,7 +150,7 @@ namespace Microsoft.AspNetCore.Builder
                         {
                             return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
                         }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0), ic.GetArgument<TodoDbContext>(1)));
                     },
                     builder,
                     handler.Method);
@@ -159,12 +166,13 @@ namespace Microsoft.AspNetCore.Builder
                         arg_id = default;
                         wasParamCheckFailure = true;
                     }
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
                     if (wasParamCheckFailure)
                     {
                         httpContext.Response.StatusCode = 400;
                         return;
                     }
-                    var result = await handler(arg_id);
+                    var result = await handler(arg_id, arg_db);
                     await result.ExecuteAsync(httpContext);
                 }
                 
@@ -178,22 +186,213 @@ namespace Microsoft.AspNetCore.Builder
                         arg_id = default;
                         wasParamCheckFailure = true;
                     }
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
                     if (wasParamCheckFailure)
                     {
                         httpContext.Response.StatusCode = 400;
                     }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id));
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id, arg_db));
                     await ExecuteObjectResult(result, httpContext);
                 }
 
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 17)] = (
+            [(@"C:\dev\git\uController\samples\MapTodos.cs", 29)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 17));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapTodos.cs", 29));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.NotFound>(del.Method, builder);
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.NoContent>(del.Method, builder);
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, Todo, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<Todo>> arg_todoServiceOrBodyResolver = (ispis?.IsService(typeof(Todo)) ?? false) ? ResolveService<Todo> : ResolveBody<Todo>;
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<TodoDbContext>> arg_dbServiceOrBodyResolver = (ispis?.IsService(typeof(TodoDbContext)) ?? false) ? ResolveService<TodoDbContext> : ResolveBody<TodoDbContext>;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0), ic.GetArgument<Todo>(1), ic.GetArgument<TodoDbContext>(2)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                    int arg_id;
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
+                    {
+                        arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_todo = await arg_todoServiceOrBodyResolver(httpContext);
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return;
+                    }
+                    var result = await handler(arg_id, arg_todo, arg_db);
+                    await result.ExecuteAsync(httpContext);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                    int arg_id;
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
+                    {
+                        arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_todo = await arg_todoServiceOrBodyResolver(httpContext);
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id, arg_todo, arg_db));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\MapTodos.cs", 48)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapTodos.cs", 48));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Created<Todo>>(del.Method, builder);
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<Todo, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<Todo>> arg_todoServiceOrBodyResolver = (ispis?.IsService(typeof(Todo)) ?? false) ? ResolveService<Todo> : ResolveBody<Todo>;
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<TodoDbContext>> arg_dbServiceOrBodyResolver = (ispis?.IsService(typeof(TodoDbContext)) ?? false) ? ResolveService<TodoDbContext> : ResolveBody<TodoDbContext>;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<Todo>(0), ic.GetArgument<TodoDbContext>(1)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_todo = await arg_todoServiceOrBodyResolver(httpContext);
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    var result = await handler(arg_todo, arg_db);
+                    await result.ExecuteAsync(httpContext);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_todo = await arg_todoServiceOrBodyResolver(httpContext);
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_todo, arg_db));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\MapTodos.cs", 58)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\MapTodos.cs", 58));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<Todo>>(del.Method, builder);
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.NotFound>(del.Method, builder);
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();
+                System.Func<HttpContext, System.Threading.Tasks.ValueTask<TodoDbContext>> arg_dbServiceOrBodyResolver = (ispis?.IsService(typeof(TodoDbContext)) ?? false) ? ResolveService<TodoDbContext> : ResolveBody<TodoDbContext>;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0), ic.GetArgument<TodoDbContext>(1)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                async System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                    int arg_id;
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
+                    {
+                        arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return;
+                    }
+                    var result = await handler(arg_id, arg_db);
+                    await result.ExecuteAsync(httpContext);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_id_Value = httpContext.Request.RouteValues["id"]?.ToString();
+                    int arg_id;
+                    if (arg_id_Value == null || !int.TryParse(arg_id_Value, out arg_id))
+                    {
+                        arg_id = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_db = await arg_dbServiceOrBodyResolver(httpContext);
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_id, arg_db));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 16)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 16));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -230,11 +429,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 18)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 17)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 18));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 17));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -273,12 +472,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 22)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 21)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 22));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 21));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(Person)));
             }, 
            (del, builder) => 
             {
@@ -314,12 +513,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 24)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 23)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 24));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 23));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<string>>(del.Method, builder);
             }, 
            (del, builder) => 
             {
@@ -360,12 +559,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 26)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 25)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 26));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 25));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(System.Text.Json.Nodes.JsonNode)));
             }, 
            (del, builder) => 
             {
@@ -404,12 +603,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 27)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 26)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 27));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 26));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(System.Text.Json.Nodes.JsonNode)));
             }, 
            (del, builder) => 
             {
@@ -447,12 +646,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 29)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 28)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 29));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 28));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(Model)));
             }, 
            (del, builder) => 
             {
@@ -491,11 +690,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 30)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 29)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 30));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 29));
             }, 
            (del, builder) => 
             {
@@ -534,11 +733,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 32)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 31)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 32));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 31));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -579,11 +778,56 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 37)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 36)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 37));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 36));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.NotFound>(del.Method, builder);
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok<string>>(del.Method, builder);
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<string, Microsoft.AspNetCore.Http.IResult>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_nameRouteOrQueryResolver = routePattern?.GetParameter("name") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
+                    var result = handler(arg_name);
+                    return result.ExecuteAsync(httpContext);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 39)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 39));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -624,12 +868,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 42)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 44)] = (
            (del, builder) => 
             {
                 var parameterInfos = del.Method.GetParameters();
                 PopulateMetadata<MinimalApis.Extensions.Binding.Body<string>>(parameterInfos[0], builder);
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 42));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 44));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -669,13 +913,14 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 44)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 46)] = (
            (del, builder) => 
             {
                 var parameterInfos = del.Method.GetParameters();
                 PopulateMetadata<MinimalApis.Extensions.Binding.Validated<Model>>(parameterInfos[0], builder);
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 44));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 46));
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.ValidationProblem>(del.Method, builder);
+                PopulateMetadata<Microsoft.AspNetCore.Http.HttpResults.Ok>(del.Method, builder);
             }, 
            (del, builder) => 
             {
@@ -714,12 +959,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 53)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 55)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 53));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 55));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(object)));
             }, 
            (del, builder) => 
             {
@@ -757,12 +1002,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 57)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 59)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 57));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 59));
+                builder.Metadata.Add(ResponseTypeMetadata.Create(401));
             }, 
            (del, builder) => 
             {
@@ -819,12 +1064,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 59)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 61)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 59));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 61));
             }, 
            (del, builder) => 
             {
@@ -862,12 +1106,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 60)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 62)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 60));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 62));
             }, 
            (del, builder) => 
             {
@@ -905,11 +1148,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 62)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 64)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 62));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 64));
             }, 
            (del, builder) => 
             {
@@ -948,12 +1191,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 64)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 66)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 64));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 66));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(string?[])));
             }, 
            (del, builder) => 
             {
@@ -992,12 +1235,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 65)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 67)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 65));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 67));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(string[])));
             }, 
            (del, builder) => 
             {
@@ -1036,12 +1279,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 66)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 68)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 66));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 68));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int[])));
             }, 
            (del, builder) => 
             {
@@ -1113,12 +1356,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 71)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 73)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 71));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 73));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(Person)));
             }, 
            (del, builder) => 
             {
@@ -1154,11 +1397,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 77)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 79)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 77));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 79));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -1221,55 +1464,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 79)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 81)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 79));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
-            }, 
-           (del, builder) => 
-            {
-                var handler = (System.Func<string, string>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_nameRouteOrQueryResolver = routePattern?.GetParameter("name") is null ? ResolveByQuery : ResolveByRoute;
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic => 
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
-                    var result = handler(arg_name);
-                    return httpContext.Response.WriteAsync(result);
-                }
-                
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
-                    await ExecuteObjectResult(result, httpContext);
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            }),
-
-            [(@"C:\dev\git\uController\samples\Program.cs", 80)] = (
-           (del, builder) => 
-            {
-
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 80));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 81));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -1314,6 +1513,50 @@ namespace Microsoft.AspNetCore.Builder
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 82));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<string, string>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_nameRouteOrQueryResolver = routePattern?.GetParameter("name") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
+                    var result = handler(arg_name);
+                    return httpContext.Response.WriteAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = arg_nameRouteOrQueryResolver(httpContext, "name").ToString();
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 84)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 84));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -1375,161 +1618,12 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 101)] = (
-           (del, builder) => 
-            {
-
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 101));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
-            }, 
-           (del, builder) => 
-            {
-                var handler = (System.Func<int, int>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic => 
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var wasParamCheckFailure = false;
-                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
-                    int arg_x;
-                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
-                    {
-                        arg_x = default;
-                        wasParamCheckFailure = true;
-                    }
-                    if (wasParamCheckFailure)
-                    {
-                        httpContext.Response.StatusCode = 400;
-                        return Task.CompletedTask;
-                    }
-                    var result = handler(arg_x);
-                    return httpContext.Response.WriteAsJsonAsync(result);
-                }
-                
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var wasParamCheckFailure = false;
-                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
-                    int arg_x;
-                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
-                    {
-                        arg_x = default;
-                        wasParamCheckFailure = true;
-                    }
-                    if (wasParamCheckFailure)
-                    {
-                        httpContext.Response.StatusCode = 400;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
-                    await ExecuteObjectResult(result, httpContext);
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            }),
-
-            [(@"C:\dev\git\uController\samples\Program.cs", 102)] = (
-           (del, builder) => 
-            {
-
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 102));
-            }, 
-           (del, builder) => 
-            {
-                var handler = (System.Action<int, int>)del;
-                EndpointFilterDelegate filteredInvocation = null;
-                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
-                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
-                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
-                if (builder.FilterFactories.Count > 0)
-                {
-                    filteredInvocation = BuildFilterDelegate(ic => 
-                    {
-                        if (ic.HttpContext.Response.StatusCode == 400)
-                        {
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                        }
-                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
-                    },
-                    builder,
-                    handler.Method);
-                }
-
-                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var wasParamCheckFailure = false;
-                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
-                    int arg_x;
-                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
-                    {
-                        arg_x = default;
-                        wasParamCheckFailure = true;
-                    }
-                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
-                    int arg_y;
-                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
-                    {
-                        arg_y = default;
-                        wasParamCheckFailure = true;
-                    }
-                    if (wasParamCheckFailure)
-                    {
-                        httpContext.Response.StatusCode = 400;
-                        return Task.CompletedTask;
-                    }
-                    handler(arg_x, arg_y);
-                    return System.Threading.Tasks.Task.CompletedTask;
-                }
-                
-                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
-                {
-                    var wasParamCheckFailure = false;
-                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
-                    int arg_x;
-                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
-                    {
-                        arg_x = default;
-                        wasParamCheckFailure = true;
-                    }
-                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
-                    int arg_y;
-                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
-                    {
-                        arg_y = default;
-                        wasParamCheckFailure = true;
-                    }
-                    if (wasParamCheckFailure)
-                    {
-                        httpContext.Response.StatusCode = 400;
-                    }
-                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
-                    await ExecuteObjectResult(result, httpContext);
-                }
-
-                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
-            }),
-
             [(@"C:\dev\git\uController\samples\Program.cs", 103)] = (
            (del, builder) => 
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 103));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
             }, 
            (del, builder) => 
             {
@@ -1678,7 +1772,7 @@ namespace Microsoft.AspNetCore.Builder
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 105));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
             }, 
            (del, builder) => 
             {
@@ -1827,7 +1921,7 @@ namespace Microsoft.AspNetCore.Builder
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 107));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
             }, 
            (del, builder) => 
             {
@@ -1976,7 +2070,7 @@ namespace Microsoft.AspNetCore.Builder
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 109));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
             }, 
            (del, builder) => 
             {
@@ -2125,7 +2219,156 @@ namespace Microsoft.AspNetCore.Builder
             {
 
                 builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 111));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<int>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    var result = handler(arg_x);
+                    return httpContext.Response.WriteAsJsonAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 112)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 112));
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Action<int, int>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_xRouteOrQueryResolver = routePattern?.GetParameter("x") is null ? ResolveByQuery : ResolveByRoute;
+                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> arg_yRouteOrQueryResolver = routePattern?.GetParameter("y") is null ? ResolveByQuery : ResolveByRoute;
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        handler(ic.GetArgument<int>(0), ic.GetArgument<int>(1));
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                        return Task.CompletedTask;
+                    }
+                    handler(arg_x, arg_y);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var wasParamCheckFailure = false;
+                    var arg_x_Value = arg_xRouteOrQueryResolver(httpContext, "x").ToString();
+                    int arg_x;
+                    if (arg_x_Value == null || !int.TryParse(arg_x_Value, out arg_x))
+                    {
+                        arg_x = default;
+                        wasParamCheckFailure = true;
+                    }
+                    var arg_y_Value = arg_yRouteOrQueryResolver(httpContext, "y").ToString();
+                    int arg_y;
+                    if (arg_y_Value == null || !int.TryParse(arg_y_Value, out arg_y))
+                    {
+                        arg_y = default;
+                        wasParamCheckFailure = true;
+                    }
+                    if (wasParamCheckFailure)
+                    {
+                        httpContext.Response.StatusCode = 400;
+                    }
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_x, arg_y));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 113)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 113));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(int)));
             }, 
            (del, builder) => 
             {
@@ -2186,12 +2429,55 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 120)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 124)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 120));
-                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json"));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 124));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
+            }, 
+           (del, builder) => 
+            {
+                var handler = (System.Func<string, string>)del;
+                EndpointFilterDelegate filteredInvocation = null;
+
+                if (builder.FilterFactories.Count > 0)
+                {
+                    filteredInvocation = BuildFilterDelegate(ic => 
+                    {
+                        if (ic.HttpContext.Response.StatusCode == 400)
+                        {
+                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                        }
+                        return System.Threading.Tasks.ValueTask.FromResult<object>(handler(ic.GetArgument<string>(0)));
+                    },
+                    builder,
+                    handler.Method);
+                }
+
+                System.Threading.Tasks.Task RequestHandler(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
+                    var result = handler(arg_name);
+                    return httpContext.Response.WriteAsync(result);
+                }
+                
+                async System.Threading.Tasks.Task RequestHandlerFiltered(Microsoft.AspNetCore.Http.HttpContext httpContext)
+                {
+                    var arg_name = httpContext.Request.RouteValues["name"]?.ToString();
+                    var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext, arg_name));
+                    await ExecuteObjectResult(result, httpContext);
+                }
+
+                return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
+            }),
+
+            [(@"C:\dev\git\uController\samples\Program.cs", 126)] = (
+           (del, builder) => 
+            {
+
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 126));
+                builder.Metadata.Add(ResponseTypeMetadata.Create("application/json", typeof(Parsable)));
             }, 
            (del, builder) => 
             {
@@ -2252,11 +2538,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 122)] = (
+            [(@"C:\dev\git\uController\samples\Program.cs", 128)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 122));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 128));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -2295,11 +2581,11 @@ namespace Microsoft.AspNetCore.Builder
                 return filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
             }),
 
-            [(@"C:\dev\git\uController\samples\Program.cs", 165)] = (
+            [(@"C:\dev\git\uController\samples\Wrapper.cs", 15)] = (
            (del, builder) => 
             {
 
-                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Program.cs", 165));
+                builder.Metadata.Add(new SourceKey(@"C:\dev\git\uController\samples\Wrapper.cs", 15));
                 builder.Metadata.Add(ResponseTypeMetadata.Create("text/plain"));
             }, 
            (del, builder) => 
@@ -2363,7 +2649,7 @@ namespace Microsoft.AspNetCore.Builder
             }),
 
 
-        };
+    };
         /// <summary>
         /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
         /// for the specified pattern.
@@ -2372,7 +2658,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
         /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.HttpResults.Ok<Product[]>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<TodoDbContext, System.Threading.Tasks.Task<System.Collections.Generic.List<Todo>>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
@@ -2385,9 +2671,48 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="pattern">The route pattern.</param>
         /// <param name="handler">The delegate executed when the endpoint is matched.</param>
         /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
-        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.HttpResults.Results<Microsoft.AspNetCore.Http.HttpResults.Ok<Product>, Microsoft.AspNetCore.Http.HttpResults.NotFound>>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP PUT requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPut(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, Todo, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, PutVerb, filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP POST requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Todo, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP DELETE requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapDelete(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<int, TodoDbContext, System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult>> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, DeleteVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2505,6 +2830,19 @@ namespace Microsoft.AspNetCore.Builder
         internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapPost(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<Microsoft.AspNetCore.Http.IFormFile, string> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return MapCore(endpoints, pattern, handler, PostVerb, filePath, lineNumber);
+        }
+
+        /// <summary>
+        /// Adds a <see cref="RouteEndpoint"/> to the <see cref="IEndpointRouteBuilder"/> that matches HTTP GET requests
+        /// for the specified pattern.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+        /// <param name="pattern">The route pattern.</param>
+        /// <param name="handler">The delegate executed when the endpoint is matched.</param>
+        /// <returns>A <see cref="RouteHandlerBuilder"/> that can be used to further customize the endpoint.</returns>
+        internal static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string pattern, System.Func<string, Microsoft.AspNetCore.Http.IResult> handler, [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
+        {
+            return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
         /// <summary>
@@ -2832,148 +3170,152 @@ namespace Microsoft.AspNetCore.Builder
             return MapCore(endpoints, pattern, handler, GetVerb, filePath, lineNumber);
         }
 
-        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore<T>(
-            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
-            string pattern, 
-            System.Delegate handler,
-            IEnumerable<string> httpMethods,
-            string filePath,
-            int lineNumber)
+    private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore<T>(
+        this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+        string pattern, 
+        System.Delegate handler,
+        IEnumerable<string> httpMethods,
+        string filePath,
+        int lineNumber)
+    {
+        var (populate, factory) = GenericThunks<T>.map[(filePath, lineNumber)];
+
+        return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+    }
+
+    private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
+        this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
+        string pattern, 
+        System.Delegate handler,
+        IEnumerable<string> httpMethods,
+        string filePath,
+        int lineNumber)
+    {
+        var (populate, factory) = map[(filePath, lineNumber)];
+
+        return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
+    }
+
+    private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
+    {
+        SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
+
+        foreach (var dataSource in endpoints.DataSources)
         {
-            var (populate, factory) = GenericThunks<T>.map[(filePath, lineNumber)];
-
-            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
-        }
-
-        private static Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapCore(
-            this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder routes, 
-            string pattern, 
-            System.Delegate handler,
-            IEnumerable<string> httpMethods,
-            string filePath,
-            int lineNumber)
-        {
-            var (populate, factory) = map[(filePath, lineNumber)];
-
-            return GetOrAddRouteEndpointDataSource(routes).AddRouteHandler(RoutePatternFactory.Parse(pattern), handler, httpMethods, isFallback: false, populate, factory);
-        }
-
-        private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
-        {
-            SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
-
-            foreach (var dataSource in endpoints.DataSources)
+            if (dataSource is SourceGeneratedRouteEndpointDataSource foundDataSource)
             {
-                if (dataSource is SourceGeneratedRouteEndpointDataSource foundDataSource)
-                {
-                    routeEndpointDataSource = foundDataSource;
-                    break;
-                }
-            }
-
-            if (routeEndpointDataSource is null)
-            {
-                routeEndpointDataSource = new SourceGeneratedRouteEndpointDataSource(endpoints.ServiceProvider);
-                endpoints.DataSources.Add(routeEndpointDataSource);
-            }
-
-            return routeEndpointDataSource;
-        }
-
-        private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
-        {
-            var routeHandlerFilters =  builder.FilterFactories;
-
-            var context0 = new EndpointFilterFactoryContext
-            {
-                MethodInfo = mi,
-                ApplicationServices = builder.ApplicationServices,
-            };
-
-            var initialFilteredInvocation = filteredInvocation;
-
-            for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
-            {
-                var filterFactory = routeHandlerFilters[i];
-                filteredInvocation = filterFactory(context0, filteredInvocation);
-            }
-
-            return filteredInvocation;
-        }
-
-        private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
-        {
-            T.PopulateMetadata(method, builder);
-        }
-
-        private static void PopulateMetadata<T>(System.Reflection.ParameterInfo parameter, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointParameterMetadataProvider
-        {
-            T.PopulateMetadata(parameter, builder);
-        }
-
-        private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
-        {
-            if (obj is IResult r)
-            {
-                return r.ExecuteAsync(httpContext);
-            }
-            else if (obj is string s)
-            {
-                return httpContext.Response.WriteAsync(s);
-            }
-            else
-            {
-                return httpContext.Response.WriteAsJsonAsync(obj);
+                routeEndpointDataSource = foundDataSource;
+                break;
             }
         }
 
-        private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
-        private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
-        private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
-        private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
+        if (routeEndpointDataSource is null)
         {
-            var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
+            routeEndpointDataSource = new SourceGeneratedRouteEndpointDataSource(endpoints.ServiceProvider);
+            endpoints.DataSources.Add(routeEndpointDataSource);
+        }
 
-            if (feature?.CanHaveBody == true)
-            {
-                if (!httpContext.Request.HasJsonContentType())
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
-                    return default;
-                }
-                try
-                {
-                    return await httpContext.Request.ReadFromJsonAsync<T>();
-                }
-                catch (IOException)
-                {
-                    return default;
-                }
-                catch (System.Text.Json.JsonException)
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    return default;
-                }
-            }
-            return default;
+        return routeEndpointDataSource;
+    }
+
+    private static EndpointFilterDelegate BuildFilterDelegate(EndpointFilterDelegate filteredInvocation, EndpointBuilder builder, System.Reflection.MethodInfo mi)
+    {
+        var routeHandlerFilters =  builder.FilterFactories;
+
+        var context0 = new EndpointFilterFactoryContext
+        {
+            MethodInfo = mi,
+            ApplicationServices = builder.ApplicationServices,
+        };
+
+        var initialFilteredInvocation = filteredInvocation;
+
+        for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+        {
+            var filterFactory = routeHandlerFilters[i];
+            filteredInvocation = filterFactory(context0, filteredInvocation);
+        }
+
+        return filteredInvocation;
+    }
+
+    private static void PopulateMetadata<T>(System.Reflection.MethodInfo method, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointMetadataProvider
+    {
+        T.PopulateMetadata(method, builder);
+    }
+
+    private static void PopulateMetadata<T>(System.Reflection.ParameterInfo parameter, EndpointBuilder builder) where T : Microsoft.AspNetCore.Http.Metadata.IEndpointParameterMetadataProvider
+    {
+        T.PopulateMetadata(parameter, builder);
+    }
+
+    private static Task ExecuteObjectResult(object obj, HttpContext httpContext)
+    {
+        if (obj is IResult r)
+        {
+            return r.ExecuteAsync(httpContext);
+        }
+        else if (obj is string s)
+        {
+            return httpContext.Response.WriteAsync(s);
+        }
+        else
+        {
+            return httpContext.Response.WriteAsJsonAsync(obj);
         }
     }
 
-    sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
+    private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+    private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+    private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
+    private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
     {
-        public Type Type { get; set; }
+        var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
+
+        if (feature?.CanHaveBody == true)
+        {
+            if (!httpContext.Request.HasJsonContentType())
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
+                return default;
+            }
+            try
+            {
+                return await httpContext.Request.ReadFromJsonAsync<T>();
+            }
+            catch (IOException)
+            {
+                return default;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return default;
+            }
+        }
+        return default;
+    }
+
+    private sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata
+    {
+        public Type Type { get; set; } = typeof(void);
 
         public int StatusCode { get; set; } = 200;
 
         public IEnumerable<string> ContentTypes { get; init; } = Enumerable.Empty<string>();
 
-        public static ResponseTypeMetadata Create(string contentType)
+        public static ResponseTypeMetadata Create(string contentType, Type type = null)
         {
-            return new ResponseTypeMetadata { ContentTypes = new[] { contentType } };
+            return new ResponseTypeMetadata { ContentTypes = new[] { contentType }, Type = type };
+        }
+
+        public static ResponseTypeMetadata Create(int statusCode)
+        {
+            return new ResponseTypeMetadata { StatusCode = statusCode };
         }
     }
 
-    internal sealed class SourceGeneratedRouteEndpointDataSource : EndpointDataSource
+    private sealed class SourceGeneratedRouteEndpointDataSource : EndpointDataSource
     {
         private readonly List<RouteEntry> _routeEntries = new();
         private readonly IServiceProvider _applicationServices;
@@ -3039,17 +3381,6 @@ namespace Microsoft.AspNetCore.Builder
         }
 
         public override IChangeToken GetChangeToken() => NullChangeToken.Singleton;
-
-        // For testing
-        internal RouteEndpointBuilder GetSingleRouteEndpointBuilder()
-        {
-            if (_routeEntries.Count is not 1)
-            {
-                throw new InvalidOperationException($"There are {_routeEntries.Count} endpoints defined! This can only be called for a single endpoint.");
-            }
-
-            return CreateRouteEndpointBuilder(_routeEntries[0]);
-        }
 
         private RouteEndpointBuilder CreateRouteEndpointBuilder(
             RouteEntry entry, RoutePattern groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>> groupConventions = null, IReadOnlyList<Action<EndpointBuilder>> groupFinallyConventions = null)
