@@ -38,12 +38,6 @@ namespace uController.SourceGenerator
                 System.Diagnostics.Debugger.Launch();
             }
 
-            //while (!System.Diagnostics.Debugger.IsAttached)
-            //{
-            //    System.Threading.Thread.Sleep(1000);
-            //}
-            // System.Diagnostics.Debugger.Launch();
-
             var metadataLoadContext = new MetadataLoadContext(context.Compilation);
             var wellKnownTypes = new WellKnownTypes(metadataLoadContext);
 
@@ -525,11 +519,19 @@ namespace uController.SourceGenerator
 //------------------------------------------------------------------------------
 
 #if NET7_0_OR_GREATER
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using System.IO;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 
