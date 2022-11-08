@@ -55,7 +55,7 @@ namespace uController.SourceGenerator
             var knownTypedResultsMethods = wellKnownTypes.TypedResultsType?.GetMethods(BindingFlags.Public | BindingFlags.Static)
                                                          .ToLookup(m => (m.Name, m.IsGenericMethod));
 
-            foreach (var (invocation, argument, callName) in receiver.MapActions)
+            foreach (var invocation in receiver.MapActions)
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
@@ -71,6 +71,10 @@ namespace uController.SourceGenerator
                 {
                     continue;
                 }
+
+                var callName = invocationOperation.TargetMethod.Name;
+                var routePatternArgument = invocationOperation.Arguments[1];
+                var delegateArgument = invocationOperation.Arguments[2];
 
                 IOperation ResolveDeclarationOperation(ISymbol symbol)
                 {
@@ -104,6 +108,7 @@ namespace uController.SourceGenerator
                 {
                     return operation switch
                     {
+                        IArgumentOperation argument => ResolveMethodFromOperation(argument.Value),
                         IConversionOperation conv => ResolveMethodFromOperation(conv.Operand),
                         IDelegateCreationOperation del => ResolveMethodFromOperation(del.Target),
                         IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveMethodFromOperation(op),
@@ -114,11 +119,11 @@ namespace uController.SourceGenerator
                     };
                 }
 
-                var method = ResolveMethodFromOperation(invocationOperation.Arguments[2].Value);
+                var method = ResolveMethodFromOperation(delegateArgument);
 
                 if (method == null)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnknownDelegateType, argument.GetLocation(), argument.ToFullString()));
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnknownDelegateType, delegateArgument.Syntax.GetLocation(), delegateArgument.Syntax.ToFullString()));
                     continue;
                 }
 
@@ -126,6 +131,7 @@ namespace uController.SourceGenerator
                 {
                     return operation switch
                     {
+                        IArgumentOperation argument => ResolveLiteralOperation(argument.Value),
                         ILiteralOperation literal => literal.ConstantValue.Value,
                         ILocalReferenceOperation l when l.Local.IsConst && ResolveDeclarationOperation(l.Local) is IOperation op => ResolveLiteralOperation(op),
                         IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveLiteralOperation(op),
@@ -133,7 +139,7 @@ namespace uController.SourceGenerator
                     };
                 }
 
-                var routePattern = ResolveLiteralOperation(invocationOperation.Arguments[1].Value) as string;
+                var routePattern = ResolveLiteralOperation(routePatternArgument) as string;
 
                 var methodModel = new MethodModel
                 {
@@ -989,7 +995,7 @@ internal static class GeneratedRouteBuilderExtensions
                 "MapFallback", // This doesn't work yet because it doesn't have a path
             };
 
-            public List<(InvocationExpressionSyntax, ExpressionSyntax, string)> MapActions { get; } = new();
+            public List<InvocationExpressionSyntax> MapActions { get; } = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
@@ -1005,7 +1011,7 @@ internal static class GeneratedRouteBuilderExtensions
                         ArgumentList: { Arguments: { Count: 2 } args }
                     } mapActionCall && KnownMethods.Contains(method))
                 {
-                    MapActions.Add((mapActionCall, args[1].Expression, method));
+                    MapActions.Add(mapActionCall);
                 }
             }
         }
