@@ -119,6 +119,10 @@ app.Map("/test/{n}", (int n) => n);
 
 //app.MapGet("/twobodies", Foo);
 
+const string pattern = "/constpattern/{name}";
+
+app.MapGet(pattern, (string name) => $"Const pattern {name}");
+
 app.MapGet("/something/parsable", ([FromQuery] Parsable p) => p);
 
 app.MapGet("/lineinfo", string (HttpContext context) =>
@@ -147,24 +151,6 @@ struct Parsable : IParsable<Parsable>
     public static bool TryParse([NotNullWhen(true)] string s, IFormatProvider provider, [MaybeNullWhen(false)] out Parsable result)
     {
         throw new NotImplementedException();
-    }
-}
-
-class Wrapper
-{
-    public static readonly string RoutePattern = "/foo/{id}";
-
-    public static readonly Func<string, string> HelloDelegate = Hello2;
-
-    public static readonly Func<string, string> HelloDelegate2 = (name) => $"Hello {name}";
-
-    public static string Hello2(string name) => $"Hello {name}";
-
-    public string Hello(int id) => "Hello World";
-
-    public void AddRoutes(IEndpointRouteBuilder routes)
-    {
-        routes.MapGet("/hello2", Hello);
     }
 }
 interface ISayHello

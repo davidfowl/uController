@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.Text;
@@ -60,11 +59,11 @@ namespace uController.SourceGenerator
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
-                var mapMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+                var invocationOperation = semanticModel.GetOperation(invocation) as IInvocationOperation;
 
-                if (mapMethodSymbol is { Parameters: { Length: 2 } parameters } &&
-                    wellKnownTypes.DelegateType.Equals(parameters[1].Type) &&
-                    wellKnownTypes.EndpointRouteBuilderType.Equals(mapMethodSymbol.ReceiverType))
+                if (invocationOperation is { Arguments: { Length: 3 } parameters } &&
+                    wellKnownTypes.DelegateType.Equals(parameters[2].Parameter.Type) &&
+                    wellKnownTypes.EndpointRouteBuilderType.Equals(parameters[0].Parameter.Type))
                 {
                     // We only want to generate overloads for calls that have a Delegate parameter
                 }
@@ -73,74 +72,49 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                static IMethodSymbol ResolveMethod(SemanticModel semanticModel, ExpressionSyntax expression)
+                IOperation ResolveDeclarationOperation(ISymbol symbol)
                 {
-                    switch (expression)
+                    foreach (var syntaxReference in symbol.DeclaringSyntaxReferences)
                     {
-                        case ParenthesizedLambdaExpressionSyntax:
-                        case MemberAccessExpressionSyntax:
-                        case IdentifierNameSyntax:
+                        var syn = syntaxReference.GetSyntax();
+
+                        if (syn is VariableDeclaratorSyntax
                             {
-                                var si = semanticModel.GetSymbolInfo(expression);
-
-                                if (si.Symbol is IMethodSymbol methodSymbol)
+                                Initializer:
                                 {
-                                    return methodSymbol;
+                                    Value: var expr
                                 }
+                            })
+                        {
+                            // Use the correct semantic model based on the syntax tree
+                            var operation = context.Compilation.GetSemanticModel(syn.SyntaxTree).GetOperation(expr);
 
-                                IMethodSymbol method = null;
-
-                                if (si.CandidateReason == CandidateReason.OverloadResolutionFailure)
-                                {
-                                    method = si.CandidateSymbols.Length == 1 ? si.CandidateSymbols[0] as IMethodSymbol : null;
-                                }
-
-                                if (method is null)
-                                {
-                                    var isReadOnly = si.Symbol switch
-                                    {
-                                        IFieldSymbol fieldSymbol => fieldSymbol.IsReadOnly,
-                                        ILocalSymbol localSymbol => localSymbol.IsConst,
-                                        _ => false
-                                    };
-
-                                    // If the reference to fields or locals are not const the we
-                                    // can't assume it won't be re-assigned
-                                    if (!isReadOnly)
-                                    {
-                                        return null;
-                                    }
-
-                                    foreach (var syntaxReference in si.Symbol.DeclaringSyntaxReferences)
-                                    {
-                                        var syn = syntaxReference.GetSyntax();
-
-                                        if (syn is VariableDeclaratorSyntax
-                                            {
-                                                Initializer:
-                                                {
-                                                    Value: var expr
-                                                }
-                                            })
-                                        {
-                                            method = ResolveMethod(semanticModel, expr);
-
-                                            if (method is not null)
-                                            {
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                return method;
+                            if (operation is not null)
+                            {
+                                return operation;
                             }
-                        default:
-                            return null;
+                        }
                     }
+
+                    return null;
                 }
 
-                var method = ResolveMethod(semanticModel, argument);
+                // Could be rewritten as a while loop
+                IMethodSymbol ResolveMethodFromOperation(IOperation operation)
+                {
+                    return operation switch
+                    {
+                        IConversionOperation conv => ResolveMethodFromOperation(conv.Operand),
+                        IDelegateCreationOperation del => ResolveMethodFromOperation(del.Target),
+                        IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveMethodFromOperation(op),
+                        IAnonymousFunctionOperation anon => anon.Symbol,
+                        ILocalFunctionOperation local => local.Symbol,
+                        IMethodReferenceOperation method => method.Method,
+                        _ => null
+                    };
+                }
+
+                var method = ResolveMethodFromOperation(invocationOperation.Arguments[2].Value);
 
                 if (method == null)
                 {
@@ -148,68 +122,26 @@ namespace uController.SourceGenerator
                     continue;
                 }
 
-                string ResolveLiteralExpression(ExpressionSyntax expression)
+                object ResolveLiteralOperation(IOperation operation)
                 {
-                    string ResolveIdentifier(IdentifierNameSyntax id)
+                    return operation switch
                     {
-                        var symbol = semanticModel.GetSymbolInfo(id).Symbol;
-                        if (symbol is null)
-                        {
-                            return null;
-                        }
-
-                        var isReadOnly = symbol switch
-                        {
-                            IFieldSymbol fieldSymbol => fieldSymbol.IsReadOnly,
-                            ILocalSymbol localSymbol => localSymbol.IsConst,
-                            _ => false
-                        };
-
-                        // If the reference to fields or locals are not const the we
-                        // can't assume it won't be re-assigned
-                        if (!isReadOnly)
-                        {
-                            return null;
-                        }
-
-                        foreach (var syntaxReference in symbol.DeclaringSyntaxReferences)
-                        {
-                            var syntax = syntaxReference.GetSyntax();
-
-                            if (syntax is VariableDeclaratorSyntax
-                                {
-                                    Initializer:
-                                    {
-                                        Value: var value
-                                    }
-                                })
-                            {
-                                return ResolveLiteralExpression(value);
-                            }
-                        }
-
-                        return null;
-                    }
-
-                    return expression switch
-                    {
-                        LiteralExpressionSyntax literal => literal.Token.ValueText,
-                        IdentifierNameSyntax id => ResolveIdentifier(id),
-                        MemberAccessExpressionSyntax member => ResolveLiteralExpression(member.Name),
+                        ILiteralOperation literal => literal.ConstantValue.Value,
+                        ILocalReferenceOperation l when l.Local.IsConst && ResolveDeclarationOperation(l.Local) is IOperation op => ResolveLiteralOperation(op),
+                        IFieldReferenceOperation f when f.Field.IsReadOnly && ResolveDeclarationOperation(f.Field) is IOperation op => ResolveLiteralOperation(op),
                         _ => null
                     };
                 }
 
-                var routePattern = invocation.ArgumentList.Arguments[0];
+                var routePattern = ResolveLiteralOperation(invocationOperation.Arguments[1].Value) as string;
 
                 var methodModel = new MethodModel
                 {
                     UniqueName = "RequestHandler",
                     MethodInfo = method.AsMethodInfo(metadataLoadContext),
-                    RoutePattern = RoutePattern.Parse(ResolveLiteralExpression(routePattern.Expression))
+                    RoutePattern = RoutePattern.Parse(routePattern)
                 };
 
-                var hasAmbiguousParameterWithoutRoute = false;
                 var parameterIndex = 0;
 
                 foreach (var parameter in methodModel.MethodInfo.GetParameters())
@@ -245,18 +177,9 @@ namespace uController.SourceGenerator
                             parameterModel.FromRoute = parameter.Name;
                         }
                     }
-                    else if (!parameterModel.HasBindingSource)
-                    {
-                        hasAmbiguousParameterWithoutRoute = true;
-                    }
 
                     methodModel.Parameters.Add(parameterModel);
                     parameterIndex++;
-                }
-
-                if (hasAmbiguousParameterWithoutRoute)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.UnableToResolveRoutePattern, routePattern.GetLocation()));
                 }
 
                 var codeGenerator = new MinimalCodeGenerator(wellKnownTypes);
@@ -440,15 +363,13 @@ namespace uController.SourceGenerator
                         {
                             var resultsMethod = op.TargetMethod;
 
-                            if (resultsMethod.IsStatic && 
+                            if (resultsMethod.IsStatic &&
                                 wellKnownTypes.ResultsType.Equals(resultsMethod.ContainingType))
                             {
                                 if (resultsMethod.Name == "StatusCode")
                                 {
                                     // Try to resolve the status code statically
-                                    var statusCodeExpression = op.Arguments[0].Value.Syntax as ExpressionSyntax;
-
-                                    var literalExpression = ResolveLiteralExpression(statusCodeExpression);
+                                    var literalExpression = ResolveLiteralOperation(op.Arguments[0].Value);
 
                                     if (literalExpression is not null)
                                     {
@@ -509,7 +430,7 @@ namespace uController.SourceGenerator
                 else if (!wellKnownTypes.IResultType.IsAssignableFrom(returnType))
                 {
                     // Add JSON
-                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json"", {(returnType.GetTypeSymbol().IsAnonymousType ? "typeof(T)" : $"typeof({returnType})" )}));");
+                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json"", {(returnType.GetTypeSymbol().IsAnonymousType ? "typeof(T)" : $"typeof({returnType})")}));");
                 }
 
                 var thunkBuilder = method.ReturnType.IsAnonymousType ? genericThunks : thunks;
@@ -1097,8 +1018,6 @@ internal static class GeneratedRouteBuilderExtensions
         public static readonly DiagnosticDescriptor UnableToResolveParameter = new DiagnosticDescriptor("MIN002", "ParameterSourceUnknown", "Unable to resolve \"{0}\", consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor UnableToResolveTryParseForType = new DiagnosticDescriptor("MIN003", "MissingTryParseForType", "Unable to find a static {0}.TryParse(string, out {0}) implementation", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-        public static readonly DiagnosticDescriptor UnableToResolveRoutePattern = new DiagnosticDescriptor("MIN004", "RoutePatternUnknown", "Unable to detect route pattern, consider adding [FromRoute] on parameters to disambigute between route and querystring values", "Usage", DiagnosticSeverity.Info, isEnabledByDefault: true);
 
         public static readonly DiagnosticDescriptor MultipleParametersConsumingBody = new DiagnosticDescriptor("MIN005", "MultipleParametersFromBody", "Detecting multiple parameters that attempt to read from the body, consider adding [FromXX] attributes to disambiguate the parameter source", "Usage", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
