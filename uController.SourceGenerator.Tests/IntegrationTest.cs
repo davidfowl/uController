@@ -1,26 +1,20 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyModel;
+using Microsoft.Extensions.DependencyModel.Resolution;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using uController.SourceGenerator;
-using Microsoft.Extensions.DependencyModel;
-using System.IO;
-using Microsoft.Extensions.DependencyModel.Resolution;
-using System.Collections.Immutable;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
-using System.Runtime.Loader;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Routing.Patterns;
-using Microsoft.AspNetCore.Http;
 
 namespace uController.SourceGenerator.Tests;
 
