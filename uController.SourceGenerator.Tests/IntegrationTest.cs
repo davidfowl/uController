@@ -156,11 +156,12 @@ public static class TestMapActions
 
     private static Project CreateProject()
     {
-        var projectId = ProjectId.CreateNewId(debugName: "TestProject");
+        var projectName = $"TestProject-{Guid.NewGuid()}";
+        var projectId = ProjectId.CreateNewId(projectName);
 
         var solution = new AdhocWorkspace()
            .CurrentSolution
-           .AddProject(projectId, "TestProject", "TestProject", LanguageNames.CSharp);
+           .AddProject(projectId, projectName, projectName, LanguageNames.CSharp);
 
         var project = solution.Projects.Single()
             .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
@@ -171,7 +172,7 @@ public static class TestMapActions
         {
             foreach (var resolveReferencePath in defaultCompileLibrary.ResolveReferencePaths(new AppLocalResolver()))
             {
-                if (resolveReferencePath.EndsWith("SourceGenerator.dll"))
+                if (resolveReferencePath.Equals(typeof(uControllerGenerator).Assembly.Location))
                 {
                     continue;
                 }
