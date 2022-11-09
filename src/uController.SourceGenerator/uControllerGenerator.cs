@@ -53,9 +53,10 @@ namespace uController.SourceGenerator
             {
                 var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
 
-                var invocationOperation = semanticModel.GetOperation(invocation) as IInvocationOperation;
+                var operation = semanticModel.GetOperation(invocation);
 
-                if (invocationOperation is { Arguments: { Length: 3 } parameters } &&
+                if (operation is IInvocationOperation invocationOperation && 
+                    invocationOperation is { Arguments: { Length: 3 } parameters } &&
                     wellKnownTypes.DelegateType.Equals(parameters[2].Parameter.Type) &&
                     wellKnownTypes.EndpointRouteBuilderType.Equals(parameters[0].Parameter.Type))
                 {
