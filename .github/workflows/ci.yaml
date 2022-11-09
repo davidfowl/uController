@@ -4,19 +4,20 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
 
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+        dotnet-quality: 'ga'
+
     - uses: aarnott/nbgv@v0.4.0
       with:
         setAllVars: true
-    
-    - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v1.7.2
-      with:
-        dotnet-version: 6.0.100
      
     - name: dotnet build
       run: dotnet build uController.sln -c Release    

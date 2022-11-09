@@ -1,68 +1,48 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
-using uController;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
     public class MetadataLoadContext
     {
-        private readonly Dictionary<string, IAssemblySymbol> _assemblies = new(StringComparer.OrdinalIgnoreCase);
         private readonly Compilation _compilation;
 
         public MetadataLoadContext(Compilation compilation)
         {
             _compilation = compilation;
-            
-            var assemblies = compilation.References
-                                        .OfType<PortableExecutableReference>()
-                                        .ToDictionary(r => AssemblyName.GetAssemblyName(r.FilePath),
-                                                      r => (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(r));
-
-            foreach (var item in assemblies)
-            {
-                // REVIEW: We need to figure out full framework
-                // _assemblies[item.Key.FullName] = item.Value;
-                _assemblies[item.Key.Name] = item.Value;
-            }
-
-            CoreAssembly = new AssemblyWrapper(compilation.GetTypeByMetadataName("System.Object").ContainingAssembly, this);
-            MainAssembly = new AssemblyWrapper(compilation.Assembly, this);
         }
 
-        public Type Resolve<T>() => Resolve(typeof(T));
+        public Assembly Assembly => _compilation.Assembly.AsAssembly(this);
 
-        public Type Resolve(Type type)
+        internal Compilation Compilation => _compilation;
+
+        public Type ResolveType(string fullyQualifiedMetadataName)
         {
-            var asmName = type.Assembly.GetName().Name;
+            return _compilation.GetTypeByMetadataName(fullyQualifiedMetadataName)?.AsType(this);
+        }
 
-            IAssemblySymbol assemblySymbol;
+        public Type ResolveType<T>() => ResolveType(typeof(T));
 
-            if (asmName == "System.Private.CoreLib" || asmName == "mscorlib" || asmName == "System.Runtime")
+        public Type ResolveType(Type type)
+        {
+            if (type is RoslynType)
             {
-                assemblySymbol = CoreAssembly.Symbol;
+                return type;
             }
-            else
+
+            var resolvedType = _compilation.GetTypeByMetadataName(type.FullName);
+
+            if (resolvedType is not null)
             {
-                var typeForwardedFrom = type.GetCustomAttributeData(typeof(TypeForwardedFromAttribute));
-
-                if (typeForwardedFrom != null)
-                {
-                    asmName = typeForwardedFrom.GetConstructorArgument<string>(0);
-                }
-
-                if (!_assemblies.TryGetValue(new AssemblyName(asmName).Name, out assemblySymbol))
-                {
-                    return null;
-                }
+                return resolvedType.AsType(this);
             }
 
             if (type.IsArray)
             {
-                var typeSymbol = assemblySymbol.GetTypeByMetadataName(type.GetElementType().FullName);
-                if (typeSymbol == null)
+                var typeSymbol = _compilation.GetTypeByMetadataName(type.GetElementType().FullName);
+                if (typeSymbol is null)
                 {
                     return null;
                 }
@@ -70,20 +50,32 @@ namespace System.Reflection
                 return _compilation.CreateArrayTypeSymbol(typeSymbol).AsType(this);
             }
 
-            // Resolve the full name
-            return assemblySymbol.GetTypeByMetadataName(type.FullName).AsType(this);
+            if (type.IsGenericType)
+            {
+                var openGenericTypeSymbol = _compilation.GetTypeByMetadataName(type.GetGenericTypeDefinition().FullName);
+                if (openGenericTypeSymbol is null)
+                {
+                    return null;
+                }
+
+                return openGenericTypeSymbol.AsType(this).MakeGenericType(type.GetGenericArguments());
+            }
+
+            return null;
         }
 
-        private AssemblyWrapper CoreAssembly { get; }
-        public Assembly MainAssembly { get; }
-
-        internal Assembly LoadFromAssemblyName(string fullName)
+        public TMember ResolveMember<TMember>(TMember memberInfo) where TMember : MemberInfo
         {
-            if (_assemblies.TryGetValue(new AssemblyName(fullName).Name, out var assembly))
+            return memberInfo switch
             {
-                return new AssemblyWrapper(assembly, this);
-            }
-            return null;
+                RoslynFieldInfo f => (TMember)(object)f,
+                RoslynMethodInfo m => (TMember)(object)m,
+                RoslynPropertyInfo p => (TMember)(object)p,
+                MethodInfo m => (TMember)(object)ResolveType(m.ReflectedType)?.GetMethod(m.Name, SharedUtilities.ComputeBindingFlags(m), binder: null, types: m.GetParameters().Select(t => t.ParameterType).ToArray(), modifiers: null),
+                PropertyInfo p => (TMember)(object)ResolveType(p.ReflectedType)?.GetProperty(p.Name, SharedUtilities.ComputeBindingFlags(p), binder: null, returnType: p.PropertyType, types: p.GetIndexParameters().Select(t => t.ParameterType).ToArray(), modifiers: null),
+                FieldInfo f => (TMember)(object)ResolveType(f.ReflectedType)?.GetField(f.Name, SharedUtilities.ComputeBindingFlags(f)),
+                _ => null
+            };
         }
     }
 }

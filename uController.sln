@@ -1,17 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29318.209
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.32728.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "samples\Sample.csproj", "{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uController", "src\uController\uController.csproj", "{57549041-6101-4D98-AA83-E4856CCBCA71}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uController.SourceGenerator", "src\uController.SourceGenerator\uController.SourceGenerator.csproj", "{045C64E7-5639-4ECD-BEE3-57597E7CF77E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9AC9FBC2-655D-4D1C-B3B0-8429140C1125}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{37EABDC7-EC04-40DB-AADB-73232A885C63}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F0473E60-E67C-4908-97BE-6F37C6EC9A48}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yaml = .github\workflows\ci.yaml
+		global.json = global.json
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{23D17AAC-308D-48E4-9F5F-6B60322BFF9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uController.SourceGenerator.Tests", "uController.SourceGenerator.Tests\uController.SourceGenerator.Tests.csproj", "{077CA0BF-E1B1-4E99-8F1B-72D2625D3560}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,22 +32,22 @@ Global
 		{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{57549041-6101-4D98-AA83-E4856CCBCA71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{57549041-6101-4D98-AA83-E4856CCBCA71}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{57549041-6101-4D98-AA83-E4856CCBCA71}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{57549041-6101-4D98-AA83-E4856CCBCA71}.Release|Any CPU.Build.0 = Release|Any CPU
 		{045C64E7-5639-4ECD-BEE3-57597E7CF77E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{045C64E7-5639-4ECD-BEE3-57597E7CF77E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{045C64E7-5639-4ECD-BEE3-57597E7CF77E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{045C64E7-5639-4ECD-BEE3-57597E7CF77E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{077CA0BF-E1B1-4E99-8F1B-72D2625D3560}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{077CA0BF-E1B1-4E99-8F1B-72D2625D3560}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{077CA0BF-E1B1-4E99-8F1B-72D2625D3560}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{077CA0BF-E1B1-4E99-8F1B-72D2625D3560}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E75EECDA-E740-454B-BA83-7B7AC0D9E0A9} = {37EABDC7-EC04-40DB-AADB-73232A885C63}
-		{57549041-6101-4D98-AA83-E4856CCBCA71} = {9AC9FBC2-655D-4D1C-B3B0-8429140C1125}
 		{045C64E7-5639-4ECD-BEE3-57597E7CF77E} = {9AC9FBC2-655D-4D1C-B3B0-8429140C1125}
+		{077CA0BF-E1B1-4E99-8F1B-72D2625D3560} = {23D17AAC-308D-48E4-9F5F-6B60322BFF9A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2D65BA78-C9A7-43A5-91EC-5237C4B9E5C4}

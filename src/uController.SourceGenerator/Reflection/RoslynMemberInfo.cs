@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
-    internal class MemberInfoWrapper : MemberInfo
+    internal class RoslynMemberInfo : MemberInfo
     {
         private readonly ISymbol _member;
         private readonly MetadataLoadContext _metadataLoadContext;
 
-        public MemberInfoWrapper(ISymbol member, MetadataLoadContext metadataLoadContext)
+        public RoslynMemberInfo(ISymbol member, MetadataLoadContext metadataLoadContext)
         {
             _member = member;
             _metadataLoadContext = metadataLoadContext;
@@ -24,12 +26,7 @@ namespace System.Reflection
 
         public override IList<CustomAttributeData> GetCustomAttributesData()
         {
-            var attributes = new List<CustomAttributeData>();
-            foreach (var a in _member.GetAttributes())
-            {
-                attributes.Add(new CustomAttributeDataWrapper(a, _metadataLoadContext));
-            }
-            return attributes;
+            return SharedUtilities.GetCustomAttributesData(_member, _metadataLoadContext);
         }
 
         public override object[] GetCustomAttributes(bool inherit)
@@ -44,7 +41,7 @@ namespace System.Reflection
 
         public override bool IsDefined(Type attributeType, bool inherit)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

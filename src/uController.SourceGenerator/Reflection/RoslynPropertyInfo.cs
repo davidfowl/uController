@@ -1,19 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 
-namespace System.Reflection
+namespace Roslyn.Reflection
 {
-    internal class PropertyWrapper : PropertyInfo
+    internal class RoslynPropertyInfo : PropertyInfo
     {
         private readonly IPropertySymbol _property;
-        private MetadataLoadContext _metadataLoadContext;
+        private readonly MetadataLoadContext _metadataLoadContext;
 
-        public PropertyWrapper(IPropertySymbol property, MetadataLoadContext metadataLoadContext)
+        public RoslynPropertyInfo(IPropertySymbol property, MetadataLoadContext metadataLoadContext)
         {
             _property = property;
             _metadataLoadContext = metadataLoadContext;
         }
+
+        public IPropertySymbol PropertySymbol => _property;
 
         public override PropertyAttributes Attributes => throw new NotImplementedException();
 
@@ -51,12 +55,13 @@ namespace System.Reflection
 
         public override ParameterInfo[] GetIndexParameters()
         {
-            var parameters = new List<ParameterInfo>();
+            List<ParameterInfo> parameters = default;
             foreach (var p in _property.Parameters)
             {
-                parameters.Add(new ParameterWrapper(p, _metadataLoadContext));
+                parameters ??= new();
+                parameters.Add(new RoslynParameterInfo(p, _metadataLoadContext));
             }
-            return parameters.ToArray();
+            return parameters?.ToArray() ?? Array.Empty<ParameterInfo>();
         }
 
         public override MethodInfo GetSetMethod(bool nonPublic)
