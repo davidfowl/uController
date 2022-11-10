@@ -70,15 +70,59 @@ app.MapGet(""/hello/{name}"", (string name) => $""Hello {name}!"");
             routeValues: new(new[] { new KeyValuePair<string, string?>("name", "Tester") }));
     }
 
+    [Fact]
+    public async Task MapGet_StringQueryParameters_StringReturn()
+    {
+        // Arrange
+        var source = @"
+app.MapGet(""/hello"", (string name) => $""Hello {name}!"");
+";
+
+        // Act
+        var (results, compilation) = await RunGenerator(source);
+
+        // Assert
+        Assert.Empty(results.Diagnostics);
+
+        var builderFunc = CreateInvocationFromCompilation(compilation);
+        var builder = CreateEndpointBuilder();
+        _ = builderFunc(builder);
+
+        var dataSource = Assert.Single(builder.DataSources);
+        var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
+        Assert.NotNull(sourceKeyMetadata);
+
+        var methodMetadata = endpoint.Metadata.GetMetadata<IHttpMethodMetadata>();
+        Assert.NotNull(methodMetadata);
+        var method = Assert.Single(methodMetadata!.HttpMethods);
+        Assert.Equal("GET", method);
+
+        await AssertEndpointBehavior(
+            endpoint,
+            "Hello David!",
+            200,
+            query: QueryString.Create("name", "David"));
+    }
+
     private static async Task AssertEndpointBehavior(
         Endpoint endpoint,
         string expectedResponse,
         int expectedStatusCode,
-        RouteValueDictionary? routeValues = null)
+        RouteValueDictionary? routeValues = null,
+        QueryString? query = null)
     {
         var httpContext = new DefaultHttpContext();
+
         var outStream = new MemoryStream();
         httpContext.Response.Body = outStream;
+
+        if (query is { } q)
+        {
+            httpContext.Request.QueryString = q;
+        }
+
         if (routeValues is not null)
         {
             httpContext.Request.RouteValues = routeValues;
@@ -99,7 +143,7 @@ app.MapGet(""/hello/{name}"", (string name) => $""Hello {name}!"");
         var output = new MemoryStream();
         var pdb = new MemoryStream();
         var result = compilation.Emit(output, pdb);
-        
+
         Assert.Empty(result.Diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
         Assert.True(result.Success);
 
