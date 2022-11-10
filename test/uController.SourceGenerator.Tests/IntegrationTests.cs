@@ -106,14 +106,50 @@ app.MapGet(""/hello"", (string name) => $""Hello {name}!"");
             query: QueryString.Create("name", "David"));
     }
 
+    [Fact]
+    public async Task MapGet_ImplicitFromService()
+    {
+        // Arrange
+        var source = $@"
+app.MapGet(""/"", ({typeof(TodoService)} todo) => todo.ToString());
+";
+
+        // Act
+        var (results, compilation) = await RunGenerator(source);
+
+        // Assert
+        Assert.Empty(results.Diagnostics);
+
+        var builderFunc = CreateInvocationFromCompilation(compilation);
+        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(new ServiceCollection().AddSingleton<TodoService>().BuildServiceProvider()));
+        _ = builderFunc(builder);
+
+        var dataSource = Assert.Single(builder.DataSources);
+        var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
+        Assert.NotNull(sourceKeyMetadata);
+
+        await AssertEndpointBehavior(endpoint, typeof(TodoService).ToString(), 200, builder.ServiceProvider);
+    }
+
+
     private static async Task AssertEndpointBehavior(
         Endpoint endpoint,
         string expectedResponse,
         int expectedStatusCode,
+        IServiceProvider? serviceProvider = null,
         RouteValueDictionary? routeValues = null,
         QueryString? query = null)
     {
         var httpContext = new DefaultHttpContext();
+        IServiceScope? scope = null;
+
+        if (serviceProvider is not null)
+        {
+            scope = serviceProvider.CreateScope();
+            httpContext.RequestServices = scope.ServiceProvider;
+        }
 
         var outStream = new MemoryStream();
         httpContext.Response.Body = outStream;
@@ -136,6 +172,8 @@ app.MapGet(""/hello"", (string name) => $""Hello {name}!"");
         var body = await streamReader.ReadToEndAsync();
         Assert.Equal(expectedStatusCode, httpContext.Response.StatusCode);
         Assert.Equal(expectedResponse, body);
+
+        scope?.Dispose();
     }
 
     private static Func<IEndpointRouteBuilder, IEndpointRouteBuilder> CreateInvocationFromCompilation(Compilation compilation)
