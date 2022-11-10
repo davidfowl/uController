@@ -275,6 +275,7 @@ namespace uController.SourceGenerator
 
         private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasForm, ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
         {
+            object defaultValue = parameter.ParameterSymbol.HasExplicitDefaultValue ? parameter.ParameterSymbol.ExplicitDefaultValue : null;
             if (parameter.ParameterType.Equals(typeof(HttpContext)))
             {
                 WriteLine($"var {parameterName} = httpContext;");
@@ -327,21 +328,21 @@ namespace uController.SourceGenerator
             }
             else if (parameter.FromRoute != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck, nullable: true))
+                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck, nullable: true))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromQuery != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromHeader != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
@@ -359,7 +360,7 @@ namespace uController.SourceGenerator
                     hasForm = true;
                 }
 
-                if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.FromForm, "formCollection", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromForm, "formCollection", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
@@ -414,7 +415,7 @@ namespace uController.SourceGenerator
                     parameter.QueryOrRoute = true;
 
                     // Fallback to resolver
-                    if (!GenerateConvert(parameterName, parameter.ParameterType, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod))
+                    if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod))
                     {
                         parameter.Unresovled = true;
                     }
@@ -461,7 +462,7 @@ namespace uController.SourceGenerator
             return mi != null;
         }
 
-        private bool GenerateConvert(string sourceName, Type type, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null)
+        private bool GenerateConvert(string sourceName, Type type, object defaultValue, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null)
         {
             var getter = methodCall ? $@"{sourceExpression}(httpContext, ""{key}"")" : $@"{sourceExpression}[""{key}""]";
 
@@ -499,7 +500,7 @@ namespace uController.SourceGenerator
                     WriteLine("{");
                     Indent();
                     WriteLine($"{sourceName} ??= new {elementType}[{sourceName}_Value.Length];");
-                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value[i]", $"{sourceName}[i]", elementType, ref generatedParamCheck);
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value[i]", $"{sourceName}[i]", elementType, defaultValue: null, ref generatedParamCheck);
                     Unindent();
                     WriteLine("}");
 
@@ -511,13 +512,13 @@ namespace uController.SourceGenerator
                     WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
                     WriteLine($"{type} {sourceName};");
 
-                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, ref generatedParamCheck);
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, defaultValue, ref generatedParamCheck);
                 }
             }
             return true;
         }
 
-        private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type, ref bool generatedParamCheck)
+        private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type, object defaultValue, ref bool generatedParamCheck)
         {
             var underlyingType = Unwrap(type);
 
@@ -530,17 +531,40 @@ namespace uController.SourceGenerator
                 _ => throw new NotSupportedException("Unknown TryParse method")
             };
 
+            // Type isn't nullable
             if (underlyingType is null)
             {
                 generatedParamCheck = true;
-                // Type isn't nullable
-                WriteLine($"if ({sourceName} == null || !{TryParseExpression(outputName)})");
-                WriteLine("{");
-                Indent();
-                WriteLine($"{outputName} = default;");
-                WriteLine("wasParamCheckFailure = true;");
-                Unindent();
-                WriteLine("}");
+
+                // No source, no default value
+                // No source but has a defaul value
+                // Unable to parse
+                if (defaultValue is null)
+                {
+                    WriteLine($"if ({sourceName} == null || !{TryParseExpression(outputName)})");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{outputName} = default;");
+                    WriteLine("wasParamCheckFailure = true;");
+                    Unindent();
+                    WriteLine("}");
+                }
+                else
+                {
+                    WriteLine($"if ({sourceName} == null)");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{outputName} = {defaultValue};");
+                    Unindent();
+                    WriteLine("}");
+                    WriteLine($"else if (!{TryParseExpression(outputName)})");
+                    WriteLine("{");
+                    Indent();
+                    WriteLine($"{outputName} = default;");
+                    WriteLine("wasParamCheckFailure = true;");
+                    Unindent();
+                    WriteLine("}");
+                }
             }
             else
             {
@@ -553,7 +577,14 @@ namespace uController.SourceGenerator
                 WriteLine("else");
                 WriteLine("{");
                 Indent();
-                WriteLine($"{outputName} = default;");
+                if (defaultValue is null)
+                {
+                    WriteLine($"{outputName} = default;");
+                }
+                else
+                {
+                    WriteLine($"{outputName} = {defaultValue};");
+                }
                 Unindent();
                 WriteLine("}");
             }

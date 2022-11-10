@@ -1,4 +1,6 @@
+using System.Globalization;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.Extensions.Primitives;
 
 namespace uController.SourceGenerator.Tests;
 
@@ -241,6 +243,114 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     [MemberData(nameof(NoResult))]
     public async Task RequestDelegateInvokesAction(string source)
     {
+        var requestDelegate = await GetRequestDelegate(source);
+
+        var httpContext = new DefaultHttpContext();
+
+        await requestDelegate(httpContext);
+
+        Assert.True(httpContext.Items["invoked"] as bool?);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePopulatesFromRouteParameterBasedOnParameterName()
+    {
+        const string paramName = "value";
+        const int originalRouteParam = 42;
+
+        var requestDelegate = await GetRequestDelegate(
+        """
+        static void TestAction(HttpContext httpContext, [FromRoute] int value)
+        {
+            httpContext.Items.Add("input", value);
+        }
+        app.MapGet("/", TestAction);
+        """);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues[paramName] = originalRouteParam.ToString(NumberFormatInfo.InvariantInfo);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(originalRouteParam, httpContext.Items["input"]);
+    }
+
+    [Fact]
+    public async Task SpecifiedRouteParametersDoNotFallbackToQueryString()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        """
+        app.MapGet("/{id}", (int? id, HttpContext httpContext) =>
+        {
+            if (id is not null)
+            {
+                httpContext.Items["input"] = id;
+            }
+        });
+        """);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>
+        {
+            ["id"] = "42"
+        });
+
+        await requestDelegate(httpContext);
+
+        Assert.Null(httpContext.Items["input"]);
+    }
+
+    [Fact]
+    public async Task SpecifiedQueryParametersDoNotFallbackToRouteValues()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        """
+        app.MapGet("/", (int? id, HttpContext httpContext) =>
+        {
+            if (id is not null)
+            {
+                httpContext.Items["input"] = id;
+            }
+        });
+        """);
+
+        var httpContext = new DefaultHttpContext();
+
+        httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>
+        {
+            ["id"] = "41"
+        });
+        httpContext.Request.RouteValues = new()
+        {
+            ["id"] = "42"
+        };
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(41, httpContext.Items["input"]);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePopulatesFromRouteOptionalParameter()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        """
+        static void TestOptional(HttpContext httpContext, [FromRoute] int value = 42)
+        {
+            httpContext.Items.Add("input", value);
+        }
+        app.MapGet("/", TestOptional);
+        """);
+
+        var httpContext = new DefaultHttpContext();
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(42, httpContext.Items["input"]);
+    }
+
+    private async Task<RequestDelegate> GetRequestDelegate(string source)
+    {
         // Act
         var (results, compilation) = await RunGenerator(source);
 
@@ -255,15 +365,9 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         // Trigger Endpoint build by calling getter.
         var endpoint = Assert.Single(dataSource.Endpoints);
 
-        var httpContext = new DefaultHttpContext();
-        
         Assert.NotNull(endpoint.RequestDelegate);
 
-        var requestDelegate = endpoint.RequestDelegate;
-
-        await requestDelegate(httpContext);
-
-        Assert.True(httpContext.Items["invoked"] as bool?);
+        return endpoint.RequestDelegate;
     }
 
     private static async Task AssertEndpointBehavior(
