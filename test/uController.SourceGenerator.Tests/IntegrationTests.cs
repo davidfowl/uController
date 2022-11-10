@@ -661,6 +661,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
         var embeddedTexts = new List<EmbeddedText>();
 
+        // Make sure we embed the sources in pdb for easy debugging
         foreach (var syntaxTree in compilation.SyntaxTrees)
         {
             var text = syntaxTree.GetText();
@@ -696,7 +697,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     private static async Task<(GeneratorRunResult, Compilation)> RunGenerator(string mapAction)
     {
         var project = CreateProject();
-        var source = $@"
+        var source = $$"""
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -705,13 +706,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 public static class TestMapActions
-{{
+{
     public static IEndpointRouteBuilder MapTestEndpoints(this IEndpointRouteBuilder app)
-    {{
-        {mapAction}
+    {
+        {{mapAction}}
         return app;
-    }}
-}}";
+    }
+}
+""";
         project = project.AddDocument("TestMapActions.cs", SourceText.From(source, Encoding.UTF8)).Project;
         var compilation = await project.GetCompilationAsync();
 
@@ -741,15 +743,22 @@ public static class TestMapActions
             .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             .WithNullableContextOptions(NullableContextOptions.Enable))
             .WithParseOptions(new CSharpParseOptions(LanguageVersion.CSharp11).WithPreprocessorSymbols("NET7_0_OR_GREATER"));
+        
+        var resolver = new AppLocalResolver();
+        var dependencyContext = DependencyContext.Load(typeof(IntegrationTests).Assembly);
 
-        foreach (var defaultCompileLibrary in DependencyContext.Load(typeof(IntegrationTests).Assembly)!.CompileLibraries)
+        Assert.NotNull(dependencyContext);
+
+        foreach (var defaultCompileLibrary in dependencyContext.CompileLibraries)
         {
-            foreach (var resolveReferencePath in defaultCompileLibrary.ResolveReferencePaths(new AppLocalResolver()))
+            foreach (var resolveReferencePath in defaultCompileLibrary.ResolveReferencePaths(resolver))
             {
+                // Skip the source generator itself
                 if (resolveReferencePath.Equals(typeof(uControllerGenerator).Assembly.Location))
                 {
                     continue;
                 }
+
                 project = project.AddMetadataReference(MetadataReference.CreateFromFile(resolveReferencePath));
             }
         }
