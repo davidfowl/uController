@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis.Emit;
+
 namespace uController.SourceGenerator.Tests;
 
 public class IntegrationTests
@@ -133,6 +135,40 @@ app.MapGet(""/"", ({typeof(TodoService)} todo) => todo.ToString());
         await AssertEndpointBehavior(endpoint, typeof(TodoService).ToString(), 200, builder.ServiceProvider);
     }
 
+    [Fact]
+    public async Task MapGetWithNamedFromRouteParameter_UsesFromRouteName()
+    {
+        // Arrange
+        var source = $@"
+app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext httpContext) =>
+{{
+    httpContext.Items[""value""] = id;
+}});
+";
+        // Act
+        var (results, compilation) = await RunGenerator(source);
+
+        // Assert
+        Assert.Empty(results.Diagnostics);
+
+        var builderFunc = CreateInvocationFromCompilation(compilation);
+        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(new EmptyServiceProvider()));
+        _ = builderFunc(builder);
+
+        var dataSource = Assert.Single(builder.DataSources);
+        // Trigger Endpoint build by calling getter.
+        var endpoint = Assert.Single(dataSource.Endpoints);
+
+        // Assert that we don't fallback to the query string
+        var httpContext = new DefaultHttpContext();
+
+        httpContext.Request.RouteValues["value"] = "42";
+
+        await endpoint.RequestDelegate!(httpContext);
+
+        Assert.Equal(42, httpContext.Items["value"]);
+    }
+
 
     private static async Task AssertEndpointBehavior(
         Endpoint endpoint,
@@ -178,9 +214,34 @@ app.MapGet(""/"", ({typeof(TodoService)} todo) => todo.ToString());
 
     private static Func<IEndpointRouteBuilder, IEndpointRouteBuilder> CreateInvocationFromCompilation(Compilation compilation)
     {
+        var assemblyName = compilation.AssemblyName!;
+        var symbolsName = Path.ChangeExtension(assemblyName, "pdb");
+
         var output = new MemoryStream();
         var pdb = new MemoryStream();
-        var result = compilation.Emit(output, pdb);
+
+        var emitOptions = new EmitOptions(
+                        debugInformationFormat: DebugInformationFormat.PortablePdb,
+                        pdbFilePath: symbolsName);
+
+        var embeddedTexts = new List<EmbeddedText>();
+
+        foreach (var syntaxTree in compilation.SyntaxTrees)
+        {
+            var text = syntaxTree.GetText();
+            var encoding = text.Encoding ?? Encoding.UTF8;
+            var buffer = encoding.GetBytes(text.ToString());
+            var sourceText = SourceText.From(buffer, buffer.Length, encoding, canBeEmbedded: true);
+
+            var syntaxRootNode = (CSharpSyntaxNode)syntaxTree.GetRoot();
+            var newSyntaxTree = CSharpSyntaxTree.Create(syntaxRootNode, options: null, encoding: encoding, path: syntaxTree.FilePath);
+
+            compilation = compilation.ReplaceSyntaxTree(syntaxTree, newSyntaxTree);
+
+            embeddedTexts.Add(EmbeddedText.FromSource(syntaxTree.FilePath, sourceText));
+        }
+
+        var result = compilation.Emit(output, pdb, options: emitOptions, embeddedTexts: embeddedTexts);
 
         Assert.Empty(result.Diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
         Assert.True(result.Success);
@@ -202,6 +263,8 @@ app.MapGet(""/"", ({typeof(TodoService)} todo) => todo.ToString());
         var project = CreateProject();
         var source = $@"
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 public static class TestMapActions
@@ -258,9 +321,9 @@ public static class TestMapActions
     }
 
 
-    private static IEndpointRouteBuilder CreateEndpointBuilder()
+    private static IEndpointRouteBuilder CreateEndpointBuilder(IServiceProvider? serviceProvider = null)
     {
-        return new DefaultEndpointRouteBuilder(new ApplicationBuilder(new EmptyServiceProvider()));
+        return new DefaultEndpointRouteBuilder(new ApplicationBuilder(serviceProvider ?? new EmptyServiceProvider()));
     }
 
     private class AppLocalResolver : ICompilationAssemblyResolver
