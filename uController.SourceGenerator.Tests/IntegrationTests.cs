@@ -1,32 +1,7 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyModel;
-using Microsoft.Extensions.DependencyModel.Resolution;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Loader;
-using System.Threading.Tasks;
-using Xunit;
-using Xunit.Abstractions;
-
 namespace uController.SourceGenerator.Tests;
 
 public class IntegrationTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public IntegrationTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     [Fact]
     public async Task MapGet_NoParameters_StringReturn()
     {
@@ -47,6 +22,9 @@ app.MapGet(""/"", () => ""Hello world!"");
 
         var dataSource = Assert.Single(builder.DataSources);
         var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
+        Assert.NotNull(sourceKeyMetadata);
 
         var methodMetadata = endpoint.Metadata.GetMetadata<IHttpMethodMetadata>();
         Assert.NotNull(methodMetadata);
@@ -76,6 +54,9 @@ app.MapGet(""/hello/{name}"", (string name) => $""Hello {name}!"");
 
         var dataSource = Assert.Single(builder.DataSources);
         var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
+        Assert.NotNull(sourceKeyMetadata);
 
         var methodMetadata = endpoint.Metadata.GetMetadata<IHttpMethodMetadata>();
         Assert.NotNull(methodMetadata);
@@ -113,19 +94,25 @@ app.MapGet(""/hello/{name}"", (string name) => $""Hello {name}!"");
         Assert.Equal(expectedResponse, body);
     }
 
-    private static Func<IEndpointRouteBuilder, IEndpointRouteBuilder>  CreateInvocationFromCompilation(Compilation compilation)
+    private static Func<IEndpointRouteBuilder, IEndpointRouteBuilder> CreateInvocationFromCompilation(Compilation compilation)
     {
-        using var output = new MemoryStream();
-        var result = compilation.Emit(output);
-        if (!result.Success)
-        {
-            throw new OperationCanceledException("Errors during compilation. Inspect diagnostics for more info.");
-        }
-        output.Seek(0, SeekOrigin.Begin);
-        var assembly = AssemblyLoadContext.Default.LoadFromStream(output);
-        return assembly?.GetType("TestMapActions")
+        var output = new MemoryStream();
+        var pdb = new MemoryStream();
+        var result = compilation.Emit(output, pdb);
+        
+        Assert.Empty(result.Diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
+        Assert.True(result.Success);
+
+        output.Position = 0;
+        pdb.Position = 0;
+
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(output, pdb);
+        var handler = assembly?.GetType("TestMapActions")
                        ?.GetMethod("MapTestEndpoints", BindingFlags.Public | BindingFlags.Static)
-                       ?.CreateDelegate<Func<IEndpointRouteBuilder, IEndpointRouteBuilder>>() ?? throw new InvalidOperationException("Unable to resolve map routes delegate");
+                       ?.CreateDelegate<Func<IEndpointRouteBuilder, IEndpointRouteBuilder>>();
+
+        Assert.NotNull(handler);
+        return handler;
     }
 
     private static async Task<(GeneratorRunResult, Compilation)> RunGenerator(string mapAction)
@@ -143,14 +130,19 @@ public static class TestMapActions
         return app;
     }}
 }}";
-        project = project.AddDocument("TestMapActions.cs", source).Project;
-        var driver = (GeneratorDriver)CSharpGeneratorDriver.Create(new uControllerGenerator());
+        project = project.AddDocument("TestMapActions.cs", SourceText.From(source, Encoding.UTF8)).Project;
         var compilation = await project.GetCompilationAsync();
 
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(new[] { new uControllerGenerator() },
+            parseOptions: (CSharpParseOptions)project.ParseOptions!);
+
+        Assert.NotNull(compilation);
+
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var _);
+
         var results = driver.GetRunResult();
         var diagnostics = outputCompilation.GetDiagnostics();
-        Assert.Empty(diagnostics);
+        Assert.Empty(diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
         return (results.Results[0], outputCompilation);
     }
 
@@ -166,9 +158,9 @@ public static class TestMapActions
         var project = solution.Projects.Single()
             .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             .WithNullableContextOptions(NullableContextOptions.Enable))
-            .WithParseOptions(new CSharpParseOptions(LanguageVersion.CSharp11));
+            .WithParseOptions(new CSharpParseOptions(LanguageVersion.CSharp11).WithPreprocessorSymbols("NET7_0_OR_GREATER"));
 
-        foreach (var defaultCompileLibrary in DependencyContext.Load(typeof(IntegrationTests).Assembly).CompileLibraries)
+        foreach (var defaultCompileLibrary in DependencyContext.Load(typeof(IntegrationTests).Assembly)!.CompileLibraries)
         {
             foreach (var resolveReferencePath in defaultCompileLibrary.ResolveReferencePaths(new AppLocalResolver()))
             {
@@ -183,7 +175,7 @@ public static class TestMapActions
         return project;
     }
 
-    
+
     private static IEndpointRouteBuilder CreateEndpointBuilder()
     {
         return new DefaultEndpointRouteBuilder(new ApplicationBuilder(new EmptyServiceProvider()));
@@ -191,13 +183,14 @@ public static class TestMapActions
 
     private class AppLocalResolver : ICompilationAssemblyResolver
     {
-        public bool TryResolveAssemblyPaths(CompilationLibrary library, List<string> assemblies)
+        public bool TryResolveAssemblyPaths(CompilationLibrary library, List<string>? assemblies)
         {
             foreach (var assembly in library.Assemblies)
             {
                 var dll = Path.Combine(Directory.GetCurrentDirectory(), "refs", Path.GetFileName(assembly));
                 if (File.Exists(dll))
                 {
+                    assemblies ??= new();
                     assemblies.Add(dll);
                     return true;
                 }
@@ -205,6 +198,7 @@ public static class TestMapActions
                 dll = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(assembly));
                 if (File.Exists(dll))
                 {
+                    assemblies ??= new();
                     assemblies.Add(dll);
                     return true;
                 }
