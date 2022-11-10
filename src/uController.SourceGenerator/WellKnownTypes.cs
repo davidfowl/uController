@@ -31,6 +31,7 @@ namespace uController.SourceGenerator
             EnumType = metadataLoadContext.ResolveType<Enum>();
             ResultsType = metadataLoadContext.ResolveType<Results>();
             TypedResultsType = metadataLoadContext.ResolveType<TypedResults>();
+            SourceKeyType = metadataLoadContext.ResolveType("Microsoft.AspNetCore.Builder.SourceKey");
         }
 
         public Type FromQueryAttributeType { get; }
@@ -51,5 +52,6 @@ namespace uController.SourceGenerator
         public Type EnumType { get; }
         public Type ResultsType { get; }
         public Type TypedResultsType { get; }
+        public Type SourceKeyType { get; }
     }
 }
