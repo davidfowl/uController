@@ -45,6 +45,8 @@ public class Todo : ITodo
     public bool IsComplete { get; set; }
 }
 
+public record struct TodoStruct(int Id, string? Name, bool IsComplete) : ITodo;
+
 public class TodoJsonConverter : JsonConverter<ITodo>
 {
     public override ITodo? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

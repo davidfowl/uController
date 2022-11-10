@@ -482,11 +482,14 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             app.MapPost("/", TestImpliedFromBodyInterface);
             """;
 
-            // TBD
-            //void TestImpliedFromBodyStruct(HttpContext httpContext, TodoStruct todo)
-            //{
-            //    httpContext.Items.Add("body", todo);
-            //}
+            var testImpliedFromBodyStruct = 
+            $$"""
+            void TestImpliedFromBodyStruct(HttpContext httpContext, {{typeof(TodoStruct)}} todo)
+            {
+                httpContext.Items.Add("body", todo);
+            }
+            app.MapPost("/", TestImpliedFromBodyStruct);
+            """;
 
             //void TestImpliedFromBodyStruct_ParameterList([AsParameters] ParametersListWithImplictFromBody args)
             //{
@@ -497,7 +500,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             {
                     new[] { testImpliedFromBody },
                     new[] { testImpliedFromBodyInterface },
-                    // new object[] { (Action<HttpContext, TodoStruct>)TestImpliedFromBodyStruct },
+                    new object[] { testImpliedFromBodyStruct },
                     // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
                 };
         }
