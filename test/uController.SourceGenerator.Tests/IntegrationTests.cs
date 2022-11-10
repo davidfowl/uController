@@ -595,6 +595,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             {
                 (typeof(string)         , "plain string", "plain string" ),
                 (typeof(int)            , "-42", -42 ),
+                (typeof(int?)           , "42", 42),
                 (typeof(uint)           , "42", 42U ),
                 (typeof(bool)           , "true", true ),
                 (typeof(short)          , "-42", (short)-42 ),
@@ -627,13 +628,26 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             //new object[] { (Action<HttpContext, MyEnum>)Store, "ValueB", MyEnum.ValueB },
             //new object[] { (Action<HttpContext, MyTryParseRecord>)Store, "https://example.org", new MyTryParseRecord(new Uri("https://example.org")) },
             //new object?[] { (Action<HttpContext, int?>)Store, null, null },
+            static Type? Unwrap(Type type)
+            {
+                if (type.IsGenericType && !type.IsGenericTypeDefinition)
+                {
+                    // instantiated generic type only
+                    Type genericType = type.GetGenericTypeDefinition();
+                    if (genericType.Equals(typeof(Nullable<>)))
+                    {
+                        return type.GetGenericArguments()[0];
+                    }
+                }
+                return null;
+            }
 
             var results = new List<object[]>();
             foreach (var (type, val, expected) in types)
             {
                 var source =
                 $$"""
-                static void Store(HttpContext httpContext, {{type}} tryParsable)
+                static void Store(HttpContext httpContext, {{(Unwrap(type) is Type t ? $"{t}?" : $"{type}")}} tryParsable)
                 {
                     httpContext.Items["tryParsable"] = tryParsable;
                 }
