@@ -1,4 +1,7 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
+using System.Numerics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Json;
@@ -482,7 +485,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             app.MapPost("/", TestImpliedFromBodyInterface);
             """;
 
-            var testImpliedFromBodyStruct = 
+            var testImpliedFromBodyStruct =
             $$"""
             void TestImpliedFromBodyStruct(HttpContext httpContext, {{typeof(TodoStruct)}} todo)
             {
@@ -580,6 +583,82 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var deserializedRequestBody = httpContext.Items["body"];
         Assert.NotNull(deserializedRequestBody);
         Assert.Equal(originalTodo.Name, ((ITodo)deserializedRequestBody!).Name);
+    }
+
+    public static object?[][] TryParsableParameters
+    {
+        get
+        {
+            var now = DateTime.Now;
+
+            var types = new List<(Type, object, object)>
+            {
+                (typeof(string)         , "plain string", "plain string" ),
+                (typeof(int)            , "-42", -42 ),
+                (typeof(uint)           , "42", 42U ),
+                (typeof(bool)           , "true", true ),
+                (typeof(short)          , "-42", (short)-42 ),
+                (typeof(ushort)         , "42", (ushort)42 ),
+                (typeof(long)           , "-42", -42L ),
+                (typeof(ulong)          , "42", 42UL ),
+                (typeof(IntPtr)         , "-42", new IntPtr(-42) ),
+                (typeof(char)           , "A", 'A' ),
+                (typeof(double)         , "0.5", 0.5 ),
+                (typeof(float)          , "0.5", 0.5f ),
+                (typeof(Half)           , "0.5", (Half)0.5f ),
+                (typeof(decimal)        , "0.5", 0.5m ),
+                // TBD
+                // (typeof(Uri)            , "https://example.org", new Uri("https://example.org") ),
+                // (typeof(DateTime)       , now.ToString("o"), now.ToUniversalTime() ),
+                (typeof(DateTimeOffset) , "1970-01-01T00:00:00.0000000+00:00", DateTimeOffset.UnixEpoch ),
+                (typeof(TimeSpan)       , "00:00:42", TimeSpan.FromSeconds(42) ),
+                (typeof(Guid)           , "00000000-0000-0000-0000-000000000000", Guid.Empty ),
+                (typeof(Version)        , "6.0.0.42", new Version("6.0.0.42") ),
+                (typeof(BigInteger)     , "-42", new BigInteger(-42) ),
+                (typeof(IPAddress)      , "127.0.0.1", IPAddress.Loopback ),
+                (typeof(IPEndPoint)     , "127.0.0.1:80", new IPEndPoint(IPAddress.Loopback, 80) ),
+                (typeof(AddressFamily)  , "Unix", AddressFamily.Unix ),
+            };
+
+            // TBD
+            //new object[] { (Action<HttpContext, ILOpCode>)Store, "Nop", ILOpCode.Nop },
+            //new object[] { (Action<HttpContext, AssemblyFlags>)Store, "PublicKey,Retargetable", AssemblyFlags.PublicKey | AssemblyFlags.Retargetable },
+            //new object[] { (Action<HttpContext, int?>)Store, "42", 42 },
+            //new object[] { (Action<HttpContext, MyEnum>)Store, "ValueB", MyEnum.ValueB },
+            //new object[] { (Action<HttpContext, MyTryParseRecord>)Store, "https://example.org", new MyTryParseRecord(new Uri("https://example.org")) },
+            //new object?[] { (Action<HttpContext, int?>)Store, null, null },
+
+            var results = new List<object[]>();
+            foreach (var (type, val, expected) in types)
+            {
+                var source =
+                $$"""
+                static void Store(HttpContext httpContext, {{type}} tryParsable)
+                {
+                    httpContext.Items["tryParsable"] = tryParsable;
+                }
+                app.MapGet("/{tryParsable}", Store);
+                """;
+
+                results.Add(new[] { source, val, expected });
+            }
+
+            return results.ToArray();
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(TryParsableParameters))]
+    public async Task RequestDelegatePopulatesUnattributedTryParsableParametersFromRouteValue(string source, string? routeValue, object? expectedParameterValue)
+    {
+        var requestDelegate = await GetRequestDelegate(source);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues["tryParsable"] = routeValue;
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(expectedParameterValue, httpContext.Items["tryParsable"]);
     }
 
 
@@ -746,7 +825,7 @@ public static class TestMapActions
             .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             .WithNullableContextOptions(NullableContextOptions.Enable))
             .WithParseOptions(new CSharpParseOptions(LanguageVersion.CSharp11).WithPreprocessorSymbols("NET7_0_OR_GREATER"));
-        
+
         var resolver = new AppLocalResolver();
         var dependencyContext = DependencyContext.Load(typeof(IntegrationTests).Assembly);
 
