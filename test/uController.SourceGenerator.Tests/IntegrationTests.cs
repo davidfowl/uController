@@ -169,6 +169,102 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Equal(42, httpContext.Items["value"]);
     }
 
+    public static IEnumerable<object[]> NoResult
+    {
+        get
+        {
+            var testAction = """
+            void TestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+            }
+            app.MapGet("/", TestAction); 
+            """;
+
+            var taskTestAction = """
+            Task TaskTestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+                return Task.CompletedTask;
+            }
+            app.MapGet("/", TaskTestAction);
+            """;
+
+            var valueTaskTestAction = """
+            ValueTask ValueTaskTestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+                return ValueTask.CompletedTask;
+            }
+            app.MapGet("/", ValueTaskTestAction);
+            """;
+
+            var staticTestAction = """
+            void StaticTestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+            }
+            app.MapGet("/", StaticTestAction);
+            """;
+
+            var staticTaskTestAction = """
+            Task StaticTaskTestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+                return Task.CompletedTask;
+            }
+            app.MapGet("/", StaticTaskTestAction);
+            """;
+
+            var staticValueTaskTestAction = """
+            ValueTask StaticValueTaskTestAction(HttpContext httpContext)
+            {
+                httpContext.Items.Add("invoked", true);
+                return ValueTask.CompletedTask;
+            }
+            app.MapGet("/", StaticValueTaskTestAction);
+            """;
+
+            return new List<object[]>
+                {
+                    new object[] { testAction },
+                    new object[] { taskTestAction },
+                    new object[] { valueTaskTestAction },
+                    new object[] { staticTestAction },
+                    new object[] { staticTaskTestAction },
+                    new object[] { staticValueTaskTestAction },
+                };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(NoResult))]
+    public async Task RequestDelegateInvokesAction(string source)
+    {
+        // Act
+        var (results, compilation) = await RunGenerator(source);
+
+        // Assert
+        Assert.Empty(results.Diagnostics);
+
+        var builderFunc = CreateInvocationFromCompilation(compilation);
+        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(new EmptyServiceProvider()));
+        _ = builderFunc(builder);
+
+        var dataSource = Assert.Single(builder.DataSources);
+        // Trigger Endpoint build by calling getter.
+        var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var httpContext = new DefaultHttpContext();
+        
+        Assert.NotNull(endpoint.RequestDelegate);
+
+        var requestDelegate = endpoint.RequestDelegate;
+
+        await requestDelegate(httpContext);
+
+        Assert.True(httpContext.Items["invoked"] as bool?);
+    }
 
     private static async Task AssertEndpointBehavior(
         Endpoint endpoint,
@@ -200,7 +296,8 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             httpContext.Request.RouteValues = routeValues;
         }
 
-        await endpoint.RequestDelegate!(httpContext);
+        Assert.NotNull(endpoint.RequestDelegate);
+        await endpoint.RequestDelegate(httpContext);
 
         var httpResponse = httpContext.Response;
         httpResponse.Body.Seek(0, SeekOrigin.Begin);
@@ -262,6 +359,8 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     {
         var project = CreateProject();
         var source = $@"
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

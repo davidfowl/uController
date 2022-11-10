@@ -154,7 +154,16 @@ namespace uController.SourceGenerator
                 WriteNoIndent(parameterName);
                 first = false;
             }
-            WriteLineNoIndent(");");
+
+            if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(ValueTask)))
+            {
+                // Convert the ValueTask to a Task
+                WriteLineNoIndent(").AsTask();");
+            }
+            else
+            {
+                WriteLineNoIndent(");");
+            }
 
             if (!hasAwait)
             {
