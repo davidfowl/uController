@@ -468,7 +468,22 @@ namespace uController.SourceGenerator
 
             if (type.Equals(typeof(string)))
             {
-                WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
+                if (defaultValue is null)
+                {
+                    WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
+                }
+                else
+                {
+                    if (nullable)
+                    {
+                        WriteLine($@"var {sourceName} = {getter}?.ToString() ?? ""{defaultValue}"";");
+                    }
+                    else
+                    {
+                        WriteLine($@"var {sourceName}Str = {getter}.ToString();");
+                        WriteLine($@"var {sourceName} = string.IsNullOrEmpty({sourceName}Str) ? ""{defaultValue}"" : {sourceName}Str;");
+                    }
+                }
             }
             else if (type.Equals(typeof(StringValues)))
             {

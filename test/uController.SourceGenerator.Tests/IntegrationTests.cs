@@ -349,6 +349,43 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Equal(42, httpContext.Items["input"]);
     }
 
+    [Fact]
+    public async Task RequestDelegatePopulatesFromNullableOptionalParameter()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        """
+        static void TestOptional(HttpContext httpContext, [FromRoute] int? value = 42)
+        {
+            httpContext.Items.Add("input", value);
+        }
+        app.MapGet("/", TestOptional);
+        """);
+
+        var httpContext = new DefaultHttpContext();
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(42, httpContext.Items["input"]);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePopulatesFromOptionalStringParameter()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        """
+        static void TestOptionalString(HttpContext httpContext, string value = "default")
+        {
+            httpContext.Items.Add("input", value);
+        }
+        app.MapGet("/", TestOptionalString);
+        """);
+        var httpContext = new DefaultHttpContext();
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal("default", httpContext.Items["input"]);
+    }
+
     private async Task<RequestDelegate> GetRequestDelegate(string source)
     {
         // Act
