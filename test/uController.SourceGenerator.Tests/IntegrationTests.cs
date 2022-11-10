@@ -188,14 +188,15 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             app.MapGet("/", TestAction); 
             """;
 
-            var taskTestAction = """
-            Task TaskTestAction(HttpContext httpContext)
-            {
-                httpContext.Items.Add("invoked", true);
-                return Task.CompletedTask;
-            }
-            app.MapGet("/", TaskTestAction);
-            """;
+            // This binds to the RequestDelegate overload
+            //var taskTestAction = """
+            //Task TaskTestAction(HttpContext httpContext)
+            //{
+            //    httpContext.Items.Add("invoked", true);
+            //    return Task.CompletedTask;
+            //}
+            //app.MapGet("/", TaskTestAction);
+            //""";
 
             var valueTaskTestAction = """
             ValueTask ValueTaskTestAction(HttpContext httpContext)
@@ -214,14 +215,15 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             app.MapGet("/", StaticTestAction);
             """;
 
-            var staticTaskTestAction = """
-            Task StaticTaskTestAction(HttpContext httpContext)
-            {
-                httpContext.Items.Add("invoked", true);
-                return Task.CompletedTask;
-            }
-            app.MapGet("/", StaticTaskTestAction);
-            """;
+            // This binds to the RequestDelegate overload
+            //var staticTaskTestAction = """
+            //Task StaticTaskTestAction(HttpContext httpContext)
+            //{
+            //    httpContext.Items.Add("invoked", true);
+            //    return Task.CompletedTask;
+            //}
+            //app.MapGet("/", StaticTaskTestAction);
+            //""";
 
             var staticValueTaskTestAction = """
             ValueTask StaticValueTaskTestAction(HttpContext httpContext)
@@ -235,10 +237,10 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             return new List<object[]>
                 {
                     new object[] { testAction },
-                    new object[] { taskTestAction },
+                    // new object[] { taskTestAction },
                     new object[] { valueTaskTestAction },
                     new object[] { staticTestAction },
-                    new object[] { staticTaskTestAction },
+                    // new object[] { staticTaskTestAction },
                     new object[] { staticValueTaskTestAction },
                 };
         }
@@ -593,6 +595,9 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var dataSource = Assert.Single(builder.DataSources);
         // Trigger Endpoint build by calling getter.
         var endpoint = Assert.Single(dataSource.Endpoints);
+
+        var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
+        Assert.NotNull(sourceKeyMetadata);
 
         Assert.NotNull(endpoint.RequestDelegate);
 
