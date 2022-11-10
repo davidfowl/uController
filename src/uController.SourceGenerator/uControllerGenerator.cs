@@ -48,7 +48,6 @@ namespace uController.SourceGenerator
 
             var knownTypedResultsMethods = wellKnownTypes.TypedResultsType?.GetMethods(BindingFlags.Public | BindingFlags.Static)
                                                          .ToLookup(m => (m.Name, m.IsGenericMethod));
-            var sourceKeyType = metadataLoadContext.ResolveType("Microsoft.AspNetCore.Builder.SourceKey");
 
             foreach (var invocation in receiver.MapActions)
             {
@@ -510,7 +509,7 @@ namespace uController.SourceGenerator
                 sb.Append(methodText);
             }
 
-            string sourceKeyText = sourceKeyType is not null ? "" : @"
+            string sourceKeyText = wellKnownTypes.SourceKeyType is not null ? "" : @"
 namespace Microsoft.AspNetCore.Builder
 {
     internal record SourceKey(string Path, int Line);
