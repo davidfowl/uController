@@ -1,6 +1,11 @@
 using System.Globalization;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using Moq;
 
 namespace uController.SourceGenerator.Tests;
 
@@ -386,6 +391,193 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Equal("default", httpContext.Items["input"]);
     }
 
+    [Fact]
+    public async Task Returns400IfNoMatchingRouteValueForRequiredParam()
+    {
+        const string unmatchedName = "value";
+        const int unmatchedRouteParam = 42;
+
+        var requestDelegate = await GetRequestDelegate(
+        """
+        void TestAction([FromRoute] int foo, HttpContext httpContext)
+        {
+            httpContext.Items.Add("deserializedRouteParam", foo);
+        }
+        app.MapGet("/", TestAction);
+        """);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues[unmatchedName] = unmatchedRouteParam.ToString(NumberFormatInfo.InvariantInfo);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(400, httpContext.Response.StatusCode);
+        Assert.Null(httpContext.Items["deserializedRouteParam"]);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePrefersBindAsyncOverTryParse()
+    {
+        var requestDelegate = await GetRequestDelegate(
+        $$"""
+        app.MapGet("/", (HttpContext httpContext, {{typeof(MyBindAsyncRecord)}} myBindAsyncRecord) =>
+        {
+            httpContext.Items["myBindAsyncRecord"] = myBindAsyncRecord;
+        });
+        """);
+
+        var httpContext = new DefaultHttpContext();
+
+        httpContext.Request.Headers.Referer = "https://example.org";
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(new MyBindAsyncRecord(new Uri("https://example.org")), httpContext.Items["myBindAsyncRecord"]);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePopulatesFromHeaderParameterBasedOnParameterName()
+    {
+        const string customHeaderName = "X-Custom-Header";
+        const int originalHeaderParam = 42;
+
+        var requestDelegate = await GetRequestDelegate(
+        $$"""
+        void TestAction(HttpContext httpContext, [FromHeader(Name = "{{customHeaderName}}")] int value)
+        {
+            httpContext.Items["deserializedRouteParam"] = value;
+        }
+        app.MapGet("/", TestAction);
+        """);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers[customHeaderName] = originalHeaderParam.ToString(NumberFormatInfo.InvariantInfo);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(originalHeaderParam, httpContext.Items["deserializedRouteParam"]);
+    }
+
+    public static object[][] ImplicitFromBodyActions
+    {
+        get
+        {
+            var testImpliedFromBody =
+            $$""" 
+            void TestImpliedFromBody(HttpContext httpContext, {{typeof(Todo)}} todo)
+            {
+                httpContext.Items.Add("body", todo);
+            }
+            app.MapPost("/", TestImpliedFromBody);
+            """;
+
+            var testImpliedFromBodyInterface =
+            $$"""
+            void TestImpliedFromBodyInterface(HttpContext httpContext, {{typeof(ITodo)}} todo)
+            {
+                httpContext.Items.Add("body", todo);
+            }
+            app.MapPost("/", TestImpliedFromBodyInterface);
+            """;
+
+            // TBD
+            //void TestImpliedFromBodyStruct(HttpContext httpContext, TodoStruct todo)
+            //{
+            //    httpContext.Items.Add("body", todo);
+            //}
+
+            //void TestImpliedFromBodyStruct_ParameterList([AsParameters] ParametersListWithImplictFromBody args)
+            //{
+            //    args.HttpContext.Items.Add("body", args.Todo);
+            //}
+
+            return new[]
+            {
+                    new[] { testImpliedFromBody },
+                    new[] { testImpliedFromBodyInterface },
+                    // new object[] { (Action<HttpContext, TodoStruct>)TestImpliedFromBodyStruct },
+                    // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
+                };
+        }
+    }
+
+    public static object[][] ExplicitFromBodyActions
+    {
+        get
+        {
+            var TestExplicitFromBody =
+            $$"""
+            void TestExplicitFromBody(HttpContext httpContext, [FromBody] {{typeof(Todo)}} todo)
+            {
+                httpContext.Items.Add("body", todo);
+            }
+            app.MapPost("/", TestExplicitFromBody);
+            """;
+            // TBD
+            //void TestExplicitFromBody_ParameterList([AsParameters] ParametersListWithExplictFromBody args)
+            //{
+            //    args.HttpContext.Items.Add("body", args.Todo);
+            //}
+
+            return new[]
+            {
+                    new[] { TestExplicitFromBody },
+                    // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
+            };
+        }
+    }
+
+    public static object[][] FromBodyActions
+    {
+        get
+        {
+            return ExplicitFromBodyActions.Concat(ImplicitFromBodyActions).ToArray();
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FromBodyActions))]
+    public async Task RequestDelegatePopulatesFromBodyParameter(string source)
+    {
+        RequestDelegate requestDelegate = await GetRequestDelegate(source);
+
+        Todo originalTodo = new()
+        {
+            Name = "Write more tests!"
+        };
+
+        var httpContext = new DefaultHttpContext();
+
+        var requestBodyBytes = JsonSerializer.SerializeToUtf8Bytes(originalTodo);
+        var stream = new MemoryStream(requestBodyBytes);
+        httpContext.Request.Body = stream;
+
+        httpContext.Request.Headers["Content-Type"] = "application/json";
+        httpContext.Request.Headers["Content-Length"] = stream.Length.ToString(CultureInfo.InvariantCulture);
+        httpContext.Features.Set<IHttpRequestBodyDetectionFeature>(new RequestBodyDetectionFeature(true));
+
+        var jsonOptions = new JsonOptions();
+        jsonOptions.SerializerOptions.Converters.Add(new TodoJsonConverter());
+
+        var mock = new Mock<IServiceProvider>();
+        mock.Setup(m => m.GetService(It.IsAny<Type>())).Returns<Type>(t =>
+        {
+            if (t == typeof(IOptions<JsonOptions>))
+            {
+                return Options.Create(jsonOptions);
+            }
+            return null;
+        });
+        httpContext.RequestServices = mock.Object;
+
+        await requestDelegate(httpContext);
+
+        var deserializedRequestBody = httpContext.Items["body"];
+        Assert.NotNull(deserializedRequestBody);
+        Assert.Equal(originalTodo.Name, ((ITodo)deserializedRequestBody!).Name);
+    }
+
+
     private async Task<RequestDelegate> GetRequestDelegate(string source)
     {
         // Act
@@ -560,6 +752,15 @@ public static class TestMapActions
         return project;
     }
 
+    private class RequestBodyDetectionFeature : IHttpRequestBodyDetectionFeature
+    {
+        public RequestBodyDetectionFeature(bool canHaveBody)
+        {
+            CanHaveBody = canHaveBody;
+        }
+
+        public bool CanHaveBody { get; }
+    }
 
     private static IEndpointRouteBuilder CreateEndpointBuilder(IServiceProvider? serviceProvider = null)
     {
