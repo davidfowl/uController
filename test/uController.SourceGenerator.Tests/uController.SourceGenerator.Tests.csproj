@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\src\uController.SourceGenerator\uController.SourceGenerator.csproj" />
+		<ProjectReference Include="..\..\src\uController.SourceGenerator\uController.SourceGenerator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
