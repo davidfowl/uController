@@ -140,12 +140,12 @@ namespace uController.SourceGenerator
 
                 foreach (var parameter in methodModel.MethodInfo.GetParameters())
                 {
-                    var fromQuery = parameter.GetCustomAttributeData(wellKnownTypes.FromQueryAttributeType);
-                    var fromHeader = parameter.GetCustomAttributeData(wellKnownTypes.FromHeaderAttributeType);
-                    var fromForm = parameter.GetCustomAttributeData(wellKnownTypes.FromFormAttributeType);
-                    var fromBody = parameter.GetCustomAttributeData(wellKnownTypes.FromBodyAttributeType);
-                    var fromRoute = parameter.GetCustomAttributeData(wellKnownTypes.FromRouteAttributeType);
-                    var fromService = parameter.GetCustomAttributeData(wellKnownTypes.FromServicesAttributeType);
+                    var fromQuery = parameter.GetCustomAttributeData(wellKnownTypes.FromQueryMetadataType);
+                    var fromHeader = parameter.GetCustomAttributeData(wellKnownTypes.FromHeaderMetadataType);
+                    var fromForm = parameter.GetCustomAttributeData(wellKnownTypes.FromFormMetadataType);
+                    var fromBody = parameter.GetCustomAttributeData(wellKnownTypes.FromBodyMetadataType);
+                    var fromRoute = parameter.GetCustomAttributeData(wellKnownTypes.FromRouteMetadataType);
+                    var fromService = parameter.GetCustomAttributeData(wellKnownTypes.FromServicesMetadataType);
                     var asParameters = parameter.GetCustomAttributeData(wellKnownTypes.AsParametersAttributeType);
 
                     var parameterModel = new ParameterModel

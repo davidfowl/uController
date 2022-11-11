@@ -2,7 +2,6 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Roslyn.Reflection;
 
@@ -13,12 +12,12 @@ namespace uController.SourceGenerator
         public WellKnownTypes(MetadataLoadContext metadataLoadContext)
         {
             // REVIEW: Consider making this lazy
-            FromQueryAttributeType = metadataLoadContext.ResolveType<FromQueryAttribute>();
-            FromRouteAttributeType = metadataLoadContext.ResolveType<FromRouteAttribute>();
-            FromHeaderAttributeType = metadataLoadContext.ResolveType<FromHeaderAttribute>();
-            FromFormAttributeType = metadataLoadContext.ResolveType<FromFormAttribute>();
-            FromBodyAttributeType = metadataLoadContext.ResolveType<FromBodyAttribute>();
-            FromServicesAttributeType = metadataLoadContext.ResolveType<FromServicesAttribute>();
+            FromQueryMetadataType = metadataLoadContext.ResolveType<IFromQueryMetadata>();
+            FromRouteMetadataType = metadataLoadContext.ResolveType<IFromRouteMetadata>();
+            FromHeaderMetadataType = metadataLoadContext.ResolveType<IFromHeaderMetadata>();
+            FromFormMetadataType = metadataLoadContext.ResolveType<IFromFormMetadata>();
+            FromBodyMetadataType = metadataLoadContext.ResolveType<IFromBodyMetadata>();
+            FromServicesMetadataType = metadataLoadContext.ResolveType<IFromServiceMetadata>();
             AsParametersAttributeType = metadataLoadContext.ResolveType<AsParametersAttribute>();
             IEndpointMetadataProviderType = metadataLoadContext.ResolveType<IEndpointMetadataProvider>();
             IEndpointParameterMetadataProviderType = metadataLoadContext.ResolveType<IEndpointParameterMetadataProvider>();
@@ -34,12 +33,12 @@ namespace uController.SourceGenerator
             SourceKeyType = metadataLoadContext.ResolveType("Microsoft.AspNetCore.Builder.SourceKey");
         }
 
-        public Type FromQueryAttributeType { get; }
-        public Type FromRouteAttributeType { get; }
-        public Type FromHeaderAttributeType { get; }
-        public Type FromFormAttributeType { get; }
-        public Type FromBodyAttributeType { get; }
-        public Type FromServicesAttributeType { get; }
+        public Type FromQueryMetadataType { get; }
+        public Type FromRouteMetadataType { get; }
+        public Type FromHeaderMetadataType { get; }
+        public Type FromFormMetadataType { get; }
+        public Type FromBodyMetadataType { get; }
+        public Type FromServicesMetadataType { get; }
         public Type AsParametersAttributeType { get; }
         public Type IEndpointMetadataProviderType { get; }
         public Type IEndpointParameterMetadataProviderType { get; }

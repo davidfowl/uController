@@ -13,22 +13,19 @@ namespace Microsoft.AspNetCore.Http
     class TypedResults { }
 }
 
-namespace Microsoft.AspNetCore.Mvc
-{
-    class FromQueryAttribute { }
-    class FromRouteAttribute { }
-    class FromHeaderAttribute { }
-    class FromFormAttribute { }
-    class FromBodyAttribute { }
-    class FromServicesAttribute { }
-}
-
 namespace Microsoft.AspNetCore.Http.Metadata
 {
 
     interface IEndpointMetadataProvider { }
 
     interface IEndpointParameterMetadataProvider { }
+
+    interface IFromServiceMetadata { }
+    interface IFromQueryMetadata { }
+    interface IFromRouteMetadata { }
+    interface IFromBodyMetadata { }
+    interface IFromFormMetadata { }
+    interface IFromHeaderMetadata { }
 }
 
 namespace Microsoft.Extensions.Primitives

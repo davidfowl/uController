@@ -1,10 +1,22 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace uController.SourceGenerator.Tests;
 
 // Types shared between the tests and compilation. They *must* be public.
 
+public class FromServiceAttribute : Attribute, IFromServiceMetadata
+{
+}
+
+public interface IMyService
+{
+}
+
+public class MyService : IMyService
+{
+}
 public class TodoService
 {
 

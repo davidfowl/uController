@@ -12,6 +12,9 @@ using Moq;
 
 namespace uController.SourceGenerator.Tests;
 
+// TODO: Migrate all tests from https://github.com/dotnet/aspnetcore/blob/main/src/Http/Http.Extensions/test/RequestDelegateFactoryTests.cs
+// This is a subset.
+
 public class IntegrationTests
 {
     [Fact]
@@ -676,7 +679,135 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     }
 
 
-    private async Task<RequestDelegate> GetRequestDelegate(string source)
+    public static object[][] ExplicitFromServiceActions
+    {
+        get
+        {
+            var testExplicitFromService =
+            $$"""
+            void TestExplicitFromService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] {{typeof(MyService)}} myService)
+            {
+                httpContext.Items.Add("service", myService);
+            }
+            app.MapGet("/", TestExplicitFromService);
+            """;
+
+            // TBD
+            //void TestExplicitFromService_FromParameterList([AsParameters] ParametersListWithExplictFromService args)
+            //{
+            //    args.HttpContext.Items.Add("service", args.MyService);
+            //}
+
+            var testExplicitFromIEnumerableService =
+            $$"""
+            void TestExplicitFromIEnumerableService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] IEnumerable<{{typeof(MyService)}}> myServices)
+            {
+                httpContext.Items.Add("service", myServices.Single());
+            }
+            app.MapGet("/", TestExplicitFromIEnumerableService);
+            """;
+
+            var testExplictMultipleFromService =
+            $$"""
+            void TestExplicitMultipleFromService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] {{typeof(MyService)}} myService, [{{typeof(FromServiceAttribute)}}] IEnumerable<{{typeof(MyService)}}> myServices)
+            {
+                httpContext.Items.Add("service", myService);
+            }
+            app.MapGet("/", TestExplicitMultipleFromService);
+            """;
+
+            return new object[][]
+            {
+                    new[] { testExplicitFromService },
+                    // TBD
+                    // new object[] { (Action<ParametersListWithExplictFromService>)TestExplicitFromService_FromParameterList },
+                    new[] { testExplicitFromIEnumerableService },
+                    new[] { testExplictMultipleFromService },
+            };
+        }
+    }
+
+    public static object[][] ImplicitFromServiceActions
+    {
+        get
+        {
+            var testImpliedFromService =
+            $$"""
+            void TestImpliedFromService(HttpContext httpContext, {{typeof(IMyService)}} myService)
+            {
+                httpContext.Items.Add("service", myService);
+            }
+            app.MapGet("/", TestImpliedFromService);
+            """;
+
+            //void TestImpliedFromService_FromParameterList([AsParameters] ParametersListWithImplictFromService args)
+            //{
+            //    args.HttpContext.Items.Add("service", args.MyService);
+            //}
+
+            var testImpliedIEnumerableFromService =
+            $$"""
+            void TestImpliedIEnumerableFromService(HttpContext httpContext, IEnumerable<{{typeof(MyService)}}> myServices)
+            {
+                httpContext.Items.Add("service", myServices.Single());
+            }
+            app.MapGet("/", TestImpliedIEnumerableFromService);
+            """;
+
+            var testImpliedFromServiceBasedOnContainer =
+            $$"""
+            void TestImpliedFromServiceBasedOnContainer(HttpContext httpContext, {{typeof(MyService)}} myService)
+            {
+                httpContext.Items.Add("service", myService);
+            }
+            app.MapGet("/", TestImpliedFromServiceBasedOnContainer);
+            """;
+
+            return new object[][]
+            {
+                    new[] { testImpliedFromService },
+                    // new object[] { (Action<ParametersListWithImplictFromService>)TestImpliedFromService_FromParameterList },
+                    new[] { testImpliedIEnumerableFromService },
+                    new[] { testImpliedFromServiceBasedOnContainer },
+            };
+        }
+    }
+
+
+    [Theory]
+    [MemberData(nameof(FromServiceActions))]
+    public async Task RequestDelegatePopulatesParametersFromServiceWithAndWithoutAttribute(string source)
+    {
+        var myOriginalService = new MyService();
+
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(myOriginalService);
+        serviceCollection.AddSingleton<IMyService>(myOriginalService);
+        var services = serviceCollection.BuildServiceProvider();
+
+        var requestDelegate = await GetRequestDelegate(source, services);
+
+        using var requestScoped = services.CreateScope();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = requestScoped.ServiceProvider
+        };
+
+        await requestDelegate(httpContext);
+
+        Assert.Same(myOriginalService, httpContext.Items["service"]);
+    }
+
+    public static object[][] FromServiceActions
+    {
+        get
+        {
+            return ImplicitFromServiceActions.Concat(ExplicitFromServiceActions).ToArray();
+        }
+    }
+
+    private async Task<RequestDelegate> GetRequestDelegate(string source, IServiceProvider? serviceProvider = null)
     {
         // Act
         var (results, compilation) = await RunGenerator(source);
@@ -685,7 +816,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Empty(results.Diagnostics);
 
         var builderFunc = CreateInvocationFromCompilation(compilation);
-        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(new EmptyServiceProvider()));
+        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(serviceProvider ?? new EmptyServiceProvider()));
         _ = builderFunc(builder);
 
         var dataSource = Assert.Single(builder.DataSources);
@@ -795,6 +926,8 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var project = CreateProject();
         var source = $$"""
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
