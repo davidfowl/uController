@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 
+#nullable disable
 namespace Roslyn.Reflection
 {
     internal class RoslynPropertyInfo : PropertyInfo
@@ -59,7 +60,7 @@ namespace Roslyn.Reflection
             foreach (var p in _property.Parameters)
             {
                 parameters ??= new();
-                parameters.Add(new RoslynParameterInfo(p, _metadataLoadContext));
+                parameters.Add(p.AsParameterInfo(_metadataLoadContext));
             }
             return parameters?.ToArray() ?? Array.Empty<ParameterInfo>();
         }
@@ -85,3 +86,4 @@ namespace Roslyn.Reflection
         }
     }
 }
+#nullable restore

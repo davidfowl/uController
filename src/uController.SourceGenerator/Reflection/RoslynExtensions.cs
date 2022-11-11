@@ -3,22 +3,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 
+#nullable disable
 namespace Roslyn.Reflection
 {
     public static class RoslynExtensions
     {
-        public static Assembly AsAssembly(this IAssemblySymbol assemblySymbol, MetadataLoadContext metadataLoadContext) => assemblySymbol == null ? null : new RoslynAssembly(assemblySymbol, metadataLoadContext);
-
-        public static Type AsType(this ITypeSymbol typeSymbol, MetadataLoadContext metadataLoadContext) => typeSymbol == null ? null : new RoslynType(typeSymbol, metadataLoadContext);
-
-        public static ParameterInfo AsParameterInfo(this IParameterSymbol parameterSymbol, MetadataLoadContext metadataLoadContext) => parameterSymbol == null ? null : new RoslynParameterInfo(parameterSymbol, metadataLoadContext);
-
-        public static MethodInfo AsMethodInfo(this IMethodSymbol methodSymbol, MetadataLoadContext metadataLoadContext) => methodSymbol == null ? null : new RoslynMethodInfo(methodSymbol, metadataLoadContext);
-
-        public static PropertyInfo AsPropertyInfo(this IPropertySymbol propertySymbol, MetadataLoadContext metadataLoadContext) => propertySymbol == null ? null : new RoslynPropertyInfo(propertySymbol, metadataLoadContext);
-
-        public static FieldInfo AsFieldInfo(this IFieldSymbol fieldSymbol, MetadataLoadContext metadataLoadContext) => fieldSymbol == null ? null : new RoslynFieldInfo(fieldSymbol, metadataLoadContext);
-
         public static IMethodSymbol GetMethodSymbol(this MethodInfo methodInfo) => (methodInfo as RoslynMethodInfo)?.MethodSymbol;
 
         public static IPropertySymbol GetPropertySymbol(this PropertyInfo property) => (property as RoslynPropertyInfo)?.PropertySymbol;
@@ -27,6 +16,23 @@ namespace Roslyn.Reflection
         public static IParameterSymbol GetParameterSymbol(this ParameterInfo parameterInfo) => (parameterInfo as RoslynParameterInfo)?.ParameterSymbol;
 
         public static ITypeSymbol GetTypeSymbol(this Type type) => (type as RoslynType)?.TypeSymbol;
+    }
+
+    internal static class RoslynInternalExtensions
+    {
+        public static Assembly AsAssembly(this IAssemblySymbol assemblySymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<Assembly>(assemblySymbol);
+
+        public static Type AsType(this ITypeSymbol typeSymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<Type>(typeSymbol);
+
+        public static ParameterInfo AsParameterInfo(this IParameterSymbol parameterSymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<ParameterInfo>(parameterSymbol);
+
+        public static ConstructorInfo AsConstructorInfo(this IMethodSymbol methodSymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<ConstructorInfo>(methodSymbol);
+
+        public static MethodInfo AsMethodInfo(this IMethodSymbol methodSymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<MethodInfo>(methodSymbol);
+
+        public static PropertyInfo AsPropertyInfo(this IPropertySymbol propertySymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<PropertyInfo>(propertySymbol);
+
+        public static FieldInfo AsFieldInfo(this IFieldSymbol fieldSymbol, MetadataLoadContext metadataLoadContext) => metadataLoadContext.GetOrCreate<FieldInfo>(fieldSymbol);
 
         public static IEnumerable<ITypeSymbol> BaseTypes(this ITypeSymbol typeSymbol)
         {
@@ -39,3 +45,4 @@ namespace Roslyn.Reflection
         }
     }
 }
+#nullable restore

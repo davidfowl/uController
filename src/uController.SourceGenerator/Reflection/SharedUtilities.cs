@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using Microsoft.CodeAnalysis;
 
+#nullable disable
 namespace Roslyn.Reflection
 {
     internal class SharedUtilities
@@ -17,6 +17,46 @@ namespace Roslyn.Reflection
                 attributes.Add(new RoslynCustomAttributeData(a, metadataLoadContext));
             }
             return (IList<CustomAttributeData>)attributes ?? Array.Empty<CustomAttributeData>();
+        }
+
+        public static MethodAttributes GetMethodAttributes(IMethodSymbol method)
+        {
+            MethodAttributes attributes = default;
+
+            if (method.IsAbstract)
+            {
+                attributes |= MethodAttributes.Abstract | MethodAttributes.Virtual;
+            }
+
+            if (method.IsStatic)
+            {
+                attributes |= MethodAttributes.Static;
+            }
+
+            if (method.IsVirtual || method.IsOverride)
+            {
+                attributes |= MethodAttributes.Virtual;
+            }
+
+            switch (method.DeclaredAccessibility)
+            {
+                case Accessibility.Public:
+                    attributes |= MethodAttributes.Public;
+                    break;
+                case Accessibility.Private:
+                    attributes |= MethodAttributes.Private;
+                    break;
+                case Accessibility.Internal:
+                    attributes |= MethodAttributes.Assembly;
+                    break;
+            }
+
+            if (method.MethodKind != MethodKind.Ordinary)
+            {
+                attributes |= MethodAttributes.SpecialName;
+            }
+
+            return attributes;
         }
 
         public static bool MatchBindingFlags(BindingFlags bindingFlags, ITypeSymbol thisType, ISymbol symbol)
@@ -172,3 +212,4 @@ namespace Roslyn.Reflection
         }
     }
 }
+#nullable restore

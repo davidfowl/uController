@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 
+#nullable disable
 namespace Roslyn.Reflection
 {
     internal class RoslynType : Type
@@ -21,7 +22,7 @@ namespace Roslyn.Reflection
             _isByRef = isByRef;
         }
 
-        public override Assembly Assembly => new RoslynAssembly(_typeSymbol.ContainingAssembly, _metadataLoadContext);
+        public override Assembly Assembly => _typeSymbol.ContainingAssembly.AsAssembly(_metadataLoadContext);
 
         public override string AssemblyQualifiedName => throw new NotImplementedException();
 
@@ -100,7 +101,7 @@ namespace Roslyn.Reflection
                 }
 
                 ctors ??= new();
-                ctors.Add(new RoslynConstructorInfo(c, _metadataLoadContext));
+                ctors.Add(c.AsConstructorInfo(_metadataLoadContext));
             }
             return ctors?.ToArray() ?? Array.Empty<ConstructorInfo>();
         }
@@ -193,7 +194,7 @@ namespace Roslyn.Reflection
                 }
 
                 fields ??= new();
-                fields.Add(new RoslynFieldInfo(fieldSymbol, _metadataLoadContext));
+                fields.Add(fieldSymbol.AsFieldInfo(_metadataLoadContext));
             }
 
             return fields?.ToArray() ?? Array.Empty<FieldInfo>();
@@ -240,6 +241,7 @@ namespace Roslyn.Reflection
                     {
                         IFieldSymbol f => f.AsFieldInfo(_metadataLoadContext),
                         IPropertySymbol p => p.AsPropertyInfo(_metadataLoadContext),
+                        IMethodSymbol c when c.MethodKind == MethodKind.Constructor => c.AsConstructorInfo(_metadataLoadContext),
                         IMethodSymbol m => m.AsMethodInfo(_metadataLoadContext),
                         _ => null
                     };
@@ -638,15 +640,20 @@ namespace Roslyn.Reflection
 
         public override bool IsAssignableFrom(Type c)
         {
-            if (c is RoslynType rt)
+            var otherTypeSymbol = c switch
             {
-                return rt._typeSymbol.AllInterfaces.Contains(_typeSymbol, SymbolEqualityComparer.Default) || (rt.NamedTypeSymbol != null && rt.NamedTypeSymbol.BaseTypes().Contains(_typeSymbol, SymbolEqualityComparer.Default));
-            }
-            else if (_metadataLoadContext.ResolveType(c) is RoslynType rtt)
+                RoslynType rt => rt._typeSymbol,
+                Type t when _metadataLoadContext.ResolveType(t) is RoslynType rt => rt._typeSymbol,
+                _ => null
+            };
+
+            if (otherTypeSymbol is null)
             {
-                return rtt._typeSymbol.AllInterfaces.Contains(_typeSymbol, SymbolEqualityComparer.Default) || (rtt.NamedTypeSymbol != null && rtt.NamedTypeSymbol.BaseTypes().Contains(_typeSymbol, SymbolEqualityComparer.Default));
+                return false;
             }
-            return false;
+
+            return otherTypeSymbol.AllInterfaces.Contains(_typeSymbol, SymbolEqualityComparer.Default) ||
+                   (otherTypeSymbol is INamedTypeSymbol ns && ns.BaseTypes().Contains(_typeSymbol, SymbolEqualityComparer.Default));
         }
 
         public override int GetHashCode()
@@ -656,33 +663,27 @@ namespace Roslyn.Reflection
 
         public override bool Equals(object o)
         {
-            if (o is RoslynType rt)
+            var otherTypeSymbol = o switch
             {
-                return _typeSymbol.Equals(rt._typeSymbol, SymbolEqualityComparer.Default);
-            }
-            else if (o is Type t && _metadataLoadContext.ResolveType(t) is RoslynType rtt)
-            {
-                return _typeSymbol.Equals(rtt._typeSymbol, SymbolEqualityComparer.Default);
-            }
-            else if (o is ITypeSymbol ts)
-            {
-                return _typeSymbol.Equals(ts, SymbolEqualityComparer.Default);
-            }
+                RoslynType rt => rt._typeSymbol,
+                Type t when _metadataLoadContext.ResolveType(t) is RoslynType rt => rt._typeSymbol,
+                ITypeSymbol ts => ts,
+                _ => null
+            };
 
-            return false;
+            return _typeSymbol.Equals(otherTypeSymbol, SymbolEqualityComparer.Default);
         }
 
         public override bool Equals(Type o)
         {
-            if (o is RoslynType rt)
+            var otherTypeSymbol = o switch
             {
-                return _typeSymbol.Equals(rt._typeSymbol, SymbolEqualityComparer.Default);
-            }
-            else if (_metadataLoadContext.ResolveType(o) is RoslynType rtt)
-            {
-                return _typeSymbol.Equals(rtt._typeSymbol, SymbolEqualityComparer.Default);
-            }
-            return false;
+                RoslynType rt => rt._typeSymbol,
+                Type t when _metadataLoadContext.ResolveType(t) is RoslynType rt => rt._typeSymbol,
+                _ => null
+            };
+            return _typeSymbol.Equals(otherTypeSymbol, SymbolEqualityComparer.Default);
         }
     }
 }
+#nullable restore
