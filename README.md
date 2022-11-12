@@ -1,6 +1,6 @@
-## Source generators for minimal APIs
+## Source generator for minimal APIs
 
-The source generator will build extremely efficient code (what you would have hand written yourself) for invoking your handler methods!
+This source generator should make your ASP.NET Core minimal API application trim and AOT friendly.
 
 ## Using CI Builds
 
