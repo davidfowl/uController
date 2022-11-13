@@ -862,13 +862,34 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     [MemberData(nameof(AcceptsMetadataActions))]
     public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string[] expectedContentTypes)
     {
-        var endpoint = await GetEndpoint(source);
+        var serviceProviderIsService = new ServiceProviderIsService();
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton<IServiceProviderIsService>(serviceProviderIsService)
+            .BuildServiceProvider();
+        var endpoint = await GetEndpoint(source, serviceProvider);
 
         var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
         Assert.NotNull(acceptsMetadata);
 
         Assert.Equal(expectedType, acceptsMetadata.RequestType);
         Assert.Equal(expectedContentTypes, acceptsMetadata.ContentTypes);
+    }
+
+    [Theory]
+    [MemberData(nameof(FromServiceActions))]
+    public async Task DoesNotPopulateAcceptsMetadataForServices(string source)
+    {
+        var serviceProviderIsService = new ServiceProviderIsService();
+        var myOriginalService = new MyService();
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton(myOriginalService)
+            .AddSingleton<IMyService>(myOriginalService)
+            .AddSingleton<IServiceProviderIsService>(serviceProviderIsService)
+            .BuildServiceProvider();
+        var endpoint = await GetEndpoint(source, serviceProvider);
+
+        var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
+        Assert.Null(acceptsMetadata);
     }
 
     public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
@@ -1140,5 +1161,10 @@ public static class TestMapActions
         public ICollection<EndpointDataSource> DataSources { get; }
 
         public IServiceProvider ServiceProvider => ApplicationBuilder.ApplicationServices;
+    }
+
+    private class ServiceProviderIsService : IServiceProviderIsService
+    {
+        public bool IsService(Type serviceType) => serviceType == typeof(MyService) || serviceType == typeof(IMyService);
     }
 }

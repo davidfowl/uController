@@ -318,6 +318,7 @@ namespace uController.SourceGenerator
                 var populateMetadata = new StringBuilder();
                 var metadataPreReqs = new StringBuilder();
                 var generatedMetadataParameterInfo = false;
+                var generatedIsServiceProvider = false;
 
                 foreach (var p in methodModel.Parameters)
                 {
@@ -336,9 +337,18 @@ namespace uController.SourceGenerator
                         populateMetadata.AppendLine($@"                PopulateMetadata<{p.ParameterType}>(parameterInfos[{p.Index}], builder);");
                     }
 
-                    if (p.BodyOrService && generatedBodyOrService || p.FromBody)
+                    if (p.FromBody)
                     {
                         populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                    }
+                    else if (p.BodyOrService)
+                    {
+                        if (!generatedIsServiceProvider)
+                        {
+                            metadataPreReqs.AppendLine($@"                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
+                            generatedIsServiceProvider = true;
+                        }
+                        populateMetadata.AppendLine($@"                   if (!(ispis?.IsService(typeof({p.ParameterType})) ?? false)) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
                     }
 
                     if (p.ReadFromForm)
