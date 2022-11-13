@@ -335,6 +335,11 @@ namespace uController.SourceGenerator
                         }
                         populateMetadata.AppendLine($@"                PopulateMetadata<{p.ParameterType}>(parameterInfos[{p.Index}], builder);");
                     }
+
+                    if (p.BodyOrService && generatedBodyOrService || p.FromBody)
+                    {
+                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                    }
                 }
 
                 void AnalyzeResultTypesForIResultMethods(IMethodSymbol method, Type returnType)
@@ -691,6 +696,28 @@ internal static class GeneratedRouteBuilderExtensions
             }}
         }}
         return default;
+    }}
+
+    private sealed class AcceptsTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IAcceptsMetadata
+    {{
+        public IReadOnlyList<string> ContentTypes {{ get; }}
+
+        public Type RequestType {{ get; }}
+
+        public bool IsOptional {{ get; }}
+
+        public AcceptsTypeMetadata(Type type, bool isOptional, string[] contentTypes)
+        {{
+            RequestType = type ?? throw new ArgumentNullException(nameof(type));
+
+            if (contentTypes == null)
+            {{
+                throw new ArgumentNullException(nameof(contentTypes));
+            }}
+
+            ContentTypes = contentTypes;
+            IsOptional = isOptional;
+        }}
     }}
 
     private sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata

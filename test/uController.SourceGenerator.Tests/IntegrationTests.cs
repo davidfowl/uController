@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -807,7 +808,35 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         }
     }
 
-    private async Task<RequestDelegate> GetRequestDelegate(string source, IServiceProvider? serviceProvider = null)
+    public static object[][] AcceptsMetadataActions
+    {
+        get
+        {
+            return new[]
+            {
+                new[] { ImplicitFromBodyActions[0][0], typeof(Todo), "application/json" },
+                new[] { ImplicitFromBodyActions[1][0], typeof(ITodo), "application/json" },
+                new[] { ImplicitFromBodyActions[2][0], typeof(TodoStruct), "application/json" },
+                new[] { ExplicitFromBodyActions[0][0], typeof(Todo), "application/json" }
+            };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(AcceptsMetadataActions))]
+    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string expectedContentType)
+    {
+        var endpoint = await GetEndpoint(source);
+
+        var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
+        Assert.NotNull(acceptsMetadata);
+
+        Assert.Equal(expectedType, acceptsMetadata.RequestType);
+        var contentType = Assert.Single(acceptsMetadata.ContentTypes);
+        Assert.Equal(expectedContentType, contentType);
+    }
+
+    public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
     {
         // Act
         var (results, compilation) = await RunGenerator(source);
@@ -826,8 +855,13 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
         Assert.NotNull(sourceKeyMetadata);
 
-        Assert.NotNull(endpoint.RequestDelegate);
+        return endpoint;
+    }
 
+    private async Task<RequestDelegate> GetRequestDelegate(string source, IServiceProvider? serviceProvider = null)
+    {
+        var endpoint = await GetEndpoint(source, serviceProvider);
+        Assert.NotNull(endpoint.RequestDelegate);
         return endpoint.RequestDelegate;
     }
 
