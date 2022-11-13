@@ -298,6 +298,7 @@ namespace uController.SourceGenerator
                 }
 
                 WriteLine($@"var {parameterName} = formCollection.Files[""{parameter.Name}""];");
+                parameter.ReadFromForm = true;
             }
             else if (parameter.ParameterType.Equals(typeof(IFormCollection)))
             {
@@ -309,6 +310,7 @@ namespace uController.SourceGenerator
                 }
 
                 WriteLine($"var {parameterName} = formCollection;");
+                parameter.ReadFromForm = true;
             }
             else if (parameter.ParameterType.Equals(typeof(ClaimsPrincipal)))
             {
@@ -364,6 +366,8 @@ namespace uController.SourceGenerator
                 {
                     parameter.Unresovled = true;
                 }
+
+                parameter.ReadFromForm = true;
             }
             else if (parameter.FromBody)
             {

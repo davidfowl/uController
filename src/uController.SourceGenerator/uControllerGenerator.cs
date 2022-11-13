@@ -340,6 +340,11 @@ namespace uController.SourceGenerator
                     {
                         populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
                     }
+
+                    if (p.ReadFromForm)
+                    {
+                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""multipart/form-data"" }}));");  
+                    }
                 }
 
                 void AnalyzeResultTypesForIResultMethods(IMethodSymbol method, Type returnType)

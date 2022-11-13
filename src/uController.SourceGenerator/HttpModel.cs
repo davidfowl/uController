@@ -39,5 +39,6 @@ namespace uController
         public bool QueryOrRoute { get; set; }
         public bool BodyOrService { get; set; }
         public bool RequiresParameterInfo { get; set; }
+        public bool ReadFromForm { get; set; }
     }
 }

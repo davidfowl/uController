@@ -812,19 +812,55 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     {
         get
         {
+            var implicitFromFormFile = 
+            $$"""
+            app.MapPost("/fileupload", (IFormFile file) =>
+            {
+                return $"Uploaded {file.Name}";
+            });
+            """;
+
+            var implicitFromFormCollection =
+            $$"""
+            app.MapPost("/formpost", (IFormCollection formCollection) =>
+            {
+                return $"Uploaded {formCollection.Count} files";
+            });
+            """;
+
+            var explicitFromFormFile = 
+            $$"""
+            app.MapPost("/fileupload", ([FromForm] IFormFile file) =>
+            {
+                return $"Uploaded {file.Name}";
+            });
+            """;
+
+            var explicitFromFormCollection =
+            $$"""
+            app.MapPost("/formpost", ([FromForm] IFormCollection formCollection) =>
+            {
+                return $"Uploaded {formCollection.Count} files";
+            });
+            """;
+
             return new[]
             {
-                new[] { ImplicitFromBodyActions[0][0], typeof(Todo), "application/json" },
-                new[] { ImplicitFromBodyActions[1][0], typeof(ITodo), "application/json" },
-                new[] { ImplicitFromBodyActions[2][0], typeof(TodoStruct), "application/json" },
-                new[] { ExplicitFromBodyActions[0][0], typeof(Todo), "application/json" }
+                new[] { ImplicitFromBodyActions[0][0], typeof(Todo), new[] { "application/json" }},
+                new[] { ImplicitFromBodyActions[1][0], typeof(ITodo), new[] { "application/json" }},
+                new[] { ImplicitFromBodyActions[2][0], typeof(TodoStruct), new[] { "application/json" }},
+                new[] { ExplicitFromBodyActions[0][0], typeof(Todo), new[] { "application/json" }},
+                new[] { (object)implicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
+                new[] { (object)implicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }},
+                new[] { (object)explicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
+                new[] { (object)explicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }}
             };
         }
     }
 
     [Theory]
     [MemberData(nameof(AcceptsMetadataActions))]
-    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string expectedContentType)
+    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string[] expectedContentTypes)
     {
         var endpoint = await GetEndpoint(source);
 
@@ -832,8 +868,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.NotNull(acceptsMetadata);
 
         Assert.Equal(expectedType, acceptsMetadata.RequestType);
-        var contentType = Assert.Single(acceptsMetadata.ContentTypes);
-        Assert.Equal(expectedContentType, contentType);
+        Assert.Equal(expectedContentTypes, acceptsMetadata.ContentTypes);
     }
 
     public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
