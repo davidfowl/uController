@@ -862,11 +862,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     [MemberData(nameof(AcceptsMetadataActions))]
     public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string[] expectedContentTypes)
     {
-        var serviceProviderIsService = new ServiceProviderIsService();
-        var serviceProvider = new ServiceCollection()
-            .AddSingleton<IServiceProviderIsService>(serviceProviderIsService)
-            .BuildServiceProvider();
-        var endpoint = await GetEndpoint(source, serviceProvider);
+        var endpoint = await GetEndpoint(source);
 
         var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
         Assert.NotNull(acceptsMetadata);
@@ -879,12 +875,10 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     [MemberData(nameof(FromServiceActions))]
     public async Task DoesNotPopulateAcceptsMetadataForServices(string source)
     {
-        var serviceProviderIsService = new ServiceProviderIsService();
         var myOriginalService = new MyService();
         var serviceProvider = new ServiceCollection()
             .AddSingleton(myOriginalService)
             .AddSingleton<IMyService>(myOriginalService)
-            .AddSingleton<IServiceProviderIsService>(serviceProviderIsService)
             .BuildServiceProvider();
         var endpoint = await GetEndpoint(source, serviceProvider);
 
@@ -1161,10 +1155,5 @@ public static class TestMapActions
         public ICollection<EndpointDataSource> DataSources { get; }
 
         public IServiceProvider ServiceProvider => ApplicationBuilder.ApplicationServices;
-    }
-
-    private class ServiceProviderIsService : IServiceProviderIsService
-    {
-        public bool IsService(Type serviceType) => serviceType == typeof(MyService) || serviceType == typeof(IMyService);
     }
 }
