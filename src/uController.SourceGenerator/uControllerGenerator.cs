@@ -348,7 +348,7 @@ namespace uController.SourceGenerator
                             metadataPreReqs.AppendLine($@"                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
                             generatedIsServiceProvider = true;
                         }
-                        populateMetadata.AppendLine($@"                   if (!(ispis?.IsService(typeof({p.ParameterType})) ?? false)) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                        populateMetadata.AppendLine($@"                   if (ispis?.IsService(typeof({p.ParameterType}) == false) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
                     }
 
                     if (p.ReadFromForm)
