@@ -318,6 +318,7 @@ namespace uController.SourceGenerator
                 var populateMetadata = new StringBuilder();
                 var metadataPreReqs = new StringBuilder();
                 var generatedMetadataParameterInfo = false;
+                var generatedIsServiceProvider = false;
 
                 foreach (var p in methodModel.Parameters)
                 {
@@ -334,6 +335,25 @@ namespace uController.SourceGenerator
                             generatedMetadataParameterInfo = true;
                         }
                         populateMetadata.AppendLine($@"                PopulateMetadata<{p.ParameterType}>(parameterInfos[{p.Index}], builder);");
+                    }
+
+                    if (p.FromBody)
+                    {
+                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                    }
+                    else if (p.BodyOrService)
+                    {
+                        if (!generatedIsServiceProvider)
+                        {
+                            metadataPreReqs.AppendLine($@"                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
+                            generatedIsServiceProvider = true;
+                        }
+                        populateMetadata.AppendLine($@"                if ((ispis?.IsService(typeof({p.ParameterType})) ?? false) == false) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                    }
+
+                    if (p.ReadFromForm)
+                    {
+                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""multipart/form-data"" }}));");  
                     }
                 }
 
@@ -691,6 +711,28 @@ internal static class GeneratedRouteBuilderExtensions
             }}
         }}
         return default;
+    }}
+
+    private sealed class AcceptsTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IAcceptsMetadata
+    {{
+        public IReadOnlyList<string> ContentTypes {{ get; }}
+
+        public Type RequestType {{ get; }}
+
+        public bool IsOptional {{ get; }}
+
+        public AcceptsTypeMetadata(Type type, bool isOptional, string[] contentTypes)
+        {{
+            RequestType = type ?? throw new ArgumentNullException(nameof(type));
+
+            if (contentTypes == null)
+            {{
+                throw new ArgumentNullException(nameof(contentTypes));
+            }}
+
+            ContentTypes = contentTypes;
+            IsOptional = isOptional;
+        }}
     }}
 
     private sealed class ResponseTypeMetadata : Microsoft.AspNetCore.Http.Metadata.IProducesResponseTypeMetadata

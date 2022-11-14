@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -466,83 +467,96 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Equal(originalHeaderParam, httpContext.Items["deserializedRouteParam"]);
     }
 
-    public static object[][] ImplicitFromBodyActions
+    public static object[][] ImplicitFromBodyActions(bool withAcceptsMetadata = false)
     {
-        get
+        var testImpliedFromBody =
+        $$""" 
+        void TestImpliedFromBody(HttpContext httpContext, {{typeof(Todo)}} todo)
         {
-            var testImpliedFromBody =
-            $$""" 
-            void TestImpliedFromBody(HttpContext httpContext, {{typeof(Todo)}} todo)
-            {
-                httpContext.Items.Add("body", todo);
-            }
-            app.MapPost("/", TestImpliedFromBody);
-            """;
-
-            var testImpliedFromBodyInterface =
-            $$"""
-            void TestImpliedFromBodyInterface(HttpContext httpContext, {{typeof(ITodo)}} todo)
-            {
-                httpContext.Items.Add("body", todo);
-            }
-            app.MapPost("/", TestImpliedFromBodyInterface);
-            """;
-
-            var testImpliedFromBodyStruct =
-            $$"""
-            void TestImpliedFromBodyStruct(HttpContext httpContext, {{typeof(TodoStruct)}} todo)
-            {
-                httpContext.Items.Add("body", todo);
-            }
-            app.MapPost("/", TestImpliedFromBodyStruct);
-            """;
-
-            //void TestImpliedFromBodyStruct_ParameterList([AsParameters] ParametersListWithImplictFromBody args)
-            //{
-            //    args.HttpContext.Items.Add("body", args.Todo);
-            //}
-
-            return new[]
-            {
-                    new[] { testImpliedFromBody },
-                    new[] { testImpliedFromBodyInterface },
-                    new object[] { testImpliedFromBodyStruct },
-                    // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
-                };
+            httpContext.Items.Add("body", todo);
         }
-    }
+        app.MapPost("/", TestImpliedFromBody);
+        """;
 
-    public static object[][] ExplicitFromBodyActions
-    {
-        get
+        var testImpliedFromBodyInterface =
+        $$"""
+        void TestImpliedFromBodyInterface(HttpContext httpContext, {{typeof(ITodo)}} todo)
         {
-            var TestExplicitFromBody =
-            $$"""
-            void TestExplicitFromBody(HttpContext httpContext, [FromBody] {{typeof(Todo)}} todo)
-            {
-                httpContext.Items.Add("body", todo);
-            }
-            app.MapPost("/", TestExplicitFromBody);
-            """;
-            // TBD
-            //void TestExplicitFromBody_ParameterList([AsParameters] ParametersListWithExplictFromBody args)
-            //{
-            //    args.HttpContext.Items.Add("body", args.Todo);
-            //}
+            httpContext.Items.Add("body", todo);
+        }
+        app.MapPost("/", TestImpliedFromBodyInterface);
+        """;
 
+        var testImpliedFromBodyStruct =
+        $$"""
+        void TestImpliedFromBodyStruct(HttpContext httpContext, {{typeof(TodoStruct)}} todo)
+        {
+            httpContext.Items.Add("body", todo);
+        }
+        app.MapPost("/", TestImpliedFromBodyStruct);
+        """;
+
+        //void TestImpliedFromBodyStruct_ParameterList([AsParameters] ParametersListWithImplictFromBody args)
+        //{
+        //    args.HttpContext.Items.Add("body", args.Todo);
+        //}
+
+        if (withAcceptsMetadata)
+        {
             return new[]
             {
-                    new[] { TestExplicitFromBody },
-                    // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
+                new object[] { testImpliedFromBody, typeof(Todo), new[] { "application/json" } },
+                new object[] { testImpliedFromBodyInterface, typeof(ITodo), new[] { "application/json" } },
+                new object[] { testImpliedFromBodyStruct, typeof(TodoStruct), new[] { "application/json" } }
+                // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
             };
         }
+        return new[]
+        {
+            new object[] { testImpliedFromBody },
+            new object[] { testImpliedFromBodyInterface  },
+            new object[] { testImpliedFromBodyStruct  }
+            // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
+        };
+    }
+
+    public static object[][] ExplicitFromBodyActions(bool withAcceptsMetadata = false)
+    {
+        var TestExplicitFromBody =
+        $$"""
+        void TestExplicitFromBody(HttpContext httpContext, [FromBody] {{typeof(Todo)}} todo)
+        {
+            httpContext.Items.Add("body", todo);
+        }
+        app.MapPost("/", TestExplicitFromBody);
+        """;
+        // TBD
+        //void TestExplicitFromBody_ParameterList([AsParameters] ParametersListWithExplictFromBody args)
+        //{
+        //    args.HttpContext.Items.Add("body", args.Todo);
+        //}
+
+        if (withAcceptsMetadata)
+        {
+
+            return new[]
+            {
+                new object[] { TestExplicitFromBody, typeof(Todo), new[] { "application/json" } },
+                // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
+            };
+        }
+        return new[]
+        {
+            new object[] { TestExplicitFromBody  },
+            // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
+        };
     }
 
     public static object[][] FromBodyActions
     {
         get
         {
-            return ExplicitFromBodyActions.Concat(ImplicitFromBodyActions).ToArray();
+            return ExplicitFromBodyActions().Concat(ImplicitFromBodyActions()).ToArray();
         }
     }
 
@@ -807,7 +821,91 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         }
     }
 
-    private async Task<RequestDelegate> GetRequestDelegate(string source, IServiceProvider? serviceProvider = null)
+    public static object[][] FromFormActions(bool withAcceptsMetadata = false)
+    {
+        var implicitFromFormFile =
+        $$"""
+        app.MapPost("/fileupload", (IFormFile file) =>
+        {
+            return $"Uploaded {file.Name}";
+        });
+        """;
+
+        var implicitFromFormCollection =
+        $$"""
+        app.MapPost("/formpost", (IFormCollection formCollection) =>
+        {
+            return $"Uploaded {formCollection.Count} files";
+        });
+        """;
+
+        var explicitFromFormFile =
+        $$"""
+        app.MapPost("/fileupload", ([FromForm] IFormFile file) =>
+        {
+            return $"Uploaded {file.Name}";
+        });
+        """;
+
+        var explicitFromFormCollection =
+        $$"""
+        app.MapPost("/formpost", ([FromForm] IFormCollection formCollection) =>
+        {
+            return $"Uploaded {formCollection.Count} files";
+        });
+        """;
+
+        if (withAcceptsMetadata)
+        {
+            return new[]
+            {
+                new[] { (object)implicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
+                new[] { (object)implicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }},
+                new[] { (object)explicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
+                new[] { (object)explicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }}
+            };
+        }
+
+        return new[]
+        {
+            new[] { (object)implicitFromFormFile },
+            new[] { (object)implicitFromFormCollection },
+            new[] { (object)explicitFromFormFile },
+            new[] { (object)explicitFromFormCollection }
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(ImplicitFromBodyActions), parameters: new object[] { true })]
+    [MemberData(nameof(ExplicitFromBodyActions), parameters: new object[] { true })]
+    [MemberData(nameof(FromFormActions), parameters: new object[] { true })]
+    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string[] expectedContentTypes)
+    {
+        var endpoint = await GetEndpoint(source);
+
+        var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
+        Assert.NotNull(acceptsMetadata);
+
+        Assert.Equal(expectedType, acceptsMetadata.RequestType);
+        Assert.Equal(expectedContentTypes, acceptsMetadata.ContentTypes);
+    }
+
+    [Theory]
+    [MemberData(nameof(FromServiceActions))]
+    public async Task DoesNotPopulateAcceptsMetadataForServices(string source)
+    {
+        var myOriginalService = new MyService();
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton(myOriginalService)
+            .AddSingleton<IMyService>(myOriginalService)
+            .BuildServiceProvider();
+        var endpoint = await GetEndpoint(source, serviceProvider);
+
+        var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
+        Assert.Null(acceptsMetadata);
+    }
+
+    public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
     {
         // Act
         var (results, compilation) = await RunGenerator(source);
@@ -826,8 +924,13 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var sourceKeyMetadata = endpoint.Metadata.GetMetadata<SourceKey>();
         Assert.NotNull(sourceKeyMetadata);
 
-        Assert.NotNull(endpoint.RequestDelegate);
+        return endpoint;
+    }
 
+    private async Task<RequestDelegate> GetRequestDelegate(string source, IServiceProvider? serviceProvider = null)
+    {
+        var endpoint = await GetEndpoint(source, serviceProvider);
+        Assert.NotNull(endpoint.RequestDelegate);
         return endpoint.RequestDelegate;
     }
 
