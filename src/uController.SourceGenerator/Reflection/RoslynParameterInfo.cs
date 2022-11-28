@@ -25,6 +25,8 @@ namespace Roslyn.Reflection
 
         public override object DefaultValue => HasDefaultValue ? _parameter.ExplicitDefaultValue : null;
 
+        public new bool IsOptional => HasDefaultValue || _parameter.NullableAnnotation == NullableAnnotation.Annotated;
+
         public override int Position => _parameter.Ordinal;
 
         public override IList<CustomAttributeData> GetCustomAttributesData()

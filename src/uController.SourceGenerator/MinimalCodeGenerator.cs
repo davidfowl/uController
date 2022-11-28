@@ -9,12 +9,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Primitives;
+using Roslyn.Reflection;
 
 namespace uController.SourceGenerator
 {
-    class MinimalCodeGenerator
+    internal class MinimalCodeGenerator
     {
         private readonly StringBuilder _codeBuilder = new();
         private readonly WellKnownTypes _wellKnownTypes;
@@ -25,19 +27,35 @@ namespace uController.SourceGenerator
             _wellKnownTypes = wellKnownTypes;
         }
 
-        public HashSet<ParameterModel> BodyParameters { get; set; } = new HashSet<ParameterModel>();
+        public HashSet<ParameterModel> BodyParameters { get; set; } = new();
 
-        private Type Unwrap(Type type)
+        internal static Type Unwrap(Type type)
         {
             if (type.IsGenericType && !type.IsGenericTypeDefinition)
             {
                 // instantiated generic type only
-                Type genericType = type.GetGenericTypeDefinition();
+                var genericType = type.GetGenericTypeDefinition();
                 if (genericType.Equals(typeof(Nullable<>)))
                 {
                     return type.GetGenericArguments()[0];
                 }
             }
+
+            return null;
+        }
+
+        internal static Type UnwrapValueTask(Type type)
+        {
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                // instantiated generic type only
+                var genericType = type.GetGenericTypeDefinition();
+                if (genericType.Equals(typeof(ValueTask<>)))
+                {
+                    return type.GetGenericArguments()[0];
+                }
+            }
+
             return null;
         }
 
@@ -79,7 +97,8 @@ namespace uController.SourceGenerator
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = parameter.GeneratedName;
-                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
+                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter,
+                              parameterName);
             }
 
             var resultExpression = "";
@@ -137,13 +156,14 @@ namespace uController.SourceGenerator
             else
             {
                 var currentIndent = 4 * _indent;
-                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
+                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length,
+                                    paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
             Write(resultExpression);
 
-            WriteNoIndent($"handler(");
-            bool first = true;
+            WriteNoIndent("handler(");
+            var first = true;
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = parameter.GeneratedName;
@@ -151,13 +171,14 @@ namespace uController.SourceGenerator
                 {
                     WriteNoIndent(", ");
                 }
+
                 WriteNoIndent(parameterName);
                 first = false;
             }
 
             if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(ValueTask)))
-            {
                 // Convert the ValueTask to a Task
+            {
                 WriteLineNoIndent(").AsTask();");
             }
             else
@@ -166,8 +187,8 @@ namespace uController.SourceGenerator
             }
 
             if (!hasAwait)
-            {
                 // Remove " async " from method signature.
+            {
                 _codeBuilder.Remove(methodStartIndex, 6);
             }
 
@@ -192,7 +213,7 @@ namespace uController.SourceGenerator
             }
             else if (unwrappedType.Equals(typeof(string)))
             {
-                AwaitOrReturn($"httpContext.Response.WriteAsync(result);");
+                AwaitOrReturn("httpContext.Response.WriteAsync(result);");
             }
             else if (unwrappedType.Equals(typeof(object)))
             {
@@ -200,11 +221,11 @@ namespace uController.SourceGenerator
             }
             else if (!unwrappedType.Equals(typeof(void)))
             {
-                AwaitOrReturn($"httpContext.Response.WriteAsJsonAsync(result);");
+                AwaitOrReturn("httpContext.Response.WriteAsJsonAsync(result);");
             }
             else if (!hasAwait && method.MethodInfo.ReturnType.Equals(typeof(void)))
-            {
                 // If awaitableInfo.ResultType is void, we've already returned the awaitable directly.
+            {
                 WriteLine($"return {typeof(Task)}.CompletedTask;");
             }
 
@@ -232,7 +253,8 @@ namespace uController.SourceGenerator
             foreach (var parameter in method.Parameters)
             {
                 var parameterName = parameter.GeneratedName;
-                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter, parameterName);
+                EmitParameter(ref hasAwait, ref hasFromBody, ref hasFromForm, ref generatedParamCheck, parameter,
+                              parameterName);
             }
 
             if (generatedParamCheck)
@@ -247,17 +269,19 @@ namespace uController.SourceGenerator
             else
             {
                 var currentIndent = 4 * _indent;
-                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length, paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
+                _codeBuilder.Remove(paramFailureStartIndex - currentIndent - Environment.NewLine.Length,
+                                    paramCheckExpression.Length + currentIndent + Environment.NewLine.Length);
             }
 
             Write("var result = await ");
 
-            WriteNoIndent($"filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext");
+            WriteNoIndent("filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext");
             foreach (var parameter in method.Parameters)
             {
                 WriteNoIndent(", ");
                 WriteNoIndent(parameter.GeneratedName);
             }
+
             WriteLineNoIndent("));");
 
             void AwaitOrReturn(string executeAsync)
@@ -273,9 +297,14 @@ namespace uController.SourceGenerator
             WriteLine("}");
         }
 
-        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasForm, ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
+        private void EmitParameter(ref bool hasAwait, ref bool hasFromBody, ref bool hasForm,
+                                   ref bool generatedParamCheck, ParameterModel parameter, string parameterName)
         {
-            object defaultValue = parameter.ParameterSymbol.HasExplicitDefaultValue ? parameter.ParameterSymbol.ExplicitDefaultValue : null;
+            var defaultValue = parameter.ParameterSymbol.HasExplicitDefaultValue
+                ? parameter.ParameterSymbol.ExplicitDefaultValue
+                : null;
+            var isOptional = parameter.ParameterSymbol.IsOptional ||
+                             parameter.ParameterSymbol.NullableAnnotation == NullableAnnotation.Annotated;
             if (parameter.ParameterType.Equals(typeof(HttpContext)))
             {
                 WriteLine($"var {parameterName} = httpContext;");
@@ -292,7 +321,7 @@ namespace uController.SourceGenerator
             {
                 if (!hasForm)
                 {
-                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    WriteLine("var formCollection = await httpContext.Request.ReadFormAsync();");
                     hasAwait = true;
                     hasForm = true;
                 }
@@ -304,7 +333,7 @@ namespace uController.SourceGenerator
             {
                 if (!hasForm)
                 {
-                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    WriteLine("var formCollection = await httpContext.Request.ReadFormAsync();");
                     hasAwait = true;
                     hasForm = true;
                 }
@@ -330,39 +359,53 @@ namespace uController.SourceGenerator
             }
             else if (parameter.FromRoute != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck, nullable: true))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue,
+                                     parameter.FromRoute, "httpContext.Request.RouteValues", ref generatedParamCheck,
+                                     true))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromQuery != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue,
+                                     parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromHeader != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue,
+                                     parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromServices)
             {
-                WriteLine($"var {parameterName} = httpContext.RequestServices.GetRequiredService<{parameter.ParameterType}>();");
+                if (isOptional)
+                {
+                    WriteLine(
+                              $"var {parameterName} = httpContext.RequestServices.GetService<{parameter.ParameterType}>();");
+                }
+                else
+                {
+                    WriteLine(
+                              $"var {parameterName} = httpContext.RequestServices.GetRequiredService<{parameter.ParameterType}>();");
+                }
             }
             else if (parameter.FromForm != null)
             {
                 if (!hasForm)
                 {
-                    WriteLine($"var formCollection = await httpContext.Request.ReadFormAsync();");
+                    WriteLine("var formCollection = await httpContext.Request.ReadFormAsync();");
                     hasAwait = true;
                     hasForm = true;
                 }
 
-                if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.FromForm, "formCollection", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue,
+                                     parameter.FromForm, "formCollection", ref generatedParamCheck))
                 {
                     parameter.Unresovled = true;
                 }
@@ -372,6 +415,15 @@ namespace uController.SourceGenerator
             else if (parameter.FromBody)
             {
                 BodyParameters.Add(parameter);
+                var fromBodyAttribute =
+                    parameter.ParameterInfo.GetCustomAttributeData(_wellKnownTypes.FromBodyMetadataType);
+                var allowEmptyKey = "AllowEmpty";
+                // Check existence of argument beforehand to avoid null-ref
+                if (fromBodyAttribute.NamedArguments.Any(n => n.MemberName == allowEmptyKey))
+                {
+                    var allowEmpty = fromBodyAttribute?.GetNamedArgument<bool>(allowEmptyKey) ?? false;
+                    isOptional |= allowEmpty;
+                }
 
                 if (parameter.ParameterType.Equals(typeof(PipeReader)))
                 {
@@ -383,8 +435,8 @@ namespace uController.SourceGenerator
                 }
                 else
                 {
-
-                    WriteLine($"var {parameterName} = await ResolveBody<{parameter.ParameterType}>(httpContext);");
+                    WriteLine(
+                              $"var {parameterName} = await ResolveBody<{parameter.ParameterType}>(httpContext, {(isOptional ? "true" : "false")});");
                 }
 
                 hasAwait = true;
@@ -394,32 +446,71 @@ namespace uController.SourceGenerator
                 // Error if we can't determine the binding source for this parameter
                 var parameterType = Unwrap(parameter.ParameterType) ?? parameter.ParameterType;
 
-                if (HasBindAsync(parameterType, out var bindAsyncMethod, out var parameterCount))
+                if (HasBindAsync(parameterType, out var bindAsyncMethod, out var parameterCount, out var returnType))
                 {
                     if (parameterCount == 1)
                     {
-                        WriteLine($"var {parameterName} = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext);");
+                        WriteLine(
+                                  $"var {parameterName}Nullable = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext);");
                     }
                     else
                     {
                         parameter.RequiresParameterInfo = true;
 
-                        WriteLine($"var {parameterName} = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext, {parameter.GeneratedName}ParameterInfo);");
+                        WriteLine(
+                                  $"var {parameterName}Nullable = await {bindAsyncMethod.DeclaringType}.BindAsync(httpContext, {parameter.GeneratedName}ParameterInfo);");
                     }
+
+                    var generatedBindAsyncAssignment = false;
+
+                    // Emit null check when the parameter is required
+                    // but the `BindAsync` can resolve to a nullable value
+                    if (UnwrapValueTask(returnType) is RoslynType innerReturn // Gets the T in ValueTask<T>
+                        && Unwrap(parameter.ParameterType) is null
+                        && Unwrap(innerReturn) is RoslynType unwrappedReturnType) // Gets the T in T?
+                    {
+                        WriteLine($"if ({parameterName}Nullable == null)");
+                        WriteLine("{");
+                        Indent();
+                        WriteLine("httpContext.Response.StatusCode = 400;");
+                        WriteLine("return;");
+                        Unindent();
+                        WriteLine("}");
+                        
+                        // If the result of `BindAsync` is nullable and the parameter
+                        // is not a value type then emit the value of the resolved
+                        // nullable value
+                        if (unwrappedReturnType.TypeSymbol.IsValueType)
+                        {
+                            WriteLine($"var {parameterName} = {parameterName}Nullable.Value;");
+                            generatedBindAsyncAssignment = true;
+                        }
+                    }
+
+                    // Get the default out of the parameter
+                    if (!generatedBindAsyncAssignment)
+                    {
+                        WriteLine($"var {parameterName} = {parameterName}Nullable;");
+                    }
+
 
                     hasAwait = true;
                 }
+
                 else if (HasTryParseMethod(parameterType, out var tryParseMethod) ||
                          parameterType.Equals(typeof(string)) ||
                          parameterType.Equals(typeof(StringValues)) ||
                          parameterType.Equals(typeof(string[])) ||
-                         parameterType.IsArray &&
-                         HasTryParseMethod(parameterType.GetElementType(), out tryParseMethod))
+                         (parameterType.IsArray &&
+                          HasTryParseMethod(parameterType.GetElementType(), out tryParseMethod)))
                 {
                     parameter.QueryOrRoute = true;
 
                     // Fallback to resolver
-                    if (!GenerateConvert(parameterName, parameter.ParameterType, defaultValue, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod))
+                    if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue,
+                                         parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver",
+                                         ref generatedParamCheck,
+                                         methodCall: true, tryParseMethod: tryParseMethod))
                     {
                         parameter.Unresovled = true;
                     }
@@ -441,61 +532,104 @@ namespace uController.SourceGenerator
             mi = null;
 
             if (type.IsEnum)
-            {
                 // Use Enum.TryParse<T>(string, bool, out T) for enums
+            {
                 mi = GetEnumTryParseMethod();
             }
 
-            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] {typeof(string), type.MakeByRefType()},
+                                                m => m.ReturnType.Equals(typeof(bool)));
 
-            mi ??= GetStaticMethodFromHierarchy(type, "TryParse", new[] { typeof(string), _wellKnownTypes.IFormatProviderType, type.MakeByRefType() }, m => m.ReturnType.Equals(typeof(bool)));
+            mi ??= GetStaticMethodFromHierarchy(type, "TryParse",
+                                                new[]
+                                                {
+                                                    typeof(string), _wellKnownTypes.IFormatProviderType,
+                                                    type.MakeByRefType()
+                                                },
+                                                m => m.ReturnType.Equals(typeof(bool)));
 
             return mi != null;
         }
 
-        private bool HasBindAsync(Type type, out MethodInfo mi, out int parameterCount)
+        private bool HasBindAsync(Type type, out MethodInfo mi, out int parameterCount, out Type returnType)
         {
-            // TODO: Validate return type
+            mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] {_wellKnownTypes.HttpContextType}, m => true);
 
-            mi = GetStaticMethodFromHierarchy(type, "BindAsync", new[] { _wellKnownTypes.HttpContextType }, m => true);
-
-            mi ??= GetStaticMethodFromHierarchy(type, "BindAsync", new[] { _wellKnownTypes.HttpContextType, _wellKnownTypes.ParamterInfoType }, m => true);
+            mi ??= GetStaticMethodFromHierarchy(type, "BindAsync",
+                                                new[]
+                                                {
+                                                    _wellKnownTypes.HttpContextType, _wellKnownTypes.ParamterInfoType
+                                                }, m => true);
 
             parameterCount = mi?.GetParameters().Length ?? 0;
 
+            returnType = mi?.ReturnType;
+
             return mi != null;
         }
 
-        private bool GenerateConvert(string sourceName, Type type, object defaultValue, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null)
+        private bool GenerateConvert(string sourceName, ParameterInfo parameterInfo, Type type, object defaultValue,
+                                     string key, string sourceExpression, ref bool generatedParamCheck,
+                                     bool nullable = false,
+                                     bool methodCall = false, MethodInfo tryParseMethod = null)
         {
-            var getter = methodCall ? $@"{sourceExpression}(httpContext, ""{key}"")" : $@"{sourceExpression}[""{key}""]";
+            var getter = methodCall
+                ? $@"{sourceExpression}(httpContext, ""{key}"")"
+                : $@"{sourceExpression}[""{key}""]";
+
+            WriteLine($"var getter{sourceName}Value = {getter};");
+
+            if (!(parameterInfo as RoslynParameterInfo).IsOptional)
+            {
+                generatedParamCheck = true;
+                if (sourceExpression.EndsWith("Headers") || sourceExpression.EndsWith("Query") ||
+                    sourceExpression.EndsWith("RouteOrQueryResolver"))
+                {
+                    WriteLine($"if (string.IsNullOrEmpty(getter{sourceName}Value))");
+                }
+                else
+                {
+                    WriteLine($"if (getter{sourceName}Value == null)");
+                }
+
+                WriteLine("{");
+                Indent();
+                WriteLine("wasParamCheckFailure = true;");
+                Unindent();
+                WriteLine("}");
+            }
 
             if (type.Equals(typeof(string)))
             {
                 if (defaultValue is null)
                 {
-                    WriteLine($"var {sourceName} = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
+                    WriteLine($"var {sourceName} = getter{sourceName}Value" + (nullable ? "?.ToString();" : ".ToString();"));
                 }
                 else
                 {
                     if (nullable)
                     {
-                        WriteLine($@"var {sourceName} = {getter}?.ToString() ?? ""{defaultValue}"";");
+                        WriteLine($@"var {sourceName} = getter{sourceName}Value?.ToString() ?? ""{defaultValue}"";");
                     }
                     else
                     {
-                        WriteLine($@"var {sourceName}Str = {getter}.ToString();");
-                        WriteLine($@"var {sourceName} = string.IsNullOrEmpty({sourceName}Str) ? ""{defaultValue}"" : {sourceName}Str;");
+                        WriteLine($@"var {sourceName}Str = getter{sourceName}Value.ToString();");
+                        WriteLine(
+                                  $@"var {sourceName} = string.IsNullOrEmpty({sourceName}Str) ? ""{defaultValue}"" : {sourceName}Str;");
                     }
                 }
             }
             else if (type.Equals(typeof(StringValues)))
             {
-                WriteLine($"var {sourceName} = {getter};");
+                WriteLine($"var {sourceName} = getter{sourceName}Value.Value;");
+            }
+            else if (type.Equals(typeof(StringValues?)))
+            {
+                WriteLine($"var {sourceName} = getter{sourceName}Value;");
             }
             else if (type.Equals(typeof(string[])))
             {
-                WriteLine($"var {sourceName} = {getter}.ToArray();");
+                WriteLine($"var {sourceName} = getter{sourceName}Value?.ToArray();");
             }
             else
             {
@@ -513,13 +647,14 @@ namespace uController.SourceGenerator
                 if (type.IsArray)
                 {
                     var elementType = type.GetElementType();
-                    WriteLine($"var {sourceName}_Value = {getter}.ToArray();");
+                    WriteLine($"var {sourceName}_Value = getter{sourceName}Value?.ToArray();");
                     WriteLine($"{elementType}[] {sourceName} = default;");
                     WriteLine($"for (var i = 0; i < {sourceName}.Length; i++)");
                     WriteLine("{");
                     Indent();
                     WriteLine($"{sourceName} ??= new {elementType}[{sourceName}_Value.Length];");
-                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value[i]", $"{sourceName}[i]", elementType, defaultValue: null, ref generatedParamCheck);
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value[i]", $"{sourceName}[i]", elementType, null,
+                                     ref generatedParamCheck);
                     Unindent();
                     WriteLine("}");
 
@@ -528,27 +663,35 @@ namespace uController.SourceGenerator
                 }
                 else
                 {
-                    WriteLine($"var {sourceName}_Value = {getter}" + (nullable ? "?.ToString();" : ".ToString();"));
+                    WriteLine($"var {sourceName}_Value = getter{sourceName}Value" + (nullable ? "?.ToString();" : ".ToString();"));
                     WriteLine($"{type} {sourceName};");
 
-                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, defaultValue, ref generatedParamCheck);
+                    GenerateTryParse(tryParseMethod, $"{sourceName}_Value", sourceName, type, defaultValue,
+                                     ref generatedParamCheck);
                 }
             }
+
             return true;
         }
 
-        private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type, object defaultValue, ref bool generatedParamCheck)
+        private void GenerateTryParse(MethodInfo tryParseMethod, string sourceName, string outputName, Type type,
+                                      object defaultValue, ref bool generatedParamCheck)
         {
             var underlyingType = Unwrap(type);
 
             // Support different TryParse overloads
-            string TryParseExpression(string outputExpression) => (tryParseMethod.DeclaringType, tryParseMethod.GetParameters().Length) switch
+            string TryParseExpression(string outputExpression)
             {
-                (_, 2) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, out {outputExpression})",
-                (var type, 3) when type.Equals(_wellKnownTypes.EnumType) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, true, out {outputExpression})",
-                (_, 3) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, System.Globalization.CultureInfo.InvariantCulture, out {outputExpression})",
-                _ => throw new NotSupportedException("Unknown TryParse method")
-            };
+                return (tryParseMethod.DeclaringType, tryParseMethod.GetParameters().Length) switch
+                {
+                    (_, 2) => $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, out {outputExpression})",
+                    (var type, 3) when type.Equals(_wellKnownTypes.EnumType) =>
+                        $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, true, out {outputExpression})",
+                    (_, 3) =>
+                        $"{tryParseMethod.DeclaringType}.TryParse({sourceName}, System.Globalization.CultureInfo.InvariantCulture, out {outputExpression})",
+                    _ => throw new NotSupportedException("Unknown TryParse method")
+                };
+            }
 
             // Type isn't nullable
             if (underlyingType is null)
@@ -556,7 +699,7 @@ namespace uController.SourceGenerator
                 generatedParamCheck = true;
 
                 // No source, no default value
-                // No source but has a defaul value
+                // No source but has a default value
                 // Unable to parse
                 if (defaultValue is null)
                 {
@@ -570,7 +713,7 @@ namespace uController.SourceGenerator
                 }
                 else
                 {
-                    WriteLine($"if ({sourceName} == null)");
+                    WriteLine($"if (string.IsNullOrEmpty({sourceName}))");
                     WriteLine("{");
                     Indent();
                     WriteLine($"{outputName} = {defaultValue};");
@@ -604,30 +747,36 @@ namespace uController.SourceGenerator
                 {
                     WriteLine($"{outputName} = {defaultValue};");
                 }
+
                 Unindent();
                 WriteLine("}");
             }
         }
+
         private MethodInfo GetEnumTryParseMethod()
         {
             var tryParse = (from m in _wellKnownTypes.EnumType.GetMethods(BindingFlags.Public | BindingFlags.Static)
-                            let parameters = m.GetParameters()
-                            where parameters.Length == 3 && m.Name == "TryParse" && m.IsGenericMethod &&
-                                  parameters[0].ParameterType.Equals(typeof(string)) &&
-                                  parameters[1].ParameterType.Equals(typeof(bool))
-                            select m).FirstOrDefault();
+                let parameters = m.GetParameters()
+                where parameters.Length == 3 && m.Name == "TryParse" && m.IsGenericMethod &&
+                      parameters[0].ParameterType.Equals(typeof(string)) &&
+                      parameters[1].ParameterType.Equals(typeof(bool))
+                select m).FirstOrDefault();
             return tryParse;
         }
 
-        private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes, Func<MethodInfo, bool> validateReturnType)
+        private MethodInfo GetStaticMethodFromHierarchy(Type type, string name, Type[] parameterTypes,
+                                                        Func<MethodInfo, bool> validateReturnType)
         {
-            bool IsMatch(MethodInfo method) => method is not null && !method.IsAbstract && validateReturnType(method);
+            bool IsMatch(MethodInfo method)
+            {
+                return method is not null && !method.IsAbstract && validateReturnType(method);
+            }
 
             var methodInfo = type.GetMethod(name,
                                             BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
-                                            binder: null,
-                                            types: parameterTypes,
-                                            modifiers: default);
+                                            null,
+                                            parameterTypes,
+                                            default);
 
             if (IsMatch(methodInfo))
             {
@@ -640,10 +789,10 @@ namespace uController.SourceGenerator
             foreach (var implementedInterface in type.GetInterfaces())
             {
                 var interfaceMethod = implementedInterface.GetMethod(name,
-                    BindingFlags.Public | BindingFlags.Static,
-                    binder: null,
-                    types: parameterTypes,
-                    modifiers: default);
+                                                                     BindingFlags.Public | BindingFlags.Static,
+                                                                     null,
+                                                                     parameterTypes,
+                                                                     default);
 
                 if (IsMatch(interfaceMethod))
                 {
@@ -675,6 +824,7 @@ namespace uController.SourceGenerator
             {
                 _codeBuilder.Append(new string(' ', _indent * 4));
             }
+
             _codeBuilder.Append(value);
         }
 
@@ -684,6 +834,7 @@ namespace uController.SourceGenerator
             {
                 _codeBuilder.Append(new string(' ', _indent * 4));
             }
+
             _codeBuilder.AppendLine(value);
         }
 

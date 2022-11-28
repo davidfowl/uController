@@ -40,13 +40,13 @@ namespace Roslyn.Reflection
 
         public override string Name => ArrayTypeSymbol is { } ar ? ar.ElementType.MetadataName + "[]" : _typeSymbol.MetadataName;
 
-        public override bool IsGenericType => NamedTypeSymbol?.IsGenericType ?? false;
+        public override bool IsGenericType => (NamedTypeSymbol?.IsGenericType ?? false) || _typeSymbol.NullableAnnotation == NullableAnnotation.Annotated;
 
         private INamedTypeSymbol NamedTypeSymbol => _typeSymbol as INamedTypeSymbol;
 
         private IArrayTypeSymbol ArrayTypeSymbol => _typeSymbol as IArrayTypeSymbol;
 
-        public override bool IsGenericTypeDefinition => IsGenericType && SymbolEqualityComparer.Default.Equals(NamedTypeSymbol, NamedTypeSymbol.ConstructedFrom);
+        public override bool IsGenericTypeDefinition => IsGenericType && SymbolEqualityComparer.IncludeNullability.Equals(NamedTypeSymbol, NamedTypeSymbol.ConstructedFrom);
 
         public override bool IsGenericParameter => _typeSymbol.TypeKind == TypeKind.TypeParameter;
 
@@ -66,8 +66,11 @@ namespace Roslyn.Reflection
         public override Type[] GetGenericArguments()
         {
             if (NamedTypeSymbol is null) return Array.Empty<Type>();
-
             var args = new List<Type>();
+            if (NamedTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated && !NamedTypeSymbol.IsValueType)
+            {
+                args.Add(NamedTypeSymbol?.ConstructedFrom.AsType(_metadataLoadContext));
+            }
             foreach (var item in NamedTypeSymbol.TypeArguments)
             {
                 args.Add(item.AsType(_metadataLoadContext));
@@ -77,6 +80,10 @@ namespace Roslyn.Reflection
 
         public override Type GetGenericTypeDefinition()
         {
+            if (NamedTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated)
+            {
+                return typeof(Nullable<>);
+            }
             return NamedTypeSymbol?.ConstructedFrom.AsType(_metadataLoadContext) ?? throw new NotSupportedException();
         }
 

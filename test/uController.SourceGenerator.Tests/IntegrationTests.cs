@@ -3,13 +3,17 @@ using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using MinimalApis.Extensions.Binding;
 using Moq;
+using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 namespace uController.SourceGenerator.Tests;
 
@@ -905,6 +909,381 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         Assert.Null(acceptsMetadata);
     }
 
+    [Fact]
+    public async Task SupportsNullableReferenceTypesInParameters()
+    {
+        var source = """
+        app.MapGet("/", (string? nullableString, DateTime? nullableDateTime) => $"{nullableString} {nullableDateTime}");
+        """;
+
+        var endpoint = await GetEndpoint(source);
+    }
+
+    public static object?[][] FromQueryOptionality
+    {
+        get
+        {
+            var requiredQueryParam = """app.MapGet("/", (string name) => $"Hello {name}!");""";
+            var defaultValueQueryParam = """
+            string defaultValueQueryParam(string name = "DefaultName") => $"Hello {name}!";
+            app.MapGet("/", defaultValueQueryParam);
+            """;
+            var nullableQueryParam = """app.MapGet("/", (string? name) => $"Hello {name}!");""";
+            var requiredParseableQueryParam = """app.MapGet("/", (int age) => $"Age: {age}");""";
+            var defaultValueParseableQueryParam = """
+            string defaultValuePareseableQueryParam(int age = 12) => $"Age: {age}";
+            app.MapGet("/", defaultValuePareseableQueryParam);
+            """;
+            var nullableQueryParseableParam = """app.MapGet("/", (int? age) => $"Age: {age}");""";
+
+            return new[]
+            {
+                new object?[] { requiredQueryParam, "name", null, 400, null},
+                new object?[] { requiredQueryParam, "name", "TestName", 200, "Hello TestName!" },
+                new object?[] { defaultValueQueryParam, "name", null, 200, "Hello DefaultName!" },
+                new object?[] { defaultValueQueryParam, "name", "TestName", 200, "Hello TestName!" },
+                new object?[] { nullableQueryParam, "name", null, 200, "Hello !" },
+                new object?[] { nullableQueryParam, "name", "TestName", 200, "Hello TestName!"},
+
+                new object?[] { requiredParseableQueryParam, "age", null, 400, null},
+                new object?[] { requiredParseableQueryParam, "age", "42", 200, "Age: 42" },
+                new object?[] { defaultValueParseableQueryParam, "age", null, 200, "Age: 12" },
+                new object?[] { defaultValueParseableQueryParam, "age", "42", 200, "Age: 42" },
+                new object?[] { nullableQueryParseableParam, "age", null, 200, "Age: " },
+                new object?[] { nullableQueryParseableParam, "age", "42", 200, "Age: 42"},
+            };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FromQueryOptionality))]
+    public async Task HandlesQueryParamOptionality(string source, string paramName, string? queryParam, int expectedStatusCode, string? expectedResponse)
+    {
+        var endpoint = await GetEndpoint(source);
+        QueryString? query = queryParam is not null ? QueryString.Create(paramName, queryParam) : null;
+
+        await AssertEndpointBehavior(
+                endpoint,
+                expectedResponse ?? string.Empty,
+                expectedStatusCode,
+                query: query);
+    }
+
+    public static object?[][] FromRouteOptionality
+    {
+        get
+        {
+            var requiredRouteParam = """app.MapGet("/{name}", (string name) => $"Hello {name}!");""";
+            var defaultValueRouteParam = """
+            string defaultValueQueryParam(string name = "DefaultName") => $"Hello {name}!";
+            app.MapGet("/{name}", defaultValueQueryParam);
+            """;
+            var nullableRouteParam = """app.MapGet("/{name}", (string? name) => $"Hello {name}!");""";
+            var requiredParseableRouteParam = """app.MapGet("/{age}", (int age) => $"Age: {age}");""";
+            var defaultValueParseableRouteParam = """
+            string defaultValuePareseableRouteParam(int age = 12) => $"Age: {age}";
+            app.MapGet("/{age}", defaultValuePareseableRouteParam);
+            """;
+            var nullableQueryParseableParam = """app.MapGet("/{age}", (int? age) => $"Age: {age}");""";
+
+            return new[]
+            {
+                new object?[] { requiredRouteParam, "name", null, 400, null},
+                new object?[] { requiredRouteParam, "name", "TestName", 200, "Hello TestName!" },
+                new object?[] { defaultValueRouteParam, "name", null, 200, "Hello DefaultName!" },
+                new object?[] { defaultValueRouteParam, "name", "TestName", 200, "Hello TestName!" },
+                new object?[] { nullableRouteParam, "name", null, 200, "Hello !" },
+                new object?[] { nullableRouteParam, "name", "TestName", 200, "Hello TestName!"},
+
+                new object?[] { requiredParseableRouteParam, "age", null, 400, null},
+                new object?[] { requiredParseableRouteParam, "age", "42", 200, "Age: 42" },
+                new object?[] { defaultValueParseableRouteParam, "age", null, 200, "Age: 12" },
+                new object?[] { defaultValueParseableRouteParam, "age", "42", 200, "Age: 42" },
+                new object?[] { nullableQueryParseableParam, "age", null, 200, "Age: " },
+                new object?[] { nullableQueryParseableParam, "age", "42", 200, "Age: 42"},
+            };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FromRouteOptionality))]
+    public async Task HandlesRouteParamOptionality(string source, string paramName, string? routeParam, int expectedStatusCode, string? expectedResponse)
+    {
+        var endpoint = await GetEndpoint(source);
+        var routeValue = routeParam is not null ? new RouteValueDictionary { { paramName, routeParam } } : null;
+
+        await AssertEndpointBehavior(
+                endpoint,
+                expectedResponse ?? string.Empty,
+                expectedStatusCode,
+                routeValues: routeValue);
+    }
+
+    public static object?[][] FromBodyOptionality
+    {
+        get
+        {
+            var requiredBodyParam = $"""
+            app.MapPost("/todo", ({typeof(Todo)} todo) => todo);
+            """;
+
+            var defaultValueBodyParam = $"""
+            {typeof(Todo)}? getTodo({typeof(Todo)}? todo = default) => todo;
+            app.MapPost("/todo", getTodo);
+            """;
+
+            var nullableBodyParam = $"""
+            app.MapPost("/todo-1", ({typeof(Todo)}? todo) => todo);
+            """;
+
+            var disallowEmptyAndNonOptional = $"""
+            app.MapPost("/todo-2", ([{typeof(FromBodyAttribute)}(AllowEmpty = false)] {typeof(Todo)} todo) => todo);
+            """;
+            
+            var allowEmptyAndNonOptional = $"""
+            app.MapPost("/todo-3", ([{typeof(FromBodyAttribute)}(AllowEmpty = true)] {typeof(Todo)} todo) => todo);
+            """;
+            
+            var allowEmptyAndOptional = $"""
+            app.MapPost("/todo-4", ([{typeof(FromBodyAttribute)}(AllowEmpty = true)] {typeof(Todo)}? todo) => todo);
+            """;
+            
+            var disallowEmptyAndOptional = $"""
+            app.MapPost("/todo-5", ([{typeof(FromBodyAttribute)}(AllowEmpty = false)] {typeof(Todo)}? todo) => todo);
+            """;
+
+            var todo = new Todo { Name = "Run tests" };
+
+            return new[]
+            {
+                new object?[] { requiredBodyParam, null, 400 },
+                new object?[] { requiredBodyParam, todo, 200 },
+                new object?[] { defaultValueBodyParam, null, 200 },
+                new object?[] { defaultValueBodyParam, todo, 200 },
+                new object?[] { nullableBodyParam, null, 200 },
+                new object?[] { nullableBodyParam, todo, 200 },
+                new object?[] { disallowEmptyAndNonOptional, null, 400 },
+                new object?[] { allowEmptyAndNonOptional, null, 200 },
+                new object?[] { allowEmptyAndOptional, null, 200 },
+                new object?[] { disallowEmptyAndOptional, null, 200 }
+            };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FromBodyOptionality))]
+    public async Task HandlesBodyParamOptionality(string source, Todo? bodyParam, int expectedStatusCode)
+    {
+        Console.WriteLine(source);
+        var requestDelegate = await GetRequestDelegate(source);
+        var httpContext = new DefaultHttpContext();
+
+        var outStream = new MemoryStream();
+        httpContext.Response.Body = outStream;
+
+        var requestBodyBytes = JsonSerializer.SerializeToUtf8Bytes(bodyParam);
+        var stream = new MemoryStream(requestBodyBytes);
+        httpContext.Request.Body = stream;
+
+        httpContext.Request.Headers["Content-Type"] = "application/json";
+        httpContext.Request.Headers["Content-Length"] = stream.Length.ToString(CultureInfo.InvariantCulture);
+        httpContext.Features.Set<IHttpRequestBodyDetectionFeature>(new RequestBodyDetectionFeature(true));
+
+        var jsonOptions = new JsonOptions();
+        jsonOptions.SerializerOptions.Converters.Add(new TodoJsonConverter());
+
+        var mock = new Mock<IServiceProvider>();
+        mock.Setup(m => m.GetService(It.IsAny<Type>())).Returns<Type>(t =>
+        {
+            if (t == typeof(IOptions<JsonOptions>))
+            {
+                return Options.Create(jsonOptions);
+            }
+            return null;
+        });
+        httpContext.RequestServices = mock.Object;
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(expectedStatusCode, httpContext.Response.StatusCode);
+
+        if (expectedStatusCode == 200)
+        {
+            var httpResponse = httpContext.Response;
+            httpResponse.Body.Seek(0, SeekOrigin.Begin);
+            var streamReader = new StreamReader(httpResponse.Body);
+            var body = await streamReader.ReadToEndAsync();
+            Assert.Equal(JsonSerializer.Serialize(bodyParam, options: new JsonSerializerOptions(JsonSerializerDefaults.Web)), body);
+        }
+    }
+
+    public static object?[][] FromServiceOptionality
+    {
+        get
+        {
+            var requiredExplicitService = $"""
+            void requiredExplicitService([{typeof(FromServiceAttribute)}]{typeof(MyService)} service, HttpContext httpContext) => httpContext.Items.Add("service", service);
+            app.MapGet("/", requiredExplicitService);
+            """;
+            var defaultValueExplicitServiceParam = $"""
+            void defaultValueExplicitServiceParam(HttpContext httpContext, [{typeof(FromServiceAttribute)}]{typeof(MyService)}? service = null) => httpContext.Items.Add("service", service);
+            app.MapGet("/", defaultValueExplicitServiceParam);
+            """;
+            var nullableExplicitServiceParam = $"""
+            app.MapGet("/", (HttpContext httpContext, [{typeof(FromServiceAttribute)}]{typeof(MyService)}? service) => httpContext.Items.Add("service", service));
+            """;
+
+            return new []
+                {
+                    new object?[] { requiredExplicitService, false, false},
+                    new object?[] { requiredExplicitService, true, true},
+
+                    new object?[] { defaultValueExplicitServiceParam, false, true},
+                    new object?[] { defaultValueExplicitServiceParam, true, true},
+
+                    new object?[] { nullableExplicitServiceParam, false, true},
+                    new object?[] { nullableExplicitServiceParam, true, true},
+                };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FromServiceOptionality))]
+    public async Task HandleFromServiceOptionality(string source, bool hasService, bool isValid)
+    {
+        var myOriginalService = new MyService();
+
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton(myOriginalService);
+        serviceCollection.AddSingleton<IMyService>(myOriginalService);
+        var services = serviceCollection.BuildServiceProvider();
+
+        var requestDelegate = await GetRequestDelegate(source, hasService ? services : null) ;
+
+        using var requestScoped = services.CreateScope();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = hasService ? requestScoped.ServiceProvider : new ServiceCollection().BuildServiceProvider()
+        };
+
+        if (isValid)
+        {
+            await requestDelegate(httpContext);
+            Assert.Same(hasService ? myOriginalService : null, httpContext.Items["service"]);
+            Assert.Equal(200,httpContext.Response.StatusCode);
+        }
+        else
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() => requestDelegate(httpContext));
+            Assert.False(httpContext.RequestAborted.IsCancellationRequested);
+        }
+    }
+    
+    public static IEnumerable<object?[]> BindAsyncOptionality
+    {
+        get
+        {
+            var requiredReferenceType = $"""
+            app.MapPost("/1", (HttpContext context, {typeof(MyBindAsyncRecord)} myBindAsyncRecord) => context.Items["uri"] = myBindAsyncRecord.Uri);
+            """;
+            var defaultReferenceType = $"""
+            void defaultReferenceTypeHandler(HttpContext context, {typeof(MyBindAsyncRecord)}? myBindAsyncRecord = null) => context.Items["uri"] = myBindAsyncRecord?.Uri;
+            app.MapPost("/2", defaultReferenceTypeHandler);
+            """;
+            var nullableReferenceType = $"""
+            app.MapPost("/3", (HttpContext context, {typeof(MyBindAsyncRecord)}? myBindAsyncRecord) => context.Items["uri"] = myBindAsyncRecord?.Uri);
+            """;
+            var requiredReferenceTypeSimple = $"""
+            app.MapPost("/4", (HttpContext context, {typeof(MySimpleBindAsyncRecord)} mySimpleBindAsyncRecord) => context.Items["uri"] = mySimpleBindAsyncRecord.Uri);
+            """;
+            var requiredValueType = $"""
+            app.MapPost("/5", (HttpContext context, {typeof(MyNullableBindAsyncStruct)} myNullableBindAsyncStruct) => context.Items["uri"] = myNullableBindAsyncStruct.Uri);
+            """;
+            var defaultValueType = $"""
+            void defaultValueTypeHandler(HttpContext context, {typeof(MyNullableBindAsyncStruct)}? myNullableBindAsyncStruct = null) => context.Items["uri"] = myNullableBindAsyncStruct?.Uri;
+            app.MapPost("/6", defaultValueTypeHandler);
+            """;
+            var nullableValueType = $"""
+            app.MapPost("/7", (HttpContext context, {typeof(MyNullableBindAsyncStruct)}? myNullableBindAsyncStruct) => context.Items["uri"] = myNullableBindAsyncStruct?.Uri);
+            """;
+            var requiredValueTypeSimple = $"""
+            app.MapPost("/8", (HttpContext context, {typeof(MySimpleBindAsyncStruct)} mySimpleBindAsyncStruct) => context.Items["uri"] = mySimpleBindAsyncStruct.Uri);
+            """;
+
+            return new object?[][]
+            {
+                    new object?[] { requiredReferenceType, false, true, false },
+                    new object?[] { requiredReferenceType, true, false, false, },
+                    new object?[] { requiredReferenceTypeSimple, true, false, false },
+                    
+                    new object?[] { defaultReferenceType, false, false, false, },
+                    new object?[] { defaultReferenceType, true, false, false },
+                    
+                    new object?[] { nullableReferenceType, false, false, false },
+                    new object?[] { nullableReferenceType, true, false, false },
+
+                    new object?[] { requiredValueType, false, true, true },
+                    new object?[] { requiredValueType, true, false, true },
+                    new object?[] { requiredValueTypeSimple, true, false, true },
+
+                    new object?[] { defaultValueType, false, false, true },
+                    new object?[] { defaultValueType, true, false, true },
+                    
+                    new object?[] { nullableValueType, false, false, true },
+                    new object?[] { nullableValueType, true, false, true },
+            };
+        }
+    }
+    
+    [Theory]
+    [MemberData(nameof(BindAsyncOptionality))]
+    public async Task HandleBindAsyncOptionality(string source, bool includeReferer, bool isInvalid, bool isStruct)
+    {
+        // Arrange
+        var requestDelegate = await GetRequestDelegate(source);
+        var httpContext = new DefaultHttpContext();
+        if (includeReferer)
+        {
+            httpContext.Request.Headers.Referer = "https://example.org";
+        }
+
+        // Assert
+        if (!isInvalid)
+        {
+            await requestDelegate(httpContext);
+            Assert.Equal(200, httpContext.Response.StatusCode);
+
+            if (includeReferer)
+            {
+                Assert.Equal(new Uri("https://example.org"), httpContext.Items["uri"]);
+            }
+            else
+            {
+                Assert.Null(httpContext.Items["uri"]);
+            }
+        }
+        else
+        {
+            await requestDelegate(httpContext);
+            // await Assert.ThrowsAsync<InvalidOperationException>(() => requestDelegate(httpContext));
+            Assert.Equal(400, httpContext.Response.StatusCode);
+            Assert.False(httpContext.RequestAborted.IsCancellationRequested);
+        }
+    }
+
+    [Theory]
+    [InlineData("""app.MapGet("/multiple-nn", (Microsoft.Extensions.Primitives.StringValues queries) => queries);""")]
+    [InlineData("""app.MapGet("/multiple-n", (Microsoft.Extensions.Primitives.StringValues? queries) => queries);""")]
+    public async Task HandleQueryHandlerTypeDifferentFromResolved(string source)
+    {
+        var requestDelegate = await GetRequestDelegate(source);
+
+        var httpContext = new DefaultHttpContext();
+
+        await requestDelegate(httpContext);
+    }
+    
     public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
     {
         // Act
@@ -1009,7 +1388,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
         var result = compilation.Emit(output, pdb, options: emitOptions, embeddedTexts: embeddedTexts);
 
-        Assert.Empty(result.Diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
+        Assert.Empty(result.Diagnostics.Where(d => d.Severity > DiagnosticSeverity.Warning));
         Assert.True(result.Success);
 
         output.Position = 0;
@@ -1058,7 +1437,7 @@ public static class TestMapActions
 
         var results = driver.GetRunResult();
         var diagnostics = outputCompilation.GetDiagnostics();
-        Assert.Empty(diagnostics.Where(d => d.Severity > DiagnosticSeverity.Info));
+        Assert.Empty(diagnostics.Where(d => d.Severity > DiagnosticSeverity.Warning));
         return (results.Results[0], outputCompilation);
     }
 

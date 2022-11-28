@@ -23,7 +23,10 @@ namespace Microsoft.AspNetCore.Http.Metadata
     interface IFromServiceMetadata { }
     interface IFromQueryMetadata { }
     interface IFromRouteMetadata { }
-    interface IFromBodyMetadata { }
+    interface IFromBodyMetadata
+    {
+        public bool AllowEmpty { get; }
+    }
     interface IFromFormMetadata { }
     interface IFromHeaderMetadata { }
 }

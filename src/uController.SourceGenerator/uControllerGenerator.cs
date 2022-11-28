@@ -152,6 +152,7 @@ namespace uController.SourceGenerator
                     {
                         Method = methodModel,
                         ParameterSymbol = parameter.GetParameterSymbol(),
+                        ParameterInfo = new RoslynParameterInfo(parameter.GetParameterSymbol(), metadataLoadContext),
                         Name = parameter.Name,
                         GeneratedName = "arg_" + parameter.Name,
                         ParameterType = parameter.ParameterType,
@@ -238,7 +239,7 @@ namespace uController.SourceGenerator
                             preReq.AppendLine("                var routePattern = (builder as RouteEndpointBuilder)?.RoutePattern;");
                         }
 
-                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues> {p.GeneratedName}RouteOrQueryResolver = routePattern?.GetParameter(""{p.Name}"") is null ? ResolveByQuery : ResolveByRoute;");
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, string, Microsoft.Extensions.Primitives.StringValues?> {p.GeneratedName}RouteOrQueryResolver = routePattern?.GetParameter(""{p.Name}"") is null ? ResolveByQuery : ResolveByRoute;");
                     }
 
                     if (p.BodyOrService)
@@ -249,7 +250,10 @@ namespace uController.SourceGenerator
                             preReq.AppendLine("                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
                         }
 
-                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType})) ?? false) ? ResolveService<{p.ParameterSymbol}> : ResolveBody<{p.ParameterType}>;");
+                        var isOptional = p.ParameterSymbol.IsOptional || p.ParameterSymbol.NullableAnnotation == NullableAnnotation.Annotated;
+                        var resolveBody = isOptional ? $"ResolveBodyOptional<{p.ParameterType}>" : $"ResolveBodyRequired<{p.ParameterType}>";
+
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType.ToString().Replace("?", string.Empty)})) ?? false) ? ResolveService<{p.ParameterSymbol}>({isOptional.ToString().ToLower()}) : {resolveBody};");
                     }
 
                     if (p.RequiresParameterInfo)
@@ -312,8 +316,8 @@ namespace uController.SourceGenerator
 
                 var filteredInvocationText = method.ReturnsVoid ?
                     $@"handler({filterArgumentString});
-                        return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);" :
-                    $@"return System.Threading.Tasks.ValueTask.FromResult<object>(handler({filterArgumentString}));";
+                        return System.Threading.Tasks.ValueTask.FromResult<object?>(Results.Empty);" :
+                    $@"return System.Threading.Tasks.ValueTask.FromResult<object?>(handler({filterArgumentString}));";
 
                 var populateMetadata = new StringBuilder();
                 var metadataPreReqs = new StringBuilder();
@@ -339,16 +343,18 @@ namespace uController.SourceGenerator
 
                     if (p.FromBody)
                     {
-                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                        var acceptsType = MinimalCodeGenerator.Unwrap(p.ParameterType) ?? p.ParameterType;
+                        populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({acceptsType}), true, new[] {{ ""application/json"" }}));");
                     }
                     else if (p.BodyOrService)
                     {
+                        var acceptsType = MinimalCodeGenerator.Unwrap(p.ParameterType) ?? p.ParameterType;
                         if (!generatedIsServiceProvider)
                         {
                             metadataPreReqs.AppendLine($@"                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
                             generatedIsServiceProvider = true;
                         }
-                        populateMetadata.AppendLine($@"                if ((ispis?.IsService(typeof({p.ParameterType})) ?? false) == false) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({p.ParameterType}), true, new[] {{ ""application/json"" }}));");
+                        populateMetadata.AppendLine($@"                if ((ispis?.IsService(typeof({acceptsType})) ?? false) == false) builder.Metadata.Add(new AcceptsTypeMetadata(typeof({acceptsType}), true, new[] {{ ""application/json"" }}));");
                     }
 
                     if (p.ReadFromForm)
@@ -444,7 +450,7 @@ namespace uController.SourceGenerator
                 else if (!wellKnownTypes.IResultType.IsAssignableFrom(returnType))
                 {
                     // Add JSON
-                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json"", {(returnType.GetTypeSymbol().IsAnonymousType ? "typeof(T)" : $"typeof({returnType})")}));");
+                    populateMetadata.AppendLine($@"                builder.Metadata.Add(ResponseTypeMetadata.Create(""application/json"", {(returnType.GetTypeSymbol().IsAnonymousType ? "typeof(T)" : $"typeof({returnType.ToString().Replace("?", string.Empty)})")}));");
                 }
 
                 var thunkBuilder = method.ReturnType.IsAnonymousType ? genericThunks : thunks;
@@ -459,7 +465,7 @@ namespace uController.SourceGenerator
            (del, builder) => 
             {{
                 var handler = ({fullDelegateType})del;
-                EndpointFilterDelegate filteredInvocation = null;
+                EndpointFilterDelegate? filteredInvocation = null;
 {preReq}{runtimeChecks.ToString().TrimEnd()}
                 if (builder.FilterFactories.Count > 0)
                 {{
@@ -467,7 +473,7 @@ namespace uController.SourceGenerator
                     {{
                         if (ic.HttpContext.Response.StatusCode == 400)
                         {{
-                            return System.Threading.Tasks.ValueTask.FromResult<object>(Results.Empty);
+                            return System.Threading.Tasks.ValueTask.FromResult<object?>(Results.Empty);
                         }}
                         {filteredInvocationText}
                     }},
@@ -546,6 +552,7 @@ namespace Microsoft.AspNetCore.Builder
 //------------------------------------------------------------------------------
 
 #if NET7_0_OR_GREATER
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -615,7 +622,7 @@ internal static class GeneratedRouteBuilderExtensions
 
     private static SourceGeneratedRouteEndpointDataSource GetOrAddRouteEndpointDataSource(IEndpointRouteBuilder endpoints)
     {{
-        SourceGeneratedRouteEndpointDataSource routeEndpointDataSource = null;
+        SourceGeneratedRouteEndpointDataSource? routeEndpointDataSource = null;
 
         foreach (var dataSource in endpoints.DataSources)
         {{
@@ -681,14 +688,16 @@ internal static class GeneratedRouteBuilderExtensions
             return httpContext.Response.WriteAsJsonAsync(obj);
         }}
     }}
-
-    private static Microsoft.Extensions.Primitives.StringValues ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
-    private static Microsoft.Extensions.Primitives.StringValues ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
-    private static ValueTask<T> ResolveService<T>(HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
-    private static async ValueTask<T> ResolveBody<T>(HttpContext httpContext)
+    private static Microsoft.Extensions.Primitives.StringValues? ResolveByQuery(HttpContext context, string key) => context.Request.Query[key];
+    private static Microsoft.Extensions.Primitives.StringValues? ResolveByRoute(HttpContext context, string key) => context.Request.RouteValues[key]?.ToString();
+    private static Func<HttpContext, ValueTask<T>> ResolveService<T>(bool isOptional) => isOptional
+        ? (HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetService<T>())
+        : (HttpContext httpContext) => new ValueTask<T>(httpContext.RequestServices.GetRequiredService<T>());
+    private static async ValueTask<T?> ResolveBodyOptional<T>(HttpContext httpContext) => await ResolveBody<T>(httpContext, true);
+    private static async ValueTask<T?> ResolveBodyRequired<T>(HttpContext httpContext) => await ResolveBody<T>(httpContext, false);
+    private static async ValueTask<T?> ResolveBody<T>(HttpContext httpContext, bool allowEmpty)
     {{
         var feature = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestBodyDetectionFeature>();
-
         if (feature?.CanHaveBody == true)
         {{
             if (!httpContext.Request.HasJsonContentType())
@@ -698,7 +707,12 @@ internal static class GeneratedRouteBuilderExtensions
             }}
             try
             {{
-                return await httpContext.Request.ReadFromJsonAsync<T>();
+                var bodyValue = await httpContext.Request.ReadFromJsonAsync<T>();
+                if (!allowEmpty && bodyValue == null)
+                {{
+                    httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                }}
+                return bodyValue;
             }}
             catch (IOException)
             {{
@@ -743,7 +757,7 @@ internal static class GeneratedRouteBuilderExtensions
 
         public IEnumerable<string> ContentTypes {{ get; init; }} = Enumerable.Empty<string>();
 
-        public static ResponseTypeMetadata Create(string contentType, Type type = null)
+        public static ResponseTypeMetadata Create(string contentType, Type? type = null)
         {{
             return new ResponseTypeMetadata {{ ContentTypes = new[] {{ contentType }}, Type = type }};
         }}
@@ -822,7 +836,7 @@ internal static class GeneratedRouteBuilderExtensions
         public override IChangeToken GetChangeToken() => NullChangeToken.Singleton;
 
         private RouteEndpointBuilder CreateRouteEndpointBuilder(
-            RouteEntry entry, RoutePattern groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>> groupConventions = null, IReadOnlyList<Action<EndpointBuilder>> groupFinallyConventions = null)
+            RouteEntry entry, RoutePattern? groupPrefix = null, IReadOnlyList<Action<EndpointBuilder>>? groupConventions = null, IReadOnlyList<Action<EndpointBuilder>>? groupFinallyConventions = null)
         {{
             var pattern = RoutePatternFactory.Combine(groupPrefix, entry.RoutePattern);
             var handler = entry.RouteHandler;
@@ -845,7 +859,7 @@ internal static class GeneratedRouteBuilderExtensions
 
             // If we're not a route handler, we started with a fully realized (although unfiltered) RequestDelegate, so we can just redirect to that
             // while running any conventions. We'll put the original back if it remains unfiltered right before building the endpoint.
-            RequestDelegate factoryCreatedRequestDelegate = null;
+            RequestDelegate? factoryCreatedRequestDelegate = null;
 
             // Let existing conventions capture and call into builder.RequestDelegate as long as they do so after it has been created.
             RequestDelegate redirectRequestDelegate = context =>

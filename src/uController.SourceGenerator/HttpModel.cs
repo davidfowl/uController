@@ -20,6 +20,7 @@ namespace uController
     {
         public MethodModel Method { get; set; }
         public IParameterSymbol ParameterSymbol { get; set; }
+        public ParameterInfo ParameterInfo { get; set; }
         public string Name { get; set; }
         public string GeneratedName { get; set; }
         public Type ParameterType { get; set; }
