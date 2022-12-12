@@ -1074,7 +1074,6 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     [MemberData(nameof(FromBodyOptionality))]
     public async Task HandlesBodyParamOptionality(string source, Todo? bodyParam, int expectedStatusCode)
     {
-        Console.WriteLine(source);
         var requestDelegate = await GetRequestDelegate(source);
         var httpContext = new DefaultHttpContext();
 
@@ -1266,7 +1265,6 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         else
         {
             await requestDelegate(httpContext);
-            // await Assert.ThrowsAsync<InvalidOperationException>(() => requestDelegate(httpContext));
             Assert.Equal(400, httpContext.Response.StatusCode);
             Assert.False(httpContext.RequestAborted.IsCancellationRequested);
         }

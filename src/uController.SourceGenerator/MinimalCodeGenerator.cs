@@ -466,8 +466,8 @@ namespace uController.SourceGenerator
                     // Emit null check when the parameter is required
                     // but the `BindAsync` can resolve to a nullable value
                     if (UnwrapValueTask(returnType) is RoslynType innerReturn // Gets the T in ValueTask<T>
-                        && Unwrap(parameter.ParameterType) is null
-                        && Unwrap(innerReturn) is RoslynType unwrappedReturnType) // Gets the T in T?
+                        && parameter.ParameterSymbol.NullableAnnotation != NullableAnnotation.Annotated
+                        &&  innerReturn.TypeSymbol.NullableAnnotation == NullableAnnotation.Annotated) // Gets the T in T?
                     {
                         WriteLine($"if ({parameterName}Nullable == null)");
                         WriteLine("{");
@@ -480,7 +480,7 @@ namespace uController.SourceGenerator
                         // If the result of `BindAsync` is nullable and the parameter
                         // is not a value type then emit the value of the resolved
                         // nullable value
-                        if (unwrappedReturnType.TypeSymbol.IsValueType)
+                        if (innerReturn.TypeSymbol.IsValueType)
                         {
                             WriteLine($"var {parameterName} = {parameterName}Nullable.Value;");
                             generatedBindAsyncAssignment = true;

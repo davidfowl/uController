@@ -152,7 +152,7 @@ namespace uController.SourceGenerator
                     {
                         Method = methodModel,
                         ParameterSymbol = parameter.GetParameterSymbol(),
-                        ParameterInfo = new RoslynParameterInfo(parameter.GetParameterSymbol(), metadataLoadContext),
+                        ParameterInfo = parameter,
                         Name = parameter.Name,
                         GeneratedName = "arg_" + parameter.Name,
                         ParameterType = parameter.ParameterType,
@@ -343,12 +343,12 @@ namespace uController.SourceGenerator
 
                     if (p.FromBody)
                     {
-                        var acceptsType = MinimalCodeGenerator.Unwrap(p.ParameterType) ?? p.ParameterType;
+                        var acceptsType = $"{p.ParameterType}".Trim('?');
                         populateMetadata.AppendLine($@"                builder.Metadata.Add(new AcceptsTypeMetadata(typeof({acceptsType}), true, new[] {{ ""application/json"" }}));");
                     }
                     else if (p.BodyOrService)
                     {
-                        var acceptsType = MinimalCodeGenerator.Unwrap(p.ParameterType) ?? p.ParameterType;
+                        var acceptsType = $"{p.ParameterType}".Trim('?');
                         if (!generatedIsServiceProvider)
                         {
                             metadataPreReqs.AppendLine($@"                var ispis = builder.ApplicationServices.GetService<IServiceProviderIsService>();");
