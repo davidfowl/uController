@@ -160,7 +160,7 @@ namespace uController.SourceGenerator
                         FromHeader = fromHeader == null ? null : fromHeader?.GetNamedArgument<string>("Name") ?? parameter.Name,
                         FromForm = fromForm == null ? null : fromForm?.GetNamedArgument<string>("Name") ?? parameter.Name,
                         FromRoute = fromRoute == null ? null : fromRoute?.GetNamedArgument<string>("Name") ?? parameter.Name,
-                        FromBody = fromBody != null,
+                        FromBodyAttributeData = fromBody,
                         FromServices = fromService != null,
                         Index = parameterIndex
                     };

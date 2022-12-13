@@ -28,7 +28,8 @@ namespace uController
         public string FromHeader { get; set; }
         public string FromForm { get; set; }
         public string FromRoute { get; set; }
-        public bool FromBody { get; set; }
+        public CustomAttributeData FromBodyAttributeData { get; set; }
+        public bool FromBody => FromBodyAttributeData != null;
         public bool FromServices { get; set; }
         public int Index { get; set; }
 

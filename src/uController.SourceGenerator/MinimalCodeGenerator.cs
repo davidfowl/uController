@@ -401,11 +401,10 @@ namespace uController.SourceGenerator
             else if (parameter.FromBody)
             {
                 BodyParameters.Add(parameter);
-                var fromBodyAttribute =
-                    parameter.ParameterInfo.GetCustomAttributeData(_wellKnownTypes.FromBodyMetadataType);
                 var allowEmptyKey = "AllowEmpty";
                 // Check existence of argument beforehand to avoid null-ref
-                if (fromBodyAttribute.NamedArguments.Any(n => n.MemberName == allowEmptyKey))
+                if (parameter.FromBodyAttributeData is {} fromBodyAttribute &&
+                    fromBodyAttribute.NamedArguments.Any(n => n.MemberName == allowEmptyKey))
                 {
                     var allowEmpty = fromBodyAttribute?.GetNamedArgument<bool>(allowEmptyKey) ?? false;
                     isOptional |= allowEmpty;
@@ -580,8 +579,7 @@ namespace uController.SourceGenerator
                     else
                     {
                         WriteLine($@"var {sourceName}Str = getter{sourceName}Value.ToString();");
-                        WriteLine(
-                                  $@"var {sourceName} = string.IsNullOrEmpty({sourceName}Str) ? ""{defaultValue}"" : {sourceName}Str;");
+                        WriteLine($@"var {sourceName} = string.IsNullOrEmpty({sourceName}Str) ? ""{defaultValue}"" : {sourceName}Str;");
                     }
                 }
             }
