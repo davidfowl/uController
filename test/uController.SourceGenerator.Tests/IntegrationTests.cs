@@ -80,10 +80,10 @@ app.MapGet(""/hello/{name}"", (string name) => $""Hello {name}!"");
         Assert.Equal("GET", method);
 
         await AssertEndpointBehavior(
-            endpoint,
-            "Hello Tester!",
-            200,
-            routeValues: new(new[] { new KeyValuePair<string, string?>("name", "Tester") }));
+                                     endpoint,
+                                     "Hello Tester!",
+                                     200,
+                                     routeValues: new(new[] {new KeyValuePair<string, string?>("name", "Tester")}));
     }
 
     [Fact]
@@ -116,10 +116,10 @@ app.MapGet(""/hello"", (string name) => $""Hello {name}!"");
         Assert.Equal("GET", method);
 
         await AssertEndpointBehavior(
-            endpoint,
-            "Hello David!",
-            200,
-            query: QueryString.Create("name", "David"));
+                                     endpoint,
+                                     "Hello David!",
+                                     200,
+                                     query: QueryString.Create("name", "David"));
     }
 
     [Fact]
@@ -137,7 +137,9 @@ app.MapGet(""/"", ({typeof(TodoService)} todo) => todo.ToString());
         Assert.Empty(results.Diagnostics);
 
         var builderFunc = CreateInvocationFromCompilation(compilation);
-        var builder = new DefaultEndpointRouteBuilder(new ApplicationBuilder(new ServiceCollection().AddSingleton<TodoService>().BuildServiceProvider()));
+        var builder =
+            new DefaultEndpointRouteBuilder(new ApplicationBuilder(new ServiceCollection().AddSingleton<TodoService>()
+                                                                       .BuildServiceProvider()));
         _ = builderFunc(builder);
 
         var dataSource = Assert.Single(builder.DataSources);
@@ -242,14 +244,14 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             """;
 
             return new List<object[]>
-                {
-                    new object[] { testAction },
-                    // new object[] { taskTestAction },
-                    new object[] { valueTaskTestAction },
-                    new object[] { staticTestAction },
-                    // new object[] { staticTaskTestAction },
-                    new object[] { staticValueTaskTestAction },
-                };
+            {
+                new object[] {testAction},
+                // new object[] { taskTestAction },
+                new object[] {valueTaskTestAction},
+                new object[] {staticTestAction},
+                // new object[] { staticTaskTestAction },
+                new object[] {staticValueTaskTestAction},
+            };
         }
     }
 
@@ -273,7 +275,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         const int originalRouteParam = 42;
 
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         static void TestAction(HttpContext httpContext, [FromRoute] int value)
         {
             httpContext.Items.Add("input", value);
@@ -293,7 +295,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public async Task SpecifiedRouteParametersDoNotFallbackToQueryString()
     {
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         app.MapGet("/{id}", (int? id, HttpContext httpContext) =>
         {
             if (id is not null)
@@ -318,7 +320,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public async Task SpecifiedQueryParametersDoNotFallbackToRouteValues()
     {
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         app.MapGet("/", (int? id, HttpContext httpContext) =>
         {
             if (id is not null)
@@ -345,10 +347,63 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     }
 
     [Fact]
+    public async Task NullRouteParametersPrefersRouteOverQueryString()
+    {
+        var requestDelegate = await GetRequestDelegate("""
+        app.MapGet("/", (int? id, HttpContext httpContext) =>
+        {
+            if (id is not null)
+            {
+                httpContext.Items["input"] = id;
+            }
+        });
+        """);
+
+        var httpContext = new DefaultHttpContext();
+
+        httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>
+        {
+            ["id"] = "41"
+        });
+        httpContext.Request.RouteValues = new()
+        {
+            ["id"] = "42"
+        };
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(42, httpContext.Items["input"]);
+    }
+
+    [Fact]
+    public async Task RequestDelegatePopulatesFromRouteParameterBasedOnAttributeNameProperty()
+    {
+        const string specifiedName = "value";
+        const int originalRouteParam = 42;
+
+        var source = $@"
+app.MapGet(""/"", ([FromRoute(Name = ""{specifiedName}"")] int foo, HttpContext httpContext) => 
+{{
+    httpContext.Items[""input""] = foo;
+    return string.Empty;
+}});
+";
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues[specifiedName] = originalRouteParam.ToString(NumberFormatInfo.InvariantInfo);
+
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(originalRouteParam, httpContext.Items["input"]);
+    }
+
+    [Fact]
     public async Task RequestDelegatePopulatesFromRouteOptionalParameter()
     {
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         static void TestOptional(HttpContext httpContext, [FromRoute] int value = 42)
         {
             httpContext.Items.Add("input", value);
@@ -367,7 +422,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public async Task RequestDelegatePopulatesFromNullableOptionalParameter()
     {
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         static void TestOptional(HttpContext httpContext, [FromRoute] int? value = 42)
         {
             httpContext.Items.Add("input", value);
@@ -386,7 +441,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public async Task RequestDelegatePopulatesFromOptionalStringParameter()
     {
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         static void TestOptionalString(HttpContext httpContext, string value = "default")
         {
             httpContext.Items.Add("input", value);
@@ -407,7 +462,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         const int unmatchedRouteParam = 42;
 
         var requestDelegate = await GetRequestDelegate(
-        """
+                                                       """
         void TestAction([FromRoute] int foo, HttpContext httpContext)
         {
             httpContext.Items.Add("deserializedRouteParam", foo);
@@ -428,7 +483,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public async Task RequestDelegatePrefersBindAsyncOverTryParse()
     {
         var requestDelegate = await GetRequestDelegate(
-        $$"""
+                                                       $$"""
         app.MapGet("/", (HttpContext httpContext, {{typeof(MyBindAsyncRecord)}} myBindAsyncRecord) =>
         {
             httpContext.Items["myBindAsyncRecord"] = myBindAsyncRecord;
@@ -451,7 +506,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         const int originalHeaderParam = 42;
 
         var requestDelegate = await GetRequestDelegate(
-        $$"""
+                                                       $$"""
         void TestAction(HttpContext httpContext, [FromHeader(Name = "{{customHeaderName}}")] int value)
         {
             httpContext.Items["deserializedRouteParam"] = value;
@@ -470,7 +525,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public static object[][] ImplicitFromBodyActions(bool withAcceptsMetadata = false)
     {
         var testImpliedFromBody =
-        $$""" 
+            $$""" 
         void TestImpliedFromBody(HttpContext httpContext, {{typeof(Todo)}} todo)
         {
             httpContext.Items.Add("body", todo);
@@ -479,7 +534,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         """;
 
         var testImpliedFromBodyInterface =
-        $$"""
+            $$"""
         void TestImpliedFromBodyInterface(HttpContext httpContext, {{typeof(ITodo)}} todo)
         {
             httpContext.Items.Add("body", todo);
@@ -488,7 +543,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         """;
 
         var testImpliedFromBodyStruct =
-        $$"""
+            $$"""
         void TestImpliedFromBodyStruct(HttpContext httpContext, {{typeof(TodoStruct)}} todo)
         {
             httpContext.Items.Add("body", todo);
@@ -505,17 +560,18 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         {
             return new[]
             {
-                new object[] { testImpliedFromBody, typeof(Todo), new[] { "application/json" } },
-                new object[] { testImpliedFromBodyInterface, typeof(ITodo), new[] { "application/json" } },
-                new object[] { testImpliedFromBodyStruct, typeof(TodoStruct), new[] { "application/json" } }
+                new object[] {testImpliedFromBody, typeof(Todo), new[] {"application/json"}},
+                new object[] {testImpliedFromBodyInterface, typeof(ITodo), new[] {"application/json"}},
+                new object[] {testImpliedFromBodyStruct, typeof(TodoStruct), new[] {"application/json"}}
                 // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
             };
         }
+
         return new[]
         {
-            new object[] { testImpliedFromBody },
-            new object[] { testImpliedFromBodyInterface  },
-            new object[] { testImpliedFromBodyStruct  }
+            new object[] {testImpliedFromBody},
+            new object[] {testImpliedFromBodyInterface},
+            new object[] {testImpliedFromBodyStruct}
             // new object[] { (Action<ParametersListWithImplictFromBody>)TestImpliedFromBodyStruct_ParameterList },
         };
     }
@@ -523,7 +579,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     public static object[][] ExplicitFromBodyActions(bool withAcceptsMetadata = false)
     {
         var TestExplicitFromBody =
-        $$"""
+            $$"""
         void TestExplicitFromBody(HttpContext httpContext, [FromBody] {{typeof(Todo)}} todo)
         {
             httpContext.Items.Add("body", todo);
@@ -541,23 +597,21 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
             return new[]
             {
-                new object[] { TestExplicitFromBody, typeof(Todo), new[] { "application/json" } },
+                new object[] {TestExplicitFromBody, typeof(Todo), new[] {"application/json"}},
                 // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
             };
         }
+
         return new[]
         {
-            new object[] { TestExplicitFromBody  },
+            new object[] {TestExplicitFromBody},
             // new object[] { (Action<ParametersListWithExplictFromBody>)TestExplicitFromBody_ParameterList },
         };
     }
 
     public static object[][] FromBodyActions
     {
-        get
-        {
-            return ExplicitFromBodyActions().Concat(ImplicitFromBodyActions()).ToArray();
-        }
+        get { return ExplicitFromBodyActions().Concat(ImplicitFromBodyActions()).ToArray(); }
     }
 
     [Theory]
@@ -591,6 +645,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             {
                 return Options.Create(jsonOptions);
             }
+
             return null;
         });
         httpContext.RequestServices = mock.Object;
@@ -599,10 +654,119 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
         var deserializedRequestBody = httpContext.Items["body"];
         Assert.NotNull(deserializedRequestBody);
-        Assert.Equal(originalTodo.Name, ((ITodo)deserializedRequestBody!).Name);
+        Assert.Equal(originalTodo.Name, ((ITodo) deserializedRequestBody!).Name);
     }
 
-    public static object?[][] TryParsableParameters
+    public static object?[][] TryParsableParameters(bool fromQuery)
+    {
+
+        var now = DateTime.Now;
+
+        var types = new List<(Type, object, object)>
+        {
+            (typeof(string), "plain string", "plain string"),
+            (typeof(int), "-42", -42),
+            (typeof(int?), "42", 42),
+            (typeof(uint), "42", 42U),
+            (typeof(bool), "true", true),
+            (typeof(short), "-42", (short) -42),
+            (typeof(ushort), "42", (ushort) 42),
+            (typeof(long), "-42", -42L),
+            (typeof(ulong), "42", 42UL),
+            (typeof(IntPtr), "-42", new IntPtr(-42)),
+            (typeof(char), "A", 'A'),
+            (typeof(double), "0.5", 0.5),
+            (typeof(float), "0.5", 0.5f),
+            (typeof(Half), "0.5", (Half) 0.5f),
+            (typeof(decimal), "0.5", 0.5m),
+            // TBD
+            // (typeof(Uri)            , "https://example.org", new Uri("https://example.org") ),
+            // (typeof(DateTime)       , now.ToString("o"), now.ToUniversalTime() ),
+            (typeof(DateTimeOffset), "1970-01-01T00:00:00.0000000+00:00", DateTimeOffset.UnixEpoch),
+            (typeof(TimeSpan), "00:00:42", TimeSpan.FromSeconds(42)),
+            (typeof(Guid), "00000000-0000-0000-0000-000000000000", Guid.Empty),
+            (typeof(Version), "6.0.0.42", new Version("6.0.0.42")),
+            (typeof(BigInteger), "-42", new BigInteger(-42)),
+            (typeof(IPAddress), "127.0.0.1", IPAddress.Loopback),
+            (typeof(IPEndPoint), "127.0.0.1:80", new IPEndPoint(IPAddress.Loopback, 80)),
+            (typeof(AddressFamily), "Unix", AddressFamily.Unix),
+        };
+
+        // TBD
+        //new object[] { (Action<HttpContext, ILOpCode>)Store, "Nop", ILOpCode.Nop },
+        //new object[] { (Action<HttpContext, AssemblyFlags>)Store, "PublicKey,Retargetable", AssemblyFlags.PublicKey | AssemblyFlags.Retargetable },
+        //new object[] { (Action<HttpContext, int?>)Store, "42", 42 },
+        //new object[] { (Action<HttpContext, MyEnum>)Store, "ValueB", MyEnum.ValueB },
+        //new object[] { (Action<HttpContext, MyTryParseRecord>)Store, "https://example.org", new MyTryParseRecord(new Uri("https://example.org")) },
+        //new object?[] { (Action<HttpContext, int?>)Store, null, null },
+        static Type? Unwrap(Type type)
+        {
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                // instantiated generic type only
+                Type genericType = type.GetGenericTypeDefinition();
+                if (genericType.Equals(typeof(Nullable<>)))
+                {
+                    return type.GetGenericArguments()[0];
+                }
+            }
+
+            return null;
+        }
+
+        var results = new List<object[]>();
+        foreach (var (type, val, expected) in types)
+        {
+            var source =
+                $$"""
+                static void Store(HttpContext httpContext, {{(Unwrap(type) is Type t ? $"{t}?" : $"{type}")}} tryParsable)
+                {
+                    httpContext.Items["tryParsable"] = tryParsable;
+                }
+                """;
+            source += fromQuery ? @"app.MapGet(""/"", Store);" : @"app.MapGet(""/{{tryParsable}}"", Store);";
+
+            results.Add(new[] {source, val, expected});
+        }
+
+        return results.ToArray();
+    }
+
+
+    [Theory]
+    [MemberData(nameof(TryParsableParameters), parameters: false)]
+    public async Task RequestDelegatePopulatesUnattributedTryParsableParametersFromRouteValue(
+        string source, string? routeValue, object? expectedParameterValue)
+    {
+        var requestDelegate = await GetRequestDelegate(source);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues["tryParsable"] = routeValue;
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(expectedParameterValue, httpContext.Items["tryParsable"]);
+    }
+
+    [Theory]
+    [MemberData(nameof(TryParsableParameters), parameters: true)]
+    public async Task RequestDelegatePopulatesUnattributedTryParsableParametersFromQueryString(
+        string source, string? queryValue, object? expectedParameterValue)
+    {
+        var requestDelegate = await GetRequestDelegate(source);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>
+        {
+            ["tryParsable"] = queryValue
+        });
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(expectedParameterValue, httpContext.Items["tryParsable"]);
+    }
+
+    public static object?[][] TryParsableArrayParameters
     {
         get
         {
@@ -610,41 +774,42 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
             var types = new List<(Type, object, object)>
             {
-                (typeof(string)         , "plain string", "plain string" ),
-                (typeof(int)            , "-42", -42 ),
-                (typeof(int?)           , "42", 42),
-                (typeof(uint)           , "42", 42U ),
-                (typeof(bool)           , "true", true ),
-                (typeof(short)          , "-42", (short)-42 ),
-                (typeof(ushort)         , "42", (ushort)42 ),
-                (typeof(long)           , "-42", -42L ),
-                (typeof(ulong)          , "42", 42UL ),
-                (typeof(IntPtr)         , "-42", new IntPtr(-42) ),
-                (typeof(char)           , "A", 'A' ),
-                (typeof(double)         , "0.5", 0.5 ),
-                (typeof(float)          , "0.5", 0.5f ),
-                (typeof(Half)           , "0.5", (Half)0.5f ),
-                (typeof(decimal)        , "0.5", 0.5m ),
-                // TBD
-                // (typeof(Uri)            , "https://example.org", new Uri("https://example.org") ),
-                // (typeof(DateTime)       , now.ToString("o"), now.ToUniversalTime() ),
-                (typeof(DateTimeOffset) , "1970-01-01T00:00:00.0000000+00:00", DateTimeOffset.UnixEpoch ),
-                (typeof(TimeSpan)       , "00:00:42", TimeSpan.FromSeconds(42) ),
-                (typeof(Guid)           , "00000000-0000-0000-0000-000000000000", Guid.Empty ),
-                (typeof(Version)        , "6.0.0.42", new Version("6.0.0.42") ),
-                (typeof(BigInteger)     , "-42", new BigInteger(-42) ),
-                (typeof(IPAddress)      , "127.0.0.1", IPAddress.Loopback ),
-                (typeof(IPEndPoint)     , "127.0.0.1:80", new IPEndPoint(IPAddress.Loopback, 80) ),
-                (typeof(AddressFamily)  , "Unix", AddressFamily.Unix ),
+                (typeof(string[]), new[] {"plain string"}, new[] {"plain string"}),
+                (typeof(StringValues), new[] {"1", "2", "3"}, new StringValues(new[] {"1", "2", "3"})),
+                // new object[] { (Action<HttpContext, int[]>)Store, new[] { "-1", "2", "3" }, new[] { -1,2,3 } },
+                // new object[] { (Action<HttpContext, uint[]>)Store, new[] { "1","42","32"}, new[] { 1U, 42U, 32U } },
+                // new object[] { (Action<HttpContext, bool[]>)Store, new[] { "true", "false" }, new[] { true, false } },
+                // new object[] { (Action<HttpContext, short[]>)Store, new[] { "-42" }, new[] { (short)-42 } },
+                // new object[] { (Action<HttpContext, ushort[]>)Store, new[] { "42" }, new[] { (ushort)42 } },
+                // new object[] { (Action<HttpContext, long[]>)Store, new[] { "-42" }, new[] { -42L } },
+                // new object[] { (Action<HttpContext, ulong[]>)Store, new[] { "42" }, new[] { 42UL } },
+                // new object[] { (Action<HttpContext, IntPtr[]>)Store, new[] { "-42" },new[] { new IntPtr(-42) } },
+                // new object[] { (Action<HttpContext, char[]>)Store, new[] { "A" }, new[] { 'A' } },
+                // new object[] { (Action<HttpContext, double[]>)Store, new[] { "0.5" },new[] { 0.5 } },
+                // new object[] { (Action<HttpContext, float[]>)Store, new[] { "0.5" },new[] { 0.5f } },
+                // new object[] { (Action<HttpContext, Half[]>)Store, new[] { "0.5" }, new[] { (Half)0.5f } },
+                // new object[] { (Action<HttpContext, decimal[]>)Store, new[] { "0.5" },new[] { 0.5m } },
+                // new object[] { (Action<HttpContext, Uri[]>)Store, new[] { "https://example.org" }, new[] { new Uri("https://example.org") } },
+                // new object[] { (Action<HttpContext, DateTime[]>)Store, new[] { now.ToString("o") },new[] { now.ToUniversalTime() } },
+                // new object[] { (Action<HttpContext, DateTimeOffset[]>)Store, new[] { "1970-01-01T00:00:00.0000000+00:00" },new[] { DateTimeOffset.UnixEpoch } },
+                // new object[] { (Action<HttpContext, TimeSpan[]>)Store, new[] { "00:00:42" },new[] { TimeSpan.FromSeconds(42) } },
+                // new object[] { (Action<HttpContext, Guid[]>)Store, new[] { "00000000-0000-0000-0000-000000000000" },new[] { Guid.Empty } },
+                // new object[] { (Action<HttpContext, Version[]>)Store, new[] { "6.0.0.42" }, new[] { new Version("6.0.0.42") } },
+                // new object[] { (Action<HttpContext, BigInteger[]>)Store, new[] { "-42" },new[]{ new BigInteger(-42) } },
+                // new object[] { (Action<HttpContext, IPAddress[]>)Store, new[] { "127.0.0.1" }, new[] { IPAddress.Loopback } },
+                // new object[] { (Action<HttpContext, IPEndPoint[]>)Store, new[] { "127.0.0.1:80" },new[] { new IPEndPoint(IPAddress.Loopback, 80) } },
+                // new object[] { (Action<HttpContext, AddressFamily[]>)Store, new[] { "Unix" },new[] { AddressFamily.Unix } },
+                // new object[] { (Action<HttpContext, ILOpCode[]>)Store, new[] { "Nop" }, new[] { ILOpCode.Nop } },
+                // new object[] { (Action<HttpContext, AssemblyFlags[]>)Store, new[] { "PublicKey,Retargetable" },new[] { AssemblyFlags.PublicKey | AssemblyFlags.Retargetable } },
+                // new object[] { (Action<HttpContext, int?[]>)Store, new[] { "42" }, new int?[] { 42 } },
+                // new object[] { (Action<HttpContext, MyEnum[]>)Store, new[] { "ValueB" },new[] { MyEnum.ValueB } },
+                // new object[] { (Action<HttpContext, MyTryParseRecord[]>)Store, new[] { "https://example.org" },new[] { new MyTryParseRecord(new Uri("https://example.org")) } },
+                // new object?[] { (Action<HttpContext, int[]>)Store, new string[] {}, Array.Empty<int>() },
+                // new object?[] { (Action<HttpContext, int?[]>)Store, new string?[] { "1", "2", null, "4" }, new int?[] { 1,2, null, 4 } },
+                // new object?[] { (Action<HttpContext, int?[]>)Store, new string[] { "1", "2", "", "4" }, new int?[] { 1,2, null, 4 } },
+                // new object[] { (Action<HttpContext, MyTryParseRecord?[]?>)Store, new[] { "" }, new MyTryParseRecord?[] { null } },
             };
 
-            // TBD
-            //new object[] { (Action<HttpContext, ILOpCode>)Store, "Nop", ILOpCode.Nop },
-            //new object[] { (Action<HttpContext, AssemblyFlags>)Store, "PublicKey,Retargetable", AssemblyFlags.PublicKey | AssemblyFlags.Retargetable },
-            //new object[] { (Action<HttpContext, int?>)Store, "42", 42 },
-            //new object[] { (Action<HttpContext, MyEnum>)Store, "ValueB", MyEnum.ValueB },
-            //new object[] { (Action<HttpContext, MyTryParseRecord>)Store, "https://example.org", new MyTryParseRecord(new Uri("https://example.org")) },
-            //new object?[] { (Action<HttpContext, int?>)Store, null, null },
             static Type? Unwrap(Type type)
             {
                 if (type.IsGenericType && !type.IsGenericTypeDefinition)
@@ -656,6 +821,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
                         return type.GetGenericArguments()[0];
                     }
                 }
+
                 return null;
             }
 
@@ -663,7 +829,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             foreach (var (type, val, expected) in types)
             {
                 var source =
-                $$"""
+                    $$"""
                 static void Store(HttpContext httpContext, {{(Unwrap(type) is Type t ? $"{t}?" : $"{type}")}} tryParsable)
                 {
                     httpContext.Items["tryParsable"] = tryParsable;
@@ -671,7 +837,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
                 app.MapGet("/{tryParsable}", Store);
                 """;
 
-                results.Add(new[] { source, val, expected });
+                results.Add(new[] {source, val, expected});
             }
 
             return results.ToArray();
@@ -679,13 +845,17 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
     }
 
     [Theory]
-    [MemberData(nameof(TryParsableParameters))]
-    public async Task RequestDelegatePopulatesUnattributedTryParsableParametersFromRouteValue(string source, string? routeValue, object? expectedParameterValue)
+    [MemberData(nameof(TryParsableArrayParameters))]
+    public async Task RequestDelegateHandlesArraysFromQueryString(string source, string[]? queryValues,
+                                                                  object? expectedParameterValue)
     {
         var requestDelegate = await GetRequestDelegate(source);
 
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.RouteValues["tryParsable"] = routeValue;
+        httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>
+        {
+            ["tryParsable"] = queryValues
+        });
 
         await requestDelegate(httpContext);
 
@@ -698,7 +868,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         get
         {
             var testExplicitFromService =
-            $$"""
+                $$"""
             void TestExplicitFromService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] {{typeof(MyService)}} myService)
             {
                 httpContext.Items.Add("service", myService);
@@ -713,7 +883,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             //}
 
             var testExplicitFromIEnumerableService =
-            $$"""
+                $$"""
             void TestExplicitFromIEnumerableService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] IEnumerable<{{typeof(MyService)}}> myServices)
             {
                 httpContext.Items.Add("service", myServices.Single());
@@ -722,7 +892,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             """;
 
             var testExplictMultipleFromService =
-            $$"""
+                $$"""
             void TestExplicitMultipleFromService(HttpContext httpContext, [{{typeof(FromServiceAttribute)}}] {{typeof(MyService)}} myService, [{{typeof(FromServiceAttribute)}}] IEnumerable<{{typeof(MyService)}}> myServices)
             {
                 httpContext.Items.Add("service", myService);
@@ -732,11 +902,11 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
             return new object[][]
             {
-                    new[] { testExplicitFromService },
-                    // TBD
-                    // new object[] { (Action<ParametersListWithExplictFromService>)TestExplicitFromService_FromParameterList },
-                    new[] { testExplicitFromIEnumerableService },
-                    new[] { testExplictMultipleFromService },
+                new[] {testExplicitFromService},
+                // TBD
+                // new object[] { (Action<ParametersListWithExplictFromService>)TestExplicitFromService_FromParameterList },
+                new[] {testExplicitFromIEnumerableService},
+                new[] {testExplictMultipleFromService},
             };
         }
     }
@@ -746,7 +916,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         get
         {
             var testImpliedFromService =
-            $$"""
+                $$"""
             void TestImpliedFromService(HttpContext httpContext, {{typeof(IMyService)}} myService)
             {
                 httpContext.Items.Add("service", myService);
@@ -760,7 +930,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             //}
 
             var testImpliedIEnumerableFromService =
-            $$"""
+                $$"""
             void TestImpliedIEnumerableFromService(HttpContext httpContext, IEnumerable<{{typeof(MyService)}}> myServices)
             {
                 httpContext.Items.Add("service", myServices.Single());
@@ -769,7 +939,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
             """;
 
             var testImpliedFromServiceBasedOnContainer =
-            $$"""
+                $$"""
             void TestImpliedFromServiceBasedOnContainer(HttpContext httpContext, {{typeof(MyService)}} myService)
             {
                 httpContext.Items.Add("service", myService);
@@ -779,10 +949,10 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
             return new object[][]
             {
-                    new[] { testImpliedFromService },
-                    // new object[] { (Action<ParametersListWithImplictFromService>)TestImpliedFromService_FromParameterList },
-                    new[] { testImpliedIEnumerableFromService },
-                    new[] { testImpliedFromServiceBasedOnContainer },
+                new[] {testImpliedFromService},
+                // new object[] { (Action<ParametersListWithImplictFromService>)TestImpliedFromService_FromParameterList },
+                new[] {testImpliedIEnumerableFromService},
+                new[] {testImpliedFromServiceBasedOnContainer},
             };
         }
     }
@@ -815,16 +985,13 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
 
     public static object[][] FromServiceActions
     {
-        get
-        {
-            return ImplicitFromServiceActions.Concat(ExplicitFromServiceActions).ToArray();
-        }
+        get { return ImplicitFromServiceActions.Concat(ExplicitFromServiceActions).ToArray(); }
     }
 
     public static object[][] FromFormActions(bool withAcceptsMetadata = false)
     {
         var implicitFromFormFile =
-        $$"""
+            $$"""
         app.MapPost("/fileupload", (IFormFile file) =>
         {
             return $"Uploaded {file.Name}";
@@ -832,7 +999,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         """;
 
         var implicitFromFormCollection =
-        $$"""
+            $$"""
         app.MapPost("/formpost", (IFormCollection formCollection) =>
         {
             return $"Uploaded {formCollection.Count} files";
@@ -840,7 +1007,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         """;
 
         var explicitFromFormFile =
-        $$"""
+            $$"""
         app.MapPost("/fileupload", ([FromForm] IFormFile file) =>
         {
             return $"Uploaded {file.Name}";
@@ -848,7 +1015,7 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         """;
 
         var explicitFromFormCollection =
-        $$"""
+            $$"""
         app.MapPost("/formpost", ([FromForm] IFormCollection formCollection) =>
         {
             return $"Uploaded {formCollection.Count} files";
@@ -859,27 +1026,28 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         {
             return new[]
             {
-                new[] { (object)implicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
-                new[] { (object)implicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }},
-                new[] { (object)explicitFromFormFile, typeof(IFormFile), new[] { "multipart/form-data" }},
-                new[] { (object)explicitFromFormCollection, typeof(IFormCollection), new[] { "multipart/form-data" }}
+                new[] {(object) implicitFromFormFile, typeof(IFormFile), new[] {"multipart/form-data"}},
+                new[] {(object) implicitFromFormCollection, typeof(IFormCollection), new[] {"multipart/form-data"}},
+                new[] {(object) explicitFromFormFile, typeof(IFormFile), new[] {"multipart/form-data"}},
+                new[] {(object) explicitFromFormCollection, typeof(IFormCollection), new[] {"multipart/form-data"}}
             };
         }
 
         return new[]
         {
-            new[] { (object)implicitFromFormFile },
-            new[] { (object)implicitFromFormCollection },
-            new[] { (object)explicitFromFormFile },
-            new[] { (object)explicitFromFormCollection }
+            new[] {(object) implicitFromFormFile},
+            new[] {(object) implicitFromFormCollection},
+            new[] {(object) explicitFromFormFile},
+            new[] {(object) explicitFromFormCollection}
         };
     }
 
     [Theory]
-    [MemberData(nameof(ImplicitFromBodyActions), parameters: new object[] { true })]
-    [MemberData(nameof(ExplicitFromBodyActions), parameters: new object[] { true })]
-    [MemberData(nameof(FromFormActions), parameters: new object[] { true })]
-    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType, string[] expectedContentTypes)
+    [MemberData(nameof(ImplicitFromBodyActions), parameters: new object[] {true})]
+    [MemberData(nameof(ExplicitFromBodyActions), parameters: new object[] {true})]
+    [MemberData(nameof(FromFormActions), parameters: new object[] {true})]
+    public async Task PopulatesAcceptsMetadataForRequestBody(string source, Type expectedType,
+                                                             string[] expectedContentTypes)
     {
         var endpoint = await GetEndpoint(source);
 
@@ -904,6 +1072,156 @@ app.MapGet(""/{{value}}"", ([FromRoute(Name = ""value"")] int id, HttpContext ht
         var acceptsMetadata = endpoint.Metadata.GetMetadata<IAcceptsMetadata>();
         Assert.Null(acceptsMetadata);
     }
+
+    [Fact]
+    public async Task Create_AddJsonResponseType_AsMetadata()
+    {
+        var source = @"
+        app.MapGet(""/"", () => new object());
+        ";
+        var endpoint = await GetEndpoint(source);
+        var responseMetadata = Assert.Single(endpoint.Metadata.OfType<IProducesResponseTypeMetadata>());
+
+        Assert.Equal("application/json", Assert.Single(responseMetadata.ContentTypes));
+        Assert.Equal(typeof(object), responseMetadata.Type);
+    }
+
+    [Fact]
+    public async Task Create_AddPlaintextResponseType_AsMetadata()
+    {
+        var source = @"
+        app.MapGet(""/"", () => ""Hello!"");
+        ";
+        var endpoint = await GetEndpoint(source);
+        var responseMetadata = Assert.Single(endpoint.Metadata.OfType<IProducesResponseTypeMetadata>());
+
+        Assert.Equal("text/plain", Assert.Single(responseMetadata.ContentTypes));
+        Assert.Null(responseMetadata.Type);
+    }
+
+    [Fact]
+    public async Task RequestDelegateFactory_InvokesFiltersButNotHandler_OnArgumentError()
+    {
+        var source = @"
+        app.MapGet(""/{name}"", (string name) => $""Hello {name}!"")
+            .AddEndpointFilter(async (context, next) =>
+            {
+                context.Arguments[0] = context.Arguments[0] != null ? $""{((string)context.Arguments[0]!)}Prefix"" : ""NULL"";
+                return await next(context);
+            });
+        ";
+
+        var httpContext = new DefaultHttpContext();
+        var responseBodyStream = new MemoryStream();
+        httpContext.Response.Body = responseBodyStream;
+
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(400, httpContext.Response.StatusCode);
+        Assert.Equal(0, responseBodyStream.Position);
+    }
+
+    [Fact]
+    public async Task InvokesFiltersOnHandlerFromLambda()
+    {
+        var source = @"
+        app.MapGet(""/{name}"", (string name) => $""Hello {name}!"")
+            .AddEndpointFilter(async (context, next) =>
+            {
+                context.Arguments[0] = context.Arguments[0] != null ? $""{((string)context.Arguments[0]!)}Prefix"" : ""NULL"";
+                return await next(context);
+            });
+        ";
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.RouteValues["name"] = "Tester";
+        var responseBodyStream = new MemoryStream();
+        httpContext.Response.Body = responseBodyStream;
+
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(200, httpContext.Response.StatusCode);
+        var decodedResponseBody = Encoding.UTF8.GetString(responseBodyStream.ToArray());
+        Assert.Equal("Hello TesterPrefix!", decodedResponseBody);
+    }
+
+    [Fact]
+    public async Task CanInvokeSingleEndpointFilter_ThatProvidesCustomErrorMessage()
+    {
+        var source = @"
+        app.MapGet(""/{name}"", (string name) => $""Hello {name}!"")
+            .AddEndpointFilter(async (context, next) =>
+            {
+                if (context.HttpContext.Response.StatusCode == 400)
+                {
+                    return Results.Problem(""New response"", statusCode: 400);
+                }
+                return await next(context);
+            });
+        ";
+
+        var httpContext = new DefaultHttpContext();
+        var responseBodyStream = new MemoryStream();
+        httpContext.Response.Body = responseBodyStream;
+        
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+        
+        Assert.Equal(400, httpContext.Response.StatusCode);
+        var decodedResponseBody = Encoding.UTF8.GetString(responseBodyStream.ToArray());
+        Assert.Equal("New response", decodedResponseBody);
+    }
+
+    [Fact]
+    public async Task RequestDelegateRejectsNonJsonContent()
+    {
+        var source = $@"app.MapGet(""/"", ({typeof(Todo)} todo) => todo);";
+        
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["Content-Type"] = "application/xml";
+        httpContext.Request.Headers["Content-Length"] = "1";
+        
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+
+        Assert.Equal(415, httpContext.Response.StatusCode);
+    }
+    
+    [Theory]
+    [InlineData((@"bool? Action() => null;"))]
+    [InlineData((@"Task<bool?> Action() => Task.FromResult<bool?>(null);"))]
+    [InlineData((@"ValueTask<bool?> Action() => ValueTask.FromResult<bool?>(null);"))]
+    [InlineData((@"int? Action() => null;"))]
+    [InlineData((@"Task<int?> Action() => Task.FromResult<int?>(null);"))]
+    [InlineData((@"ValueTask<int?> Action() => ValueTask.FromResult<int?>(null);"))]
+    // [InlineData((@"uController.SourceGenerator.Tests.Todo? Action() => null;"))]
+    // [InlineData((@"Task<uController.SourceGenerator.Tests.Todo?> Action() => Task.FromResult<uController.SourceGenerator.Tests.Todo?>(null);"))]
+    // [InlineData((@"ValueTask<uController.SourceGenerator.Tests.Todo?> Action() => ValueTask.FromResult<uController.SourceGenerator.Tests.Todo?>(null);"))]
+    public async Task RequestDelegateWritesNullReturnNullValue(string method)
+    {
+        var source = $@"
+        {method}
+        app.MapGet(""/"", Action);
+        ";
+        var httpContext = new DefaultHttpContext();
+        var responseBodyStream = new MemoryStream();
+        httpContext.Response.Body = responseBodyStream;
+        
+        var requestDelegate = await GetRequestDelegate(source);
+
+        await requestDelegate(httpContext);
+
+        var responseBody = Encoding.UTF8.GetString(responseBodyStream.ToArray());
+
+        Assert.Equal("null", responseBody);
+    }
+
 
     public async Task<Endpoint> GetEndpoint(string source, IServiceProvider? serviceProvider = null)
     {
