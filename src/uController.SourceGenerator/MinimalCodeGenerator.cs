@@ -359,14 +359,14 @@ namespace uController.SourceGenerator
             }
             else if (parameter.FromQuery != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.FromQuery, "httpContext.Request.Query", ref generatedParamCheck, sourcedFromStringValue: true))
                 {
                     parameter.Unresovled = true;
                 }
             }
             else if (parameter.FromHeader != null)
             {
-                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck))
+                if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.FromHeader, "httpContext.Request.Headers", ref generatedParamCheck, sourcedFromStringValue: true))
                 {
                     parameter.Unresovled = true;
                 }
@@ -489,7 +489,7 @@ namespace uController.SourceGenerator
                     parameter.QueryOrRoute = true;
 
                     // Fallback to resolver
-                    if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod))
+                    if (!GenerateConvert(parameterName, parameter.ParameterInfo, parameter.ParameterType, defaultValue, parameter.Name, $"{parameter.GeneratedName}RouteOrQueryResolver", ref generatedParamCheck, methodCall: true, tryParseMethod: tryParseMethod, sourcedFromStringValue: true))
                     {
                         parameter.Unresovled = true;
                     }
@@ -536,7 +536,7 @@ namespace uController.SourceGenerator
             return mi != null;
         }
 
-        private bool GenerateConvert(string sourceName, ParameterInfo parameterInfo, Type type, object defaultValue, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null)
+        private bool GenerateConvert(string sourceName, ParameterInfo parameterInfo, Type type, object defaultValue, string key, string sourceExpression, ref bool generatedParamCheck, bool nullable = false, bool methodCall = false, MethodInfo tryParseMethod = null, bool sourcedFromStringValue = false)
         {
             var getter = methodCall
                 ? $@"{sourceExpression}(httpContext, ""{key}"")"
@@ -547,8 +547,7 @@ namespace uController.SourceGenerator
             if (!(parameterInfo as RoslynParameterInfo).IsOptional)
             {
                 generatedParamCheck = true;
-                if (sourceExpression.EndsWith("Headers") || sourceExpression.EndsWith("Query") ||
-                    sourceExpression.EndsWith("RouteOrQueryResolver"))
+                if (sourcedFromStringValue)
                 {
                     WriteLine($"if (string.IsNullOrEmpty(getter{sourceName}Value))");
                 }
