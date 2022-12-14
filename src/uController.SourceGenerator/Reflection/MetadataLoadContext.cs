@@ -10,7 +10,7 @@ namespace Roslyn.Reflection
     public class MetadataLoadContext
     {
         private readonly Compilation _compilation;
-        private readonly ConcurrentDictionary<ISymbol, object> _cache = new(SymbolEqualityComparer.Default);
+        private readonly ConcurrentDictionary<ISymbol, object> _cache = new(SymbolEqualityComparer.IncludeNullability);
 
         public MetadataLoadContext(Compilation compilation)
         {

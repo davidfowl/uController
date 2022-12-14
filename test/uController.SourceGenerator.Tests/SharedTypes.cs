@@ -10,6 +10,11 @@ public class FromServiceAttribute : Attribute, IFromServiceMetadata
 {
 }
 
+public class FromBodyAttribute : Attribute, IFromBodyMetadata
+{
+    public bool AllowEmpty { get; set; }
+}
+
 public interface IMyService
 {
 }
@@ -41,6 +46,48 @@ public record MyBindAsyncRecord(Uri Uri)
     // no [FromRoute] or [FromQuery] attributes.
     public static bool TryParse(string? value, out MyBindAsyncRecord? result) =>
         throw new NotImplementedException();
+}
+
+public record MySimpleBindAsyncRecord(Uri Uri)
+{
+    public static ValueTask<MySimpleBindAsyncRecord?> BindAsync(HttpContext context)
+    {
+        if (!Uri.TryCreate(context.Request.Headers.Referer, UriKind.Absolute, out var uri))
+        {
+            return new(result: null);
+        }
+
+        return new(result: new(uri));
+    }
+}
+
+public record struct MyNullableBindAsyncStruct(Uri Uri)
+{
+    public static ValueTask<MyNullableBindAsyncStruct?> BindAsync(HttpContext context, ParameterInfo parameter)
+    {
+        Assert.True(parameter.ParameterType == typeof(MyNullableBindAsyncStruct) || parameter.ParameterType == typeof(MyNullableBindAsyncStruct?));
+        Assert.Equal("myNullableBindAsyncStruct", parameter.Name);
+
+        if (!Uri.TryCreate(context.Request.Headers.Referer, UriKind.Absolute, out var uri))
+        {
+            return new(result: null);
+        }
+
+        return new(result: new(uri));
+    }
+}
+
+public record struct MySimpleBindAsyncStruct(Uri Uri)
+{
+    public static ValueTask<MySimpleBindAsyncStruct> BindAsync(HttpContext context)
+    {
+        if (!Uri.TryCreate(context.Request.Headers.Referer, UriKind.Absolute, out var uri))
+        {
+            throw new BadHttpRequestException("The request is missing the required Referer header.");
+        }
+
+        return new(result: new(uri));
+    }
 }
 
 public interface ITodo
