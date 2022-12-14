@@ -20,6 +20,7 @@ namespace uController
     {
         public MethodModel Method { get; set; }
         public IParameterSymbol ParameterSymbol { get; set; }
+        public ParameterInfo ParameterInfo { get; set; }
         public string Name { get; set; }
         public string GeneratedName { get; set; }
         public Type ParameterType { get; set; }
@@ -27,7 +28,8 @@ namespace uController
         public string FromHeader { get; set; }
         public string FromForm { get; set; }
         public string FromRoute { get; set; }
-        public bool FromBody { get; set; }
+        public CustomAttributeData FromBodyAttributeData { get; set; }
+        public bool FromBody => FromBodyAttributeData != null;
         public bool FromServices { get; set; }
         public int Index { get; set; }
 

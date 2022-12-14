@@ -46,7 +46,7 @@ namespace Roslyn.Reflection
 
         private IArrayTypeSymbol ArrayTypeSymbol => _typeSymbol as IArrayTypeSymbol;
 
-        public override bool IsGenericTypeDefinition => IsGenericType && SymbolEqualityComparer.Default.Equals(NamedTypeSymbol, NamedTypeSymbol.ConstructedFrom);
+        public override bool IsGenericTypeDefinition => IsGenericType && SymbolEqualityComparer.IncludeNullability.Equals(NamedTypeSymbol, NamedTypeSymbol.ConstructedFrom);
 
         public override bool IsGenericParameter => _typeSymbol.TypeKind == TypeKind.TypeParameter;
 
@@ -66,7 +66,6 @@ namespace Roslyn.Reflection
         public override Type[] GetGenericArguments()
         {
             if (NamedTypeSymbol is null) return Array.Empty<Type>();
-
             var args = new List<Type>();
             foreach (var item in NamedTypeSymbol.TypeArguments)
             {
