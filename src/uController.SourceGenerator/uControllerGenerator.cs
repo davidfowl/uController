@@ -253,7 +253,7 @@ namespace uController.SourceGenerator
                         var isOptional = p.ParameterSymbol.IsOptional || p.ParameterSymbol.NullableAnnotation == NullableAnnotation.Annotated;
                         var resolveBody = isOptional ? $"ResolveBodyOptional<{p.ParameterType}>" : $"ResolveBodyRequired<{p.ParameterType}>";
 
-                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType.ToString().Replace("?", string.Empty)})) ?? false) ? ResolveService<{p.ParameterSymbol}>({isOptional.ToString().ToLower()}) : {resolveBody};");
+                        runtimeChecks.AppendLine($@"                System.Func<HttpContext, System.Threading.Tasks.ValueTask<{p.ParameterType}>> {p.GeneratedName}ServiceOrBodyResolver = (ispis?.IsService(typeof({p.ParameterType.ToString().Replace("?", string.Empty)})) ?? false) ? ResolveService<{p.ParameterType}>({isOptional.ToString().ToLower()}) : {resolveBody};");
                     }
 
                     if (p.RequiresParameterInfo)
